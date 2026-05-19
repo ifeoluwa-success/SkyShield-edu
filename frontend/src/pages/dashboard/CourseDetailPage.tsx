@@ -27,6 +27,7 @@ import { startMissionRun } from '../../services/incidentService';
 import Toast from '../../components/Toast';
 import { Spinner } from '../../components/ui/Loading';
 import { useAuth } from '../../hooks/useAuth';
+import '../../assets/css/CourseDetailPage.css';
 
 /* ─── helpers (unchanged logic) ─────────────────────────────────────────── */
 
@@ -57,22 +58,21 @@ const firstUnlockedModuleId = (enrollment: CourseEnrollment): string | null => {
 /* ─── inline styles ──────────────────────────────────────────────────────── */
 
 const S: Record<string, React.CSSProperties> = {
-  /* page shells */
   page: {
     display: 'flex',
     flexDirection: 'column',
     minHeight: '100vh',
-    background: '#F7F5F0',
+    background: 'var(--bg-primary)',
     fontFamily: '"DM Sans", system-ui, sans-serif',
-    color: '#1A1814',
+    color: 'var(--text-primary)',
   },
   topbar: {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
     padding: '14px 28px',
-    borderBottom: '0.5px solid rgba(26,24,20,0.12)',
-    background: '#FFFFFF',
+    borderBottom: '1px solid var(--border-color)',
+    background: 'var(--bg-secondary)',
   },
   backBtn: {
     display: 'inline-flex',
@@ -80,26 +80,24 @@ const S: Record<string, React.CSSProperties> = {
     gap: 6,
     fontSize: 13,
     fontWeight: 500,
-    color: '#6B6760',
+    color: 'var(--text-secondary)',
     background: 'none',
-    border: '0.5px solid rgba(26,24,20,0.2)',
+    border: '1px solid var(--border-color)',
     borderRadius: 6,
     padding: '6px 12px',
     cursor: 'pointer',
     fontFamily: 'inherit',
   },
-  topbarSep: { color: '#A8A5A0', fontSize: 13 },
-  topbarTitle: { fontSize: 13, color: '#A8A5A0', fontWeight: 400 },
-
-  /* layout */
+  topbarSep: { color: 'var(--text-muted)', fontSize: 13 },
+  topbarTitle: { fontSize: 13, color: 'var(--text-muted)', fontWeight: 400 },
   layout: {
     display: 'grid',
     gridTemplateColumns: '284px 1fr',
     flex: 1,
   },
   sidebar: {
-    background: '#FFFFFF',
-    borderRight: '0.5px solid rgba(26,24,20,0.12)',
+    background: 'var(--bg-secondary)',
+    borderRight: '1px solid var(--border-color)',
     padding: '28px 18px',
     position: 'sticky' as const,
     top: 0,
@@ -110,34 +108,32 @@ const S: Record<string, React.CSSProperties> = {
     padding: '36px 40px',
     maxWidth: 820,
   },
-
-  /* sidebar internals */
   courseLabel: {
     fontSize: 10,
     fontWeight: 600,
     letterSpacing: '0.1em',
     textTransform: 'uppercase' as const,
-    color: '#A8A5A0',
+    color: 'var(--text-muted)',
     marginBottom: 8,
   },
   courseTitle: {
     fontSize: 18,
     fontWeight: 600,
     lineHeight: 1.35,
-    color: '#1A1814',
+    color: 'var(--text-primary)',
     marginBottom: 20,
   },
   progressMeta: {
     display: 'flex',
     justifyContent: 'space-between',
     fontSize: 12,
-    color: '#6B6760',
+    color: 'var(--text-secondary)',
     fontWeight: 500,
     marginBottom: 7,
   },
   progressTrack: {
     height: 4,
-    background: '#E5E2DC',
+    background: 'var(--bg-elevated)',
     borderRadius: 99,
     overflow: 'hidden',
     marginBottom: 24,
@@ -147,27 +143,24 @@ const S: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     letterSpacing: '0.12em',
     textTransform: 'uppercase' as const,
-    color: '#A8A5A0',
+    color: 'var(--text-muted)',
     marginBottom: 8,
     paddingLeft: 4,
   },
   moduleList: { listStyle: 'none', display: 'flex', flexDirection: 'column' as const, gap: 2 },
-
-  /* content card */
   card: {
-    background: '#FFFFFF',
-    border: '0.5px solid rgba(26,24,20,0.12)',
+    background: 'var(--bg-secondary)',
+    border: '1px solid var(--border-color)',
     borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 20,
+    boxShadow: 'var(--shadow-sm)',
   },
   cardHeader: {
     padding: '26px 30px 20px',
-    borderBottom: '0.5px solid rgba(26,24,20,0.1)',
+    borderBottom: '1px solid var(--border-color)',
   },
   cardBody: { padding: '26px 30px' },
-
-  /* tags */
   tagReading: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -178,8 +171,8 @@ const S: Record<string, React.CSSProperties> = {
     textTransform: 'uppercase' as const,
     padding: '4px 10px',
     borderRadius: 4,
-    background: '#EEF2FF',
-    color: '#3730A3',
+    background: 'var(--violet-dim)',
+    color: 'var(--violet)',
     marginBottom: 14,
   },
   tagSim: {
@@ -192,42 +185,37 @@ const S: Record<string, React.CSSProperties> = {
     textTransform: 'uppercase' as const,
     padding: '4px 10px',
     borderRadius: 4,
-    background: '#EAF2ED',
-    color: '#2D5F3F',
+    background: 'var(--cyan-dim)',
+    color: 'var(--cyan)',
     marginBottom: 14,
   },
-
-  /* headings */
   moduleHeading: {
     fontSize: 24,
     fontWeight: 600,
     lineHeight: 1.25,
-    color: '#1A1814',
+    color: 'var(--text-primary)',
     marginBottom: 8,
   },
-  moduleDesc: { fontSize: 14, color: '#6B6760', lineHeight: 1.6 },
-
-  /* reading body */
+  moduleDesc: { fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 },
   readingBody: {
     fontSize: 15,
     lineHeight: 1.8,
-    color: '#1A1814',
-    borderLeft: '3px solid rgba(26,24,20,0.15)',
+    color: 'var(--text-primary)',
+    borderLeft: '3px solid var(--border-color)',
     paddingLeft: 20,
     marginBottom: 28,
   },
-
-  /* status messages */
   msgSuccess: {
     display: 'flex',
     alignItems: 'flex-start',
     gap: 10,
     padding: '13px 16px',
     borderRadius: 8,
-    background: '#EAF2ED',
-    color: '#2D5F3F',
+    background: 'var(--success-dim)',
+    color: 'var(--success)',
     fontSize: 14,
     marginBottom: 20,
+    border: '1px solid color-mix(in srgb, var(--success) 35%, transparent)',
   },
   msgWarn: {
     display: 'flex',
@@ -235,10 +223,11 @@ const S: Record<string, React.CSSProperties> = {
     gap: 10,
     padding: '13px 16px',
     borderRadius: 8,
-    background: '#FEF3C7',
-    color: '#92400E',
+    background: 'var(--warning-dim)',
+    color: 'var(--warning)',
     fontSize: 14,
     marginBottom: 20,
+    border: '1px solid color-mix(in srgb, var(--warning) 35%, transparent)',
   },
   msgDanger: {
     display: 'flex',
@@ -246,13 +235,12 @@ const S: Record<string, React.CSSProperties> = {
     gap: 10,
     padding: '13px 16px',
     borderRadius: 8,
-    background: '#FEE2E2',
-    color: '#991B1B',
+    background: 'var(--danger-dim)',
+    color: 'var(--danger)',
     fontSize: 14,
     marginBottom: 20,
+    border: '1px solid color-mix(in srgb, var(--danger) 35%, transparent)',
   },
-
-  /* sim meta grid */
   metaGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
@@ -260,15 +248,15 @@ const S: Record<string, React.CSSProperties> = {
     marginBottom: 28,
   },
   metaCard: {
-    background: '#F7F5F0',
+    background: 'var(--bg-tertiary)',
     borderRadius: 10,
     padding: '14px 16px',
-    border: '0.5px solid rgba(26,24,20,0.1)',
+    border: '1px solid var(--border-color)',
   },
   metaLabel: {
     fontSize: 11,
     fontWeight: 500,
-    color: '#A8A5A0',
+    color: 'var(--text-muted)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.07em',
     marginBottom: 4,
@@ -276,10 +264,9 @@ const S: Record<string, React.CSSProperties> = {
   metaValue: {
     fontSize: 22,
     fontWeight: 600,
-    color: '#1A1814',
+    color: 'var(--text-primary)',
     fontVariantNumeric: 'tabular-nums' as const,
   },
-
   simDivider: {
     display: 'flex',
     alignItems: 'center',
@@ -288,23 +275,21 @@ const S: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     letterSpacing: '0.08em',
     textTransform: 'uppercase' as const,
-    color: '#A8A5A0',
+    color: 'var(--text-muted)',
     marginBottom: 22,
   },
-
   actionsRow: { display: 'flex', gap: 10, alignItems: 'center' },
-
   btnPrimary: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 8,
-    background: '#2D5F3F',
-    color: '#FFFFFF',
+    background: 'linear-gradient(135deg, var(--cyan), var(--cyan-dark))',
+    color: '#020c1b',
     border: 'none',
     borderRadius: 8,
     padding: '11px 22px',
     fontSize: 14,
-    fontWeight: 500,
+    fontWeight: 600,
     cursor: 'pointer',
     fontFamily: 'inherit',
   },
@@ -312,9 +297,9 @@ const S: Record<string, React.CSSProperties> = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 8,
-    background: 'none',
-    color: '#6B6760',
-    border: '0.5px solid rgba(26,24,20,0.22)',
+    background: 'var(--bg-tertiary)',
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border-color)',
     borderRadius: 8,
     padding: '11px 20px',
     fontSize: 14,
@@ -323,34 +308,31 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: 'inherit',
   },
   btnDisabled: { opacity: 0.45, cursor: 'default' },
-
-  /* cert banner */
   certBanner: {
-    background: 'linear-gradient(135deg, #1A3D2A 0%, #2D5F3F 100%)',
+    background: 'var(--gradient-primary)',
     borderRadius: 12,
     padding: '20px 24px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    color: '#FFFFFF',
+    color: '#020c1b',
     marginTop: 20,
+    border: '1px solid color-mix(in srgb, var(--cyan) 40%, transparent)',
   },
   certLeft: { display: 'flex', alignItems: 'center', gap: 12 },
-  certNum: { fontSize: 13, opacity: 0.7, marginTop: 2 },
+  certNum: { fontSize: 13, opacity: 0.75, marginTop: 2 },
   certHeading: { fontSize: 16, fontWeight: 600 },
   certBtn: {
-    background: 'rgba(255,255,255,0.15)',
-    border: '0.5px solid rgba(255,255,255,0.3)',
-    color: '#FFFFFF',
+    background: 'color-mix(in srgb, var(--bg-secondary) 25%, transparent)',
+    border: '1px solid color-mix(in srgb, #020c1b 25%, transparent)',
+    color: '#020c1b',
     borderRadius: 8,
     padding: '9px 18px',
     fontSize: 14,
-    fontWeight: 500,
+    fontWeight: 600,
     cursor: 'pointer',
     fontFamily: 'inherit',
   },
-
-  /* state pages */
   stateWrap: {
     display: 'flex',
     flexDirection: 'column' as const,
@@ -361,9 +343,8 @@ const S: Record<string, React.CSSProperties> = {
     textAlign: 'center' as const,
     gap: 12,
   },
-  stateTitle: { fontSize: 22, fontWeight: 600, color: '#1A1814' },
-  stateText: { fontSize: 15, color: '#6B6760', maxWidth: 420, lineHeight: 1.65 },
-
+  stateTitle: { fontSize: 22, fontWeight: 600, color: 'var(--text-primary)' },
+  stateText: { fontSize: 15, color: 'var(--text-secondary)', maxWidth: 420, lineHeight: 1.65 },
   loadingWrap: {
     display: 'flex',
     flexDirection: 'column' as const,
@@ -371,8 +352,8 @@ const S: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     minHeight: '100vh',
     gap: 14,
-    background: '#F7F5F0',
-    color: '#6B6760',
+    background: 'var(--bg-primary)',
+    color: 'var(--text-secondary)',
     fontSize: 15,
     fontFamily: '"DM Sans", system-ui, sans-serif',
   },
@@ -387,18 +368,18 @@ const ModuleStatusIcon: React.FC<{ mod: CourseModule; enrollment: CourseEnrollme
   const p = progressForModule(enrollment, mod.id);
   const status = p?.status ?? 'locked';
 
-  if (status === 'locked') return <Lock size={15} color="#A8A5A0" />;
-  if (status === 'passed') return <CheckCircle size={15} color="#2D5F3F" />;
+  if (status === 'locked') return <Lock size={15} className="cd-icon-muted" />;
+  if (status === 'passed') return <CheckCircle size={15} className="cd-icon-success" />;
   if (status === 'failed') {
     const canRetry = p && p.attempts < mod.max_simulation_attempts && mod.module_type === 'simulation';
     return (
-      <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#991B1B' }}>
+      <span className="cd-status-fail">
         <XCircle size={15} />
         {canRetry && <span style={{ fontSize: 11, fontWeight: 600 }}>Retry</span>}
       </span>
     );
   }
-  return <Circle size={15} color="#6366F1" />;
+  return <Circle size={15} className="cd-icon-progress" />;
 };
 
 interface MetaCardProps { label: string; value: string; valueColor?: string }
@@ -648,7 +629,7 @@ const CourseDetailPage: React.FC = () => {
       <div style={S.page}>
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         <div style={S.stateWrap}>
-          <BookOpen size={40} color="#2D5F3F" />
+          <BookOpen size={40} className="cd-icon-success" />
           <h1 style={S.stateTitle}>Enroll to access this course</h1>
           <p style={S.stateText}>
             Join the course to view modules, readings, and simulation checkpoints.
@@ -698,7 +679,7 @@ const CourseDetailPage: React.FC = () => {
             <span>{passedModuleCount} / {totalModuleCount} modules</span>
           </div>
           <div style={S.progressTrack}>
-            <div style={{ height: '100%', width: `${progressPct}%`, background: '#2D5F3F', borderRadius: 99, transition: 'width 0.4s ease' }} />
+            <div className="cd-progress-fill" style={{ width: `${progressPct}%` }} />
           </div>
 
           <p style={S.sectionLabel}>Modules</p>
@@ -709,39 +690,18 @@ const CourseDetailPage: React.FC = () => {
               const locked = status === 'locked';
               const isActive = mod.id === activeModuleId;
 
-              const btnStyle: React.CSSProperties = {
-                display: 'grid',
-                gridTemplateColumns: '18px 1fr auto',
-                alignItems: 'center',
-                gap: 10,
-                width: '100%',
-                padding: '10px 10px',
-                background: isActive ? '#EAF2ED' : 'none',
-                border: 'none',
-                cursor: locked ? 'default' : 'pointer',
-                borderRadius: 8,
-                textAlign: 'left',
-                opacity: locked ? 0.45 : 1,
-                fontFamily: 'inherit',
-                transition: 'background 0.12s',
-              };
-
               return (
                 <li key={mod.id}>
                   <button
                     type="button"
                     disabled={locked}
                     onClick={() => !locked && setActiveModuleId(mod.id)}
-                    style={btnStyle}
+                    className={`cd-sidebar-module${isActive ? ' cd-sidebar-module--active' : ''}${locked ? ' cd-sidebar-module--locked' : ''}`}
                   >
-                    <span style={{ fontSize: 11, fontWeight: 600, color: isActive ? '#2D5F3F' : '#A8A5A0', textAlign: 'center' }}>
-                      {mod.position}
-                    </span>
-                    <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: isActive ? '#2D5F3F' : '#1A1814', lineHeight: 1.3 }}>
-                        {mod.title}
-                      </span>
-                      <span style={{ fontSize: 11, color: '#A8A5A0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="cd-sidebar-module-pos">{mod.position}</span>
+                    <span className="cd-sidebar-module-body">
+                      <span className="cd-sidebar-module-title">{mod.title}</span>
+                      <span className="cd-sidebar-module-type">
                         {mod.module_type === 'reading'
                           ? <><Book size={11} /> Reading</>
                           : <><Target size={11} /> Simulation</>
@@ -769,7 +729,7 @@ const CourseDetailPage: React.FC = () => {
                 <p style={S.moduleDesc}>{enrollment.course.description}</p>
               </div>
               <div style={S.cardBody}>
-                <p style={{ fontSize: 14, color: '#6B6760', marginBottom: 20 }}>
+                <p className="cd-welcome-hint">
                   Select a module from the list or start from the beginning.
                 </p>
                 <div style={S.actionsRow}>
@@ -856,9 +816,9 @@ const CourseDetailPage: React.FC = () => {
                 ) : (
                   <>
                     <div style={S.simDivider}>
-                      <span style={{ flex: 1, height: '0.5px', background: 'rgba(26,24,20,0.12)' }} />
+                      <span className="cd-divider-line" />
                       <span>Your performance</span>
-                      <span style={{ flex: 1, height: '0.5px', background: 'rgba(26,24,20,0.12)' }} />
+                      <span className="cd-divider-line" />
                     </div>
 
                     <div style={S.metaGrid}>
@@ -872,9 +832,9 @@ const CourseDetailPage: React.FC = () => {
                         value={activeProgress.best_score != null ? `${activeProgress.best_score}%` : '—'}
                         valueColor={
                           activeProgress.best_score != null && activeProgress.best_score >= activeModule.minimum_passing_score
-                            ? '#2D5F3F'
+                            ? 'var(--success)'
                             : activeProgress.best_score != null
-                            ? '#991B1B'
+                            ? 'var(--danger)'
                             : undefined
                         }
                       />
@@ -949,7 +909,7 @@ const CourseDetailPage: React.FC = () => {
           {certIssued && enrollment.certificate_number && (
             <div style={S.certBanner}>
               <div style={S.certLeft}>
-                <Trophy size={28} color="rgba(255,255,255,0.9)" />
+                <Trophy size={28} className="cd-cert-trophy" />
                 <div>
                   <p style={S.certHeading}>Certificate earned</p>
                   <p style={S.certNum}>{enrollment.certificate_number}</p>

@@ -9,17 +9,18 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiRespon
 import logging
 
 from .models import (
-    ContentCategory, LearningMaterial, LearningPath, 
+    ContentCategory, LearningMaterial, LearningPath,
     GlossaryTerm, FAQ, Announcement, MaterialBookmark,
     MaterialComment, MaterialRating, MaterialLike, MaterialView,
-    MaterialDownload, PathEnrollment, AnnouncementRead
+    MaterialDownload, MaterialProgress, PathEnrollment, AnnouncementRead,
 )
 from .serializers import (
     ContentCategorySerializer, LearningMaterialListSerializer,
     LearningMaterialDetailSerializer, LearningPathListSerializer,
     LearningPathDetailSerializer, GlossaryTermSerializer,
     FAQSerializer, AnnouncementSerializer, MaterialBookmarkSerializer,
-    MaterialCommentSerializer, MaterialRatingSerializer, SearchResultSerializer
+    MaterialCommentSerializer, MaterialRatingSerializer, MaterialProgressSerializer,
+    SearchResultSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -161,6 +162,14 @@ class LearningMaterialViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['user'] = self.request.user
+        if self.action == 'list':
+            queryset = self.filter_queryset(self.get_queryset())
+            material_ids = list(queryset.values_list('id', flat=True))
+            from apps.simulations.query_helpers import learning_material_user_context
+
+            context['material_user_flags'] = learning_material_user_context(
+                self.request.user, material_ids
+            )
         return context
     
     @extend_schema(
@@ -390,6 +399,66 @@ class LearningMaterialViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = MaterialCommentSerializer(comments, many=True, context=self.get_serializer_context())
         return Response(serializer.data)
 
+    @extend_schema(
+        description='Update viewing/reading progress for a material',
+        request=MaterialProgressSerializer,
+        responses={200: MaterialProgressSerializer},
+    )
+    @action(detail=True, methods=['post', 'patch'], permission_classes=[permissions.IsAuthenticated])
+    def progress(self, request, slug=None):
+        """Create or update per-user material progress."""
+        material = self.get_object()
+        progress_percentage = request.data.get('progress_percentage')
+        completed = request.data.get('completed')
+
+        if progress_percentage is not None:
+            try:
+                progress_percentage = float(progress_percentage)
+                progress_percentage = max(0.0, min(100.0, progress_percentage))
+            except (TypeError, ValueError):
+                return Response(
+                    {'error': 'progress_percentage must be a number between 0 and 100'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        defaults = {}
+        if progress_percentage is not None:
+            defaults['progress_percentage'] = progress_percentage
+        if completed is not None:
+            defaults['completed'] = bool(completed)
+            if defaults['completed']:
+                defaults['progress_percentage'] = 100.0
+                defaults['completed_at'] = timezone.now()
+
+        record, _ = MaterialProgress.objects.update_or_create(
+            user=request.user,
+            material=material,
+            defaults=defaults or {'progress_percentage': 0.0},
+        )
+
+        if record.completed:
+            for enrollment in PathEnrollment.objects.filter(
+                user=request.user,
+                path__in=material.learning_paths.all(),
+            ).distinct():
+                completed_ids = list(enrollment.completed_materials or [])
+                material_id = str(material.id)
+                if material_id not in completed_ids:
+                    completed_ids.append(material_id)
+                    enrollment.completed_materials = completed_ids
+                    if enrollment.status == 'enrolled':
+                        enrollment.status = 'in_progress'
+                    total = enrollment.path.materials.count()
+                    if total and len(completed_ids) >= total:
+                        enrollment.status = 'completed'
+                        enrollment.completed_at = timezone.now()
+                    enrollment.save(
+                        update_fields=['completed_materials', 'status', 'completed_at', 'last_accessed']
+                    )
+
+        serializer = MaterialProgressSerializer(record, context=self.get_serializer_context())
+        return Response(serializer.data)
+
 
 class LearningPathViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -412,6 +481,14 @@ class LearningPathViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['user'] = self.request.user
+        if self.action == 'list':
+            queryset = self.filter_queryset(self.get_queryset())
+            path_ids = list(queryset.values_list('id', flat=True))
+            from apps.simulations.query_helpers import learning_path_user_context
+
+            context['path_user_context'] = learning_path_user_context(
+                self.request.user, path_ids
+            )
         return context
     
     @extend_schema(
@@ -506,6 +583,64 @@ class LearningPathViewSet(viewsets.ReadOnlyModelViewSet):
         path.save(update_fields=['enrolled_count'])
         
         return Response({'enrolled': True})
+
+    @extend_schema(
+        description='Mark a material in this path as completed for the current user',
+        responses={200: OpenApiResponse(description='Updated enrollment progress')},
+    )
+    @action(detail=True, methods=['post'], url_path='complete-material', permission_classes=[permissions.IsAuthenticated])
+    def complete_material(self, request, slug=None):
+        """Record completion of one material on an enrolled path."""
+        path = self.get_object()
+        material_id = request.data.get('material_id')
+        if not material_id:
+            return Response({'error': 'material_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not path.materials.filter(id=material_id, is_published=True).exists():
+            return Response(
+                {'error': 'Material is not part of this path'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        enrollment, created = PathEnrollment.objects.get_or_create(
+            user=request.user,
+            path=path,
+            defaults={'status': 'in_progress'},
+        )
+        if created:
+            path.enrolled_count = path.enrollments.count()
+            path.save(update_fields=['enrolled_count'])
+
+        completed_ids = list(enrollment.completed_materials or [])
+        material_id_str = str(material_id)
+        if material_id_str not in completed_ids:
+            completed_ids.append(material_id_str)
+        enrollment.completed_materials = completed_ids
+        if enrollment.status == 'enrolled':
+            enrollment.status = 'in_progress'
+
+        total = path.materials.filter(is_published=True).count()
+        if total and len(completed_ids) >= total:
+            enrollment.status = 'completed'
+            enrollment.completed_at = timezone.now()
+
+        enrollment.save(update_fields=['completed_materials', 'status', 'completed_at', 'last_accessed'])
+
+        MaterialProgress.objects.update_or_create(
+            user=request.user,
+            material_id=material_id,
+            defaults={
+                'progress_percentage': 100.0,
+                'completed': True,
+                'completed_at': timezone.now(),
+            },
+        )
+
+        return Response({
+            'status': enrollment.status,
+            'progress': enrollment.calculate_progress(),
+            'completed_materials': enrollment.completed_materials,
+        })
 
 
 class GlossaryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -672,14 +807,14 @@ class MaterialCommentViewSet(viewsets.ModelViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return MaterialComment.objects.none()
 
-        material_pk = self.kwargs.get('material_pk')
+        material_slug = self.kwargs.get('material_slug')
         queryset = MaterialComment.objects.filter(
             is_deleted=False
         ).select_related('user', 'parent', 'material')
-        
-        if material_pk:
-            queryset = queryset.filter(material_id=material_pk)
-        
+
+        if material_slug:
+            queryset = queryset.filter(material__slug=material_slug, material__is_published=True)
+
         return queryset.order_by('-created_at')
     
     def get_serializer_context(self):
@@ -689,11 +824,9 @@ class MaterialCommentViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """Create a new comment for a material."""
-        material_pk = self.kwargs.get('material_pk')
-        serializer.save(
-            user=self.request.user,
-            material_id=material_pk
-        )
+        material_slug = self.kwargs.get('material_slug')
+        material = LearningMaterial.objects.get(slug=material_slug, is_published=True)
+        serializer.save(user=self.request.user, material=material)
     
     def perform_destroy(self, instance):
         """Soft delete a comment."""

@@ -45,7 +45,7 @@ const AdminDashboardPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="admin-dashboard loading">
+      <div className="role-dashboard loading">
         <PageLoader message="Loading admin statistics…" className="min-h-0 py-12" />
       </div>
     );
@@ -53,7 +53,7 @@ const AdminDashboardPage: React.FC = () => {
 
   if (!stats) {
     return (
-      <div className="admin-dashboard error-state">
+      <div className="role-dashboard error-state">
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         <AlertTriangle size={40} />
         <p>Could not load admin dashboard stats.</p>
@@ -62,81 +62,96 @@ const AdminDashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="admin-dashboard">
+    <div className="role-dashboard">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <div className="page-header">
         <div className="header-content">
-          <h1 className="page-title">Admin Dashboard</h1>
-          <p className="page-subtitle">Platform-wide statistics and health overview</p>
+          <div>
+            <h1 className="page-title">Admin Dashboard</h1>
+            <p className="page-subtitle">Platform-wide statistics and health overview</p>
+          </div>
         </div>
       </div>
 
-      {/* Users section */}
-      <section className="admin-section">
-        <h2 className="admin-section-title"><Users size={18} /> Users</h2>
-        <div className="admin-stats-grid">
-          <div className="admin-stat-card">
-            <div className="admin-stat-value">{stats.users.total.toLocaleString()}</div>
-            <div className="admin-stat-label">Total Users</div>
+      <section className="dashboard-section">
+        <h2 className="dashboard-section-title">
+          <Users size={18} /> Users
+        </h2>
+        <div className="dashboard-stats-grid">
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">{stats.users.total.toLocaleString()}</div>
+            <div className="dashboard-stat-label">Total Users</div>
           </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-value">{stats.users.active.toLocaleString()}</div>
-            <div className="admin-stat-label">Active Users</div>
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">{stats.users.active.toLocaleString()}</div>
+            <div className="dashboard-stat-label">Active Users</div>
           </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-value">{stats.users.completion_rate}%</div>
-            <div className="admin-stat-label">Active Rate</div>
-            <div className="admin-stat-bar-track">
-              <div className="admin-stat-bar-fill" style={{ width: `${stats.users.completion_rate}%`, background: '#10b981' }} />
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">{stats.users.completion_rate}%</div>
+            <div className="dashboard-stat-label">Active Rate</div>
+            <div className="dashboard-stat-bar-track">
+              <div
+                className="dashboard-stat-bar-fill"
+                style={{ width: `${stats.users.completion_rate}%`, background: '#10b981' }}
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Simulations section */}
-      <section className="admin-section">
-        <h2 className="admin-section-title"><Shield size={18} /> Simulations</h2>
-        <div className="admin-stats-grid">
-          <div className="admin-stat-card">
-            <div className="admin-stat-value">{stats.simulations.total.toLocaleString()}</div>
-            <div className="admin-stat-label">Total Sessions</div>
+      <section className="dashboard-section">
+        <h2 className="dashboard-section-title">
+          <Shield size={18} /> Simulations
+        </h2>
+        <div className="dashboard-stats-grid">
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">{stats.simulations.total.toLocaleString()}</div>
+            <div className="dashboard-stat-label">Total Sessions</div>
           </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-value">{stats.simulations.completed.toLocaleString()}</div>
-            <div className="admin-stat-label">Completed</div>
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">{stats.simulations.completed.toLocaleString()}</div>
+            <div className="dashboard-stat-label">Completed</div>
           </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-value">{stats.simulations.completion_rate}%</div>
-            <div className="admin-stat-label">Completion Rate</div>
-            <div className="admin-stat-bar-track">
-              <div className="admin-stat-bar-fill" style={{ width: `${stats.simulations.completion_rate}%`, background: '#8b5cf6' }} />
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">{stats.simulations.completion_rate}%</div>
+            <div className="dashboard-stat-label">Completion Rate</div>
+            <div className="dashboard-stat-bar-track">
+              <div
+                className="dashboard-stat-bar-fill"
+                style={{ width: `${stats.simulations.completion_rate}%`, background: '#8b5cf6' }}
+              />
             </div>
           </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-value">{stats.scenarios}</div>
-            <div className="admin-stat-label">Scenarios</div>
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">{stats.scenarios}</div>
+            <div className="dashboard-stat-label">Scenarios</div>
           </div>
         </div>
       </section>
 
-      {/* Activity section */}
-      <section className="admin-section">
-        <h2 className="admin-section-title"><BarChart2 size={18} /> Last 24 Hours</h2>
-        <div className="admin-stats-grid">
-          <div className={`admin-stat-card ${stats.activity.errors_24h > 0 ? 'alert' : ''}`}>
-            <div className="admin-stat-header">
-              {stats.activity.errors_24h > 0
-                ? <AlertTriangle size={18} color="#ef4444" />
-                : <CheckCircle size={18} color="#10b981" />}
+      <section className="dashboard-section">
+        <h2 className="dashboard-section-title">
+          <BarChart2 size={18} /> Last 24 Hours
+        </h2>
+        <div className="dashboard-stats-grid">
+          <div className={`dashboard-stat-card ${stats.activity.errors_24h > 0 ? 'alert' : ''}`}>
+            <div className="dashboard-stat-header">
+              {stats.activity.errors_24h > 0 ? (
+                <AlertTriangle size={18} color="#ef4444" />
+              ) : (
+                <CheckCircle size={18} color="#10b981" />
+              )}
             </div>
-            <div className="admin-stat-value">{stats.activity.errors_24h}</div>
-            <div className="admin-stat-label">Errors</div>
+            <div className="dashboard-stat-value">{stats.activity.errors_24h}</div>
+            <div className="dashboard-stat-label">Errors</div>
           </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-header"><Upload size={18} color="#3b82f6" /></div>
-            <div className="admin-stat-value">{stats.activity.uploads_24h}</div>
-            <div className="admin-stat-label">File Uploads</div>
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-header">
+              <Upload size={18} color="#3b82f6" />
+            </div>
+            <div className="dashboard-stat-value">{stats.activity.uploads_24h}</div>
+            <div className="dashboard-stat-label">File Uploads</div>
           </div>
         </div>
       </section>

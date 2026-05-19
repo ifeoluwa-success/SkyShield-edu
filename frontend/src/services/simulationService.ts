@@ -304,10 +304,14 @@ export interface LearningMaterial {
 }
 
 export const getMyLearningMaterials = async (): Promise<LearningMaterial[]> => {
-  const response = await api.get<{ results: LearningMaterial[] }>('/content/materials/', {
-    params: { is_published: true, limit: 50 },
-  });
-  return response.data.results;
+  const response = await api.get<LearningMaterial[] | { results: LearningMaterial[] }>(
+    '/content/materials/',
+    { params: { limit: 50 } },
+  );
+  const data = response.data;
+  if (Array.isArray(data)) return data;
+  if (data && 'results' in data) return data.results;
+  return [];
 };
 
 // ─── Upcoming Live Sessions ───────────────────────────────────────────────────

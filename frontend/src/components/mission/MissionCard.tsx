@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
+import React, { useState } from "react"
+import type { IncidentRun, SupervisorIntervention } from "../../types/incident"
 import { 
   Play, 
   Pause, 
@@ -19,12 +20,8 @@ import { cn } from "../../lib/utils"
 type Phase = "briefing" | "detection" | "investigation" | "containment" | "recovery" | "review"
 type Status = "in_progress" | "paused" | "completed" | "failed" | "abandoned"
 
-interface Intervention {
-  type: "PAUSE" | "RESUME" | "INJECT_THREAT" | "FORCE_PHASE"
-  data?: Record<string, unknown>
-}
-
 interface MissionCardProps {
+  run?: IncidentRun
   id?: string
   title?: string
   status?: Status
@@ -34,7 +31,7 @@ interface MissionCardProps {
   phaseStartedAt?: string | null
   threatLevel?: "nominal" | "elevated" | "critical"
   onSelect?: (runId: string) => void
-  onIntervene?: (runId: string, intervention: Intervention) => void
+  onIntervene?: (runId: string, intervention: SupervisorIntervention) => void
 }
 
 const phases: Phase[] = ["briefing", "detection", "investigation", "containment", "recovery", "review"]
@@ -62,17 +59,26 @@ const threatConfig = {
 }
 
 export function MissionCard({
-  id = "mission-1",
-  title = "Operation Watchdog",
-  status = "in_progress",
-  phase = "detection",
-  score = 0,
-  participantCount = 1,
-  phaseStartedAt = null,
-  threatLevel = "nominal",
+  run,
+  id: idProp,
+  title: titleProp,
+  status: statusProp,
+  phase: phaseProp,
+  score: scoreProp,
+  participantCount: participantCountProp,
+  phaseStartedAt: phaseStartedAtProp,
+  threatLevel: threatLevelProp,
   onSelect,
   onIntervene,
 }: MissionCardProps) {
+  const id = idProp ?? run?.id ?? "mission-1"
+  const title = titleProp ?? run?.scenario.title ?? "Operation Watchdog"
+  const status = (statusProp ?? run?.status ?? "in_progress") as Status
+  const phase = (phaseProp ?? run?.phase ?? "detection") as Phase
+  const score = scoreProp ?? run?.score ?? 0
+  const participantCount = participantCountProp ?? run?.participant_count ?? 1
+  const phaseStartedAt = phaseStartedAtProp ?? run?.phase_started_at ?? null
+  const threatLevel = threatLevelProp ?? "nominal"
   const [showInject, setShowInject] = useState(false)
   const [injectLabel, setInjectLabel] = useState("Threat Inject")
   const [injectSeverity, setInjectSeverity] = useState(3)

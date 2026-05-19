@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation, useSearchParams } from 'react-rout
 import { AxiosError } from 'axios';
 import { Copy, Link2, LogOut, Radio, ShieldAlert, Users } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { useMissionSocket } from '../../hooks/useMissionSocket';
+import { useMissionSocket, type MissionConnectionStatus } from '../../hooks/useMissionSocket';
 import type { FinalScore, IncidentEvent, MissionPhase, MissionParticipant, MissionState, ScenarioStep } from '../../types/incident';
 import type { User } from '../../types/auth';
 import {
@@ -16,6 +16,7 @@ import {
   requestHint,
   submitAction,
 } from '../../services/incidentService';
+import { refreshToken } from '../../services/authService';
 import { BriefingScreen } from '../../components/mission/BriefingScreen';
 import { PhaseBar } from '../../components/mission/PhaseBar';
 import { RadarScope } from '../../components/mission/RadarScope';
@@ -27,6 +28,7 @@ import { ParticipantBadges } from '../../components/mission/ParticipantBadges';
 import { ReviewScreen } from '../../components/mission/ReviewScreen';
 import Toast from '../../components/Toast';
 import { Spinner } from '../../components/ui/Loading';
+import '../../assets/css/MissionPlayerPage.css';
 
 const phaseOrder: MissionPhase[] = [
   'briefing',
@@ -57,56 +59,162 @@ const getOperatorMode = (role: string | undefined, jobTitle: string | undefined)
   return 'atc';
 };
 
+function phaseRank(p: MissionPhase | undefined): number {
+  if (!p) return -1;
+  const i = phaseOrder.indexOf(p);
+  return i >= 0 ? i : -1;
+}
+
+/** When REST and WS disagree, trust the more advanced phase so late-game / review is not stuck on an old phase. */
+function pickMoreAdvancedPhase(a: MissionPhase | undefined, b: MissionPhase | undefined): MissionPhase {
+  const ra = phaseRank(a);
+  const rb = phaseRank(b);
+  if (rb > ra) return b ?? a ?? 'briefing';
+  if (ra > rb) return a ?? b ?? 'briefing';
+  return (a ?? b ?? 'briefing') as MissionPhase;
+}
+
+const OPERATIONAL_PHASES: MissionPhase[] = ['detection', 'investigation', 'containment', 'recovery'];
+
+function parseStepIndex(v: unknown): number | undefined {
+  if (typeof v === 'number' && Number.isFinite(v) && v >= 0) return Math.floor(v);
+  if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) {
+    const n = Number(v);
+    if (Number.isFinite(n) && n >= 0) return Math.floor(n);
+  }
+  return undefined;
+}
+
+/** Backend step rows use `id` + `description`; normalize to `ScenarioStep` shape for the panel. */
+function materializeScenarioStep(raw: unknown, fallbackPhase: MissionPhase): ScenarioStep | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  const step_id = String(r.step_id ?? r.id ?? '').trim();
+  if (!step_id) return null;
+  const options = Array.isArray(r.options) ? (r.options as ScenarioStep['options']) : [];
+  return {
+    step_id,
+    phase: (r.phase ?? r.mission_phase ?? fallbackPhase) as MissionPhase,
+    description: String(r.description ?? r.narrative ?? r.question ?? ''),
+    points_value: Number(r.points_value ?? r.points ?? 10),
+    time_limit_seconds: Number(r.time_limit_seconds ?? 60),
+    options,
+    correct_action: String(r.correct_action ?? ''),
+    hint: String(r.hint ?? ''),
+  };
+}
+
+/** Step index for mission cursor — matches orchestrator `current_step` (0-based). */
+function readActiveStepIndex(state: MissionState | null): number | undefined {
+  if (!state) return undefined;
+  const root = state as unknown as Record<string, unknown>;
+  const session = (state.run.session_state ?? {}) as Record<string, unknown>;
+  const runRoot = state.run as unknown as Record<string, unknown>;
+  return (
+    parseStepIndex(root.current_step) ??
+    parseStepIndex(session.current_step) ??
+    parseStepIndex(runRoot.current_step)
+  );
+}
+
+/**
+ * Resolve the active scenario step from merged `missionState`.
+ * The mission engine advances `session_state.current_step` (0-based index); step id strings
+ * are stable labels (e.g. adsb-01) and must not be used alone to pick the active row.
+ */
 const extractCurrentStep = (state: MissionState | null): ScenarioStep | null => {
   if (!state?.run?.scenario?.steps?.length) return null;
+
   const steps = state.run.scenario.steps;
-  const ss = state.run.session_state ?? {};
+  const session = (state.run.session_state ?? {}) as Record<string, unknown>;
+  const root = state as unknown as Record<string, unknown>;
+  const runRoot = state.run as unknown as Record<string, unknown>;
 
-  const curObj =
-    ss.current_step && typeof ss.current_step === 'object' && !Array.isArray(ss.current_step)
-      ? (ss.current_step as Record<string, unknown>)
-      : null;
+  const rawPhase = (state.phase ?? state.run?.phase ?? 'briefing') as string;
+  const canonicalPhase = (phaseOrder.includes(rawPhase as MissionPhase) ? rawPhase : 'briefing') as MissionPhase;
+  if (canonicalPhase === 'briefing' || canonicalPhase === 'review') return null;
 
-  const pickId = (v: unknown): string | null => {
+  const stepIndex = readActiveStepIndex(state);
+  if (stepIndex !== undefined && stepIndex < steps.length) {
+    const byIndex = materializeScenarioStep(steps[stepIndex], canonicalPhase);
+    if (byIndex) return byIndex;
+  }
+
+  const toStepId = (v: unknown): string | undefined => {
+    if (v === null || v === undefined) return undefined;
     if (typeof v === 'string' && v.trim()) return v.trim();
     if (typeof v === 'number' && Number.isFinite(v)) return String(v);
-    return null;
+    return undefined;
   };
 
-  const stepId =
-    pickId(ss.current_step_id) ??
-    pickId(ss.step_id) ??
-    pickId(ss.active_step_id) ??
-    (curObj ? pickId(curObj.step_id) ?? pickId(curObj.id) : null);
+  const currentStepObj =
+    session.current_step && typeof session.current_step === 'object' && !Array.isArray(session.current_step)
+      ? (session.current_step as Record<string, unknown>)
+      : null;
 
-  if (stepId) {
-    const found = steps.find(s => s.step_id === stepId);
-    if (found) return found;
+  const possibleRaw: unknown[] = [
+    session.current_step_id,
+    session.step_id,
+    session.active_step_id,
+    currentStepObj?.step_id,
+    currentStepObj?.id,
+    root.current_step_id,
+    runRoot.current_step_id,
+  ];
+
+  const possibleIds = [...new Set(possibleRaw.map(toStepId).filter((x): x is string => Boolean(x)))];
+
+  for (const id of possibleIds) {
+    const byIdAndPhase = steps.find(s => {
+      const r = s as unknown as Record<string, unknown>;
+      return (r.step_id === id || r.id === id) && (r.phase === canonicalPhase || r.mission_phase === canonicalPhase);
+    });
+    const found =
+      byIdAndPhase ??
+      steps.find(s => {
+        const r = s as unknown as Record<string, unknown>;
+        return r.step_id === id || r.id === id;
+      });
+    const materialized = materializeScenarioStep(found, canonicalPhase);
+    if (materialized) return materialized;
   }
 
-  const num = (v: unknown): number | null => {
-    if (typeof v === 'number' && Number.isFinite(v)) return v;
-    if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) return Number(v);
-    return null;
-  };
-
-  const idxRaw =
-    num(ss.current_step_number) ??
-    num(ss.step_number) ??
-    num(ss.current_step_index) ??
-    (curObj ? num(curObj.index) ?? num(curObj.number) : null);
-
-  if (idxRaw !== null) {
-    const asOneBased = idxRaw >= 1 && idxRaw <= steps.length;
-    const idx = asOneBased ? idxRaw - 1 : Math.min(Math.max(0, Math.floor(idxRaw)), steps.length - 1);
-    const byIdx = steps[idx];
-    if (byIdx) return byIdx;
+  const n = steps.length;
+  const phaseIdx = OPERATIONAL_PHASES.indexOf(canonicalPhase);
+  if (phaseIdx >= 0) {
+    const derivedIndex =
+      n >= OPERATIONAL_PHASES.length
+        ? Math.min(phaseIdx, n - 1)
+        : Math.min(Math.floor((phaseIdx * n) / OPERATIONAL_PHASES.length), n - 1);
+    const byDerivedPhase = materializeScenarioStep(steps[derivedIndex], canonicalPhase);
+    if (byDerivedPhase) return byDerivedPhase;
   }
 
-  const runPhase = state.run?.phase;
-  const statePhase = state.phase;
-  return steps.find(s => s.phase === statePhase) ?? steps.find(s => s.phase === runPhase) ?? steps[0] ?? null;
+  const byExplicitPhase = steps.find(s => {
+    const r = s as unknown as Record<string, unknown>;
+    return r.phase === canonicalPhase || r.mission_phase === canonicalPhase;
+  });
+  return materializeScenarioStep(byExplicitPhase ?? steps[0], canonicalPhase);
 };
+
+/** POST /actions/ sometimes returns timers/score only on the envelope — fold into merged state. */
+function overlayActionEnvelope(
+  merged: MissionState,
+  envelope: { time_remaining?: number; score_so_far?: number },
+): MissionState {
+  const tr = envelope.time_remaining;
+  const score = envelope.score_so_far;
+  return {
+    ...merged,
+    ...(typeof tr === 'number' ? { time_remaining: tr } : {}),
+    ...(typeof score === 'number' ? { score_so_far: score } : {}),
+    run: {
+      ...merged.run,
+      ...(typeof tr === 'number' ? { time_remaining: tr } : {}),
+      ...(typeof score === 'number' ? { score } : {}),
+    },
+  };
+}
 
 function pickLongerString(a: string | undefined, b: string | undefined): string {
   const sa = (a ?? '').trim();
@@ -114,62 +222,80 @@ function pickLongerString(a: string | undefined, b: string | undefined): string 
   return sa.length >= sb.length ? sa : sb;
 }
 
-function mergeSessionState(
-  boot: Record<string, unknown>,
-  ws: Record<string, unknown>,
+/** Merge session payloads: `server` wins on conflicts (REST / submit body), except briefing text prefers longer copy. */
+function mergeSessionStateServerWins(
+  socketSession: Record<string, unknown>,
+  serverSession: Record<string, unknown>,
 ): Record<string, unknown> {
-  const out: Record<string, unknown> = { ...boot, ...ws };
+  const out: Record<string, unknown> = { ...socketSession, ...serverSession };
   for (const k of ['briefing_narrative', 'briefing', 'briefing_text'] as const) {
-    const b = boot[k];
-    const w = ws[k];
-    if (typeof b !== 'string' && typeof w !== 'string') continue;
-    const sb = typeof b === 'string' ? b : '';
-    const sw = typeof w === 'string' ? w : '';
-    if (sb.length === 0 && sw.length === 0) continue;
-    out[k] = sb.length >= sw.length ? sb : sw;
+    const s = socketSession[k];
+    const r = serverSession[k];
+    if (typeof s !== 'string' && typeof r !== 'string') continue;
+    const ss = typeof s === 'string' ? s : '';
+    const sr = typeof r === 'string' ? r : '';
+    if (ss.length === 0 && sr.length === 0) continue;
+    out[k] = sr.length >= ss.length ? sr : ss;
   }
   return out;
 }
 
-function mergeMissionState(ws: MissionState | null, boot: MissionState | null): MissionState | null {
-  if (!ws && !boot) return null;
-  if (!ws) return boot;
-  if (!boot) return ws;
+/**
+ * Merge WebSocket snapshot with server-fetched state (`bootstrappedState`).
+ * Second argument (`server`) is authoritative for session fields and most scalars so stale WS
+ * cannot pin `current_step_id` after `getMissionState` / `submitAction` responses.
+ */
+function mergeMissionState(socket: MissionState | null, server: MissionState | null): MissionState | null {
+  if (!socket && !server) return null;
+  if (!socket) return server;
+  if (!server) return socket;
 
-  const wsSteps = ws.run?.scenario?.steps ?? [];
-  const bootSteps = boot.run?.scenario?.steps ?? [];
-  const steps = wsSteps.length > 0 ? wsSteps : bootSteps;
+  const socketSteps = socket.run?.scenario?.steps ?? [];
+  const serverSteps = server.run?.scenario?.steps ?? [];
+  const steps = serverSteps.length > 0 ? serverSteps : socketSteps;
 
-  const bss = boot.run.session_state ?? {};
-  const wss = ws.run.session_state ?? {};
+  const socketS = socket.run.session_state ?? {};
+  const serverS = server.run.session_state ?? {};
 
   return {
-    ...boot,
-    ...ws,
+    ...socket,
+    ...server,
+    phase: pickMoreAdvancedPhase(socket.phase, server.phase),
+    status: server.status ?? socket.status,
+    time_remaining:
+      server.time_remaining ??
+      socket.time_remaining ??
+      server.run?.time_remaining ??
+      socket.run?.time_remaining ??
+      null,
+    score_so_far: server.score_so_far ?? socket.score_so_far,
+    participants:
+      (server.participants?.length ?? 0) >= (socket.participants?.length ?? 0)
+        ? server.participants
+        : socket.participants,
+    last_5_events:
+      (server.last_5_events?.length ?? 0) >= (socket.last_5_events?.length ?? 0)
+        ? server.last_5_events
+        : socket.last_5_events,
+    active_threats:
+      (server.active_threats?.length ?? 0) >= (socket.active_threats?.length ?? 0)
+        ? server.active_threats
+        : socket.active_threats,
     run: {
-      ...boot.run,
-      ...ws.run,
+      ...socket.run,
+      ...server.run,
+      phase: pickMoreAdvancedPhase(socket.run?.phase, server.run?.phase),
       scenario: {
-        ...boot.run.scenario,
-        ...ws.run.scenario,
+        ...socket.run.scenario,
+        ...server.run.scenario,
         steps,
-        description: pickLongerString(boot.run.scenario?.description, ws.run.scenario?.description),
+        description: pickLongerString(socket.run.scenario?.description, server.run.scenario?.description),
       },
-      session_state: mergeSessionState(
-        bss as Record<string, unknown>,
-        wss as Record<string, unknown>,
+      session_state: mergeSessionStateServerWins(
+        socketS as Record<string, unknown>,
+        serverS as Record<string, unknown>,
       ),
     },
-    participants:
-      (ws.participants?.length ?? 0) >= (boot.participants?.length ?? 0) ? ws.participants : boot.participants,
-    last_5_events:
-      (ws.last_5_events?.length ?? 0) >= (boot.last_5_events?.length ?? 0) ? ws.last_5_events : boot.last_5_events,
-    active_threats:
-      (ws.active_threats?.length ?? 0) >= (boot.active_threats?.length ?? 0) ? ws.active_threats : boot.active_threats,
-    phase: ws.phase ?? boot.phase,
-    status: ws.status ?? boot.status,
-    time_remaining: ws.time_remaining ?? boot.time_remaining,
-    score_so_far: ws.score_so_far ?? boot.score_so_far,
   };
 }
 
@@ -181,6 +307,29 @@ function normalizePanelOptions(step: ScenarioStep | null): { id: string; text: s
     const text = String(r.text ?? r.label ?? r.title ?? r.name ?? `Option ${i + 1}`);
     return { id, text };
   });
+}
+
+function channelStatusLabel(status: MissionConnectionStatus): string {
+  switch (status) {
+    case 'connected':
+      return 'Channel live';
+    case 'syncing':
+      return 'Syncing state…';
+    case 'reconnecting':
+      return 'Reconnecting…';
+    case 'connecting':
+      return 'Connecting…';
+    case 'failed':
+      return 'Connection lost';
+    default:
+      return 'Offline';
+  }
+}
+
+function channelStatusTone(status: MissionConnectionStatus): 'live' | 'warn' | 'off' {
+  if (status === 'connected') return 'live';
+  if (status === 'disconnected' || status === 'failed') return 'off';
+  return 'warn';
 }
 
 function formatApiError(err: unknown, fallback: string): string {
@@ -235,6 +384,8 @@ const MissionPlayerPage: React.FC = () => {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [finalScore, setFinalScore] = useState<FinalScore | null>(null);
   const [allReady, setAllReady] = useState(false);
+  const [isAcknowledgingBriefing, setIsAcknowledgingBriefing] = useState(false);
+  const [briefingDismissed, setBriefingDismissed] = useState(false);
   const [isEscalated, setIsEscalated] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -242,6 +393,7 @@ const MissionPlayerPage: React.FC = () => {
   const [bootstrappedState, setBootstrappedState] = useState<MissionState | null>(null);
 
   const eventListRef = useRef<IncidentEvent[]>([]);
+  const completionScoreFetchedRef = useRef(false);
   const [events, setEvents] = useState<IncidentEvent[]>([]);
 
   const safeRunId = runId ?? '';
@@ -285,15 +437,76 @@ const MissionPlayerPage: React.FC = () => {
 
   const socketEnabled = preflightStatus === 'ready' && Boolean(safeRunId && safeToken);
 
-  const { missionState: wsMissionState, isConnected, lastEvent, timerWarning } = useMissionSocket({
+  const resyncMissionState = useCallback(async () => {
+    if (!safeRunId) return null;
+    const fresh = await getMissionState(safeRunId);
+    setBootstrappedState(fresh);
+    return fresh;
+  }, [safeRunId]);
+
+  const resolveSocketToken = useCallback(async () => {
+    try {
+      const { access } = await refreshToken();
+      return access;
+    } catch {
+      return localStorage.getItem('access_token');
+    }
+  }, []);
+
+  const handleSocketDisconnect = useCallback(() => {
+    setIsSubmitting(false);
+  }, []);
+
+  const applyHintResult = useCallback(
+    (data: { hint: string; hints_used: number }) => {
+      setHintText(data.hint);
+      setHintsUsed(data.hints_used);
+      void getMissionState(safeRunId)
+        .then(fresh => {
+          setBootstrappedState(prev => (prev ? mergeMissionState(prev, fresh) ?? fresh : fresh));
+        })
+        .catch(() => {
+          /* WebSocket may still push state */
+        });
+    },
+    [safeRunId],
+  );
+
+  const {
+    missionState: wsMissionState,
+    isConnected: channelLive,
+    connectionStatus,
+    reconnectAttempt,
+    lastEvent,
+    timerWarning,
+    retryConnection,
+    sendMessage,
+  } = useMissionSocket({
     runId: socketEnabled ? safeRunId : '',
     token: socketEnabled ? safeToken : '',
+    enabled: socketEnabled,
     onPhaseChange,
     onEscalation,
     onTimeout,
     onMissionComplete: onMissionCompleteWs,
+    onResync: resyncMissionState,
+    resolveToken: resolveSocketToken,
+    onDisconnect: handleSocketDisconnect,
+    onHint: applyHintResult,
   });
 
+  const channelTone = channelStatusTone(connectionStatus);
+  const showReconnectBanner =
+    !showBriefing &&
+    !showReview &&
+    connectionStatus !== 'connected' &&
+    connectionStatus !== 'disconnected' &&
+    connectionStatus !== 'failed';
+  const showConnectionFailed =
+    !showBriefing && !showReview && connectionStatus === 'failed';
+  const actionsFrozen = !channelLive;
+
+  /** Merged view: WebSocket + REST (`bootstrappedState`). REST wins on `session_state` so step/phase stay in sync after actions. */
   const missionState = useMemo(
     () => mergeMissionState(wsMissionState, bootstrappedState),
     [wsMissionState, bootstrappedState],
@@ -315,6 +528,7 @@ const MissionPlayerPage: React.FC = () => {
   }, [missionState]);
 
   const resolvedStep = useMemo(() => extractCurrentStep(missionState), [missionState]);
+  const activeStepIndex = useMemo(() => readActiveStepIndex(missionState), [missionState]);
   const panelOptions = useMemo(() => normalizePanelOptions(resolvedStep), [resolvedStep]);
 
   useEffect(() => {
@@ -387,21 +601,66 @@ const MissionPlayerPage: React.FC = () => {
   }, [showReview, safeRunId, finalScore]);
 
   useEffect(() => {
+    completionScoreFetchedRef.current = false;
+    setBriefingDismissed(false);
+    setIsAcknowledgingBriefing(false);
+  }, [safeRunId]);
+
+  useEffect(() => {
     const phase = missionState?.phase;
     if (phase) {
-      setShowBriefing(phase === 'briefing');
+      if (!briefingDismissed) {
+        setShowBriefing(phase === 'briefing');
+      }
       setShowReview(phase === 'review');
-      if (phase !== 'briefing') setAllReady(true);
+      if (phase !== 'briefing') {
+        setAllReady(true);
+        setBriefingDismissed(true);
+        setShowBriefing(false);
+      }
     }
-  }, [missionState]);
+  }, [missionState, briefingDismissed]);
+
+  /** Backend sometimes sets `status: completed` before or without `phase: review` — sync UI and score. */
+  useEffect(() => {
+    const phase = missionState?.phase;
+    const status = missionState?.status;
+    if (status !== 'completed' && phase !== 'review') {
+      if (phase === 'briefing' || !phase) completionScoreFetchedRef.current = false;
+      return;
+    }
+    if (!safeRunId || completionScoreFetchedRef.current) return;
+    completionScoreFetchedRef.current = true;
+    setShowBriefing(false);
+    setShowReview(true);
+    void getFinalScore(safeRunId)
+      .then(s => setFinalScore(s))
+      .catch(() => {
+        completionScoreFetchedRef.current = false;
+      });
+  }, [missionState?.phase, missionState?.status, safeRunId]);
 
   useEffect(() => {
     if (!lastEvent) return;
+    if (lastEvent.event_type === 'hint_requested') {
+      const text = lastEvent.payload?.hint_text;
+      if (typeof text === 'string' && text.trim()) {
+        setHintText(text);
+      }
+    }
     const existing = eventListRef.current;
     const next = [lastEvent, ...existing].slice(0, 50);
     eventListRef.current = next;
     setEvents(next);
   }, [lastEvent]);
+
+  useEffect(() => {
+    const session = missionState?.run?.session_state as Record<string, unknown> | undefined;
+    const used = session?.hints_used;
+    if (typeof used === 'number' && Number.isFinite(used)) {
+      setHintsUsed(Math.max(0, Math.floor(used)));
+    }
+  }, [missionState?.run?.session_state]);
 
   useEffect(() => {
     const base = missionState?.last_5_events ?? [];
@@ -419,6 +678,10 @@ const MissionPlayerPage: React.FC = () => {
   const timeRemaining = missionState?.time_remaining ?? missionState?.run?.time_remaining ?? null;
   const score = missionState?.score_so_far ?? missionState?.run?.score ?? 0;
 
+  useEffect(() => {
+    setHintText(null);
+  }, [currentPhase, resolvedStep?.step_id]);
+
   const phaseTimeLimit = useMemo(() => {
     const fromStep = resolvedStep?.time_limit_seconds;
     if (typeof fromStep === 'number' && fromStep > 0) return fromStep;
@@ -435,8 +698,13 @@ const MissionPlayerPage: React.FC = () => {
   const participants = missionState?.participants ?? [];
   const participantCount = Math.max(participants.length, missionState?.run?.participant_count ?? 0);
   const teamActive = participantCount >= 2;
-  const soloWaiting = !showBriefing && !showReview && participantCount <= 1;
+  const showSoloModeBanner = !showBriefing && !showReview && participantCount <= 1;
   const standbyMode = !showBriefing && !showReview && events.length === 0;
+  const isLaunchingMission =
+    briefingDismissed &&
+    !showBriefing &&
+    !showReview &&
+    (isAcknowledgingBriefing || currentPhase === 'briefing');
 
   const handleCopyMissionLink = useCallback(async () => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -448,6 +716,7 @@ const MissionPlayerPage: React.FC = () => {
     }
   }, []);
 
+
   const inviteButton = (
     <button type="button" className={shareInviteButtonClass} onClick={() => void handleCopyMissionLink()}>
       <Link2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -456,21 +725,51 @@ const MissionPlayerPage: React.FC = () => {
   );
 
   const handleAcknowledge = useCallback(async () => {
-    if (!safeRunId) return;
+    if (!safeRunId || isAcknowledgingBriefing) return;
+    setIsAcknowledgingBriefing(true);
     try {
       const r = await acknowledgeBriefing(safeRunId);
       setAllReady(Boolean(r.all_ready));
-      if (r.all_ready) {
+
+      let fresh: MissionState | null = r.current_state ?? null;
+      if (!fresh) {
+        try {
+          fresh = await getMissionState(safeRunId);
+        } catch {
+          /* keep merged WS state */
+        }
+      }
+      if (fresh) {
+        setBootstrappedState(prev =>
+          prev ? mergeMissionState(prev, fresh) ?? fresh : fresh,
+        );
+      }
+
+      const pc = Math.max(
+        fresh?.participants?.length ?? 0,
+        fresh?.run?.participant_count ?? 0,
+      );
+      const soloish = pc <= 1;
+      if (r.all_ready || soloish) {
+        setBriefingDismissed(true);
         setShowBriefing(false);
+      }
+      if (soloish && !r.all_ready) {
+        setToast({
+          type: 'info',
+          message: 'Solo mode: briefing cleared for you. Other operators can still join via the mission link.',
+        });
       }
     } catch (err) {
       setToast({ type: 'error', message: formatApiError(err, 'Could not acknowledge briefing.') });
+    } finally {
+      setIsAcknowledgingBriefing(false);
     }
-  }, [safeRunId]);
+  }, [safeRunId, isAcknowledgingBriefing]);
 
   const handleSubmitOption = useCallback(
     async (optionId: string) => {
-      if (!safeRunId || !resolvedStep) return;
+      if (!safeRunId || !resolvedStep || actionsFrozen) return;
       try {
         setIsSubmitting(true);
         setHintText(null);
@@ -481,17 +780,19 @@ const MissionPlayerPage: React.FC = () => {
           timestamp_client: Date.now(),
         });
         if (res?.current_state) {
-          setBootstrappedState(prev =>
-            prev ? mergeMissionState(res.current_state, prev) ?? res.current_state : res.current_state,
+          setBootstrappedState(
+            overlayActionEnvelope(res.current_state, {
+              time_remaining: res.time_remaining,
+              score_so_far: res.score_so_far,
+            }),
           );
-        } else {
-          try {
-            const fresh = await getMissionState(safeRunId);
-            setBootstrappedState(prev =>
-              prev ? mergeMissionState(fresh, prev) ?? fresh : fresh,
-            );
-          } catch {
-            /* rely on WebSocket */
+        }
+        try {
+          const fresh = await getMissionState(safeRunId);
+          setBootstrappedState(mergeMissionState(wsMissionState, fresh) ?? fresh);
+        } catch {
+          if (!res?.current_state) {
+            /* no REST refresh available */
           }
         }
         if (res?.event) {
@@ -504,27 +805,22 @@ const MissionPlayerPage: React.FC = () => {
         setIsSubmitting(false);
       }
     },
-    [resolvedStep, safeRunId],
+    [resolvedStep, safeRunId, wsMissionState, actionsFrozen],
   );
 
   const handleRequestHint = useCallback(async () => {
-    if (!safeRunId) return;
+    if (!safeRunId || actionsFrozen) return;
     try {
-      const r = await requestHint(safeRunId);
-      setHintText(r.hint);
-      setHintsUsed(r.hints_used);
-      try {
-        const fresh = await getMissionState(safeRunId);
-        setBootstrappedState(prev =>
-          prev ? mergeMissionState(fresh, prev) ?? fresh : fresh,
-        );
-      } catch {
-        /* WebSocket may still push */
+      if (channelLive) {
+        sendMessage('request_hint', {});
+        return;
       }
+      const r = await requestHint(safeRunId);
+      applyHintResult(r);
     } catch (err) {
       setToast({ type: 'error', message: formatApiError(err, 'Hint not available.') });
     }
-  }, [safeRunId]);
+  }, [safeRunId, actionsFrozen, channelLive, sendMessage, applyHintResult]);
 
   const handleAbandon = useCallback(async () => {
     if (!safeRunId) return;
@@ -624,12 +920,14 @@ const MissionPlayerPage: React.FC = () => {
     );
   }
 
+  const phaseIndex = Math.max(0, phaseOrder.indexOf(currentPhase)) + 1;
+
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-zinc-100 text-zinc-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="mission-player fixed inset-0 z-40">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       {escalBanner}
 
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-white/95 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95 sm:px-4 sm:py-3">
+      <header className="mission-player__header">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
             <Radio size={18} aria-hidden />
@@ -657,7 +955,7 @@ const MissionPlayerPage: React.FC = () => {
               teamActive
                 ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'
                 : 'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300',
-              isConnected ? '' : 'opacity-80',
+              channelLive ? '' : 'opacity-80',
             ].join(' ')}
           >
             <Users className="h-3 w-3 shrink-0" aria-hidden />
@@ -666,12 +964,14 @@ const MissionPlayerPage: React.FC = () => {
           <span
             className={[
               'hidden rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide sm:inline',
-              isConnected
+              channelTone === 'live'
                 ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'
-                : 'border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200',
+                : channelTone === 'warn'
+                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200'
+                  : 'border-slate-400/40 bg-slate-100 text-slate-600 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300',
             ].join(' ')}
           >
-            {isConnected ? 'Channel live' : 'Reconnecting…'}
+            {channelStatusLabel(connectionStatus)}
           </span>
           <button
             type="button"
@@ -699,8 +999,27 @@ const MissionPlayerPage: React.FC = () => {
           operatorRole={operatorRoleLabel}
           onAcknowledge={handleAcknowledge}
           isReady={allReady}
+          soloMode={participantCount <= 1}
+          isAcknowledging={isAcknowledgingBriefing}
           inviteSlot={inviteButton}
         />
+      ) : null}
+
+      {isLaunchingMission ? (
+        <div
+          className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-slate-950/90 px-6 text-center backdrop-blur-md"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <Spinner size="xl" />
+          <div>
+            <p className="text-base font-semibold text-white">Entering simulation</p>
+            <p className="mt-2 max-w-sm text-sm text-slate-300">
+              Syncing mission state and loading the operations console…
+            </p>
+          </div>
+        </div>
       ) : null}
 
       {showReview ? (
@@ -715,56 +1034,64 @@ const MissionPlayerPage: React.FC = () => {
       ) : null}
 
       {!showBriefing && !showReview && (
-        <div className="relative flex min-h-0 flex-1 flex-col">
-          <PhaseBar variant="studio" currentPhase={currentPhase} timeRemaining={timeRemaining} score={score} />
-
-          {soloWaiting && (
-            <div className="shrink-0 border-b border-amber-500/25 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent px-3 py-2.5 dark:from-amber-500/15 dark:via-amber-500/5 sm:px-4">
-              <div className="mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-2">
-                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden />
-                  <div>
-                    <p className="text-sm font-semibold text-amber-950 dark:text-amber-100">Waiting for other operators</p>
-                    <p className="text-xs text-amber-900/80 dark:text-amber-200/80">
-                      You are the first on this channel. Share the link so teammates appear in the roster and the mission can
-                      coordinate in real time.
-                    </p>
-                  </div>
-                </div>
+        <div className="mission-player__body">
+          <div className="mission-player__alerts">
+          {showConnectionFailed ? (
+            <div className="shrink-0 border-b border-red-500/35 bg-red-500/10 px-3 py-3 dark:bg-red-500/15 sm:px-4">
+              <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-2 text-center sm:flex-row sm:gap-4">
+                <p className="text-xs font-medium text-red-950 dark:text-red-100 sm:text-sm">
+                  Mission connection lost after {reconnectAttempt} attempts. Decisions are paused until you reconnect.
+                </p>
                 <button
                   type="button"
-                  onClick={() => void handleCopyMissionLink()}
-                  className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-500 sm:self-center"
+                  onClick={() => retryConnection()}
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-red-600/40 bg-white px-4 py-2 text-xs font-semibold text-red-900 shadow-sm hover:bg-red-50 dark:bg-red-950/40 dark:text-red-100 dark:hover:bg-red-950/60"
                 >
-                  <Copy className="h-3.5 w-3.5" aria-hidden />
-                  Share mission URL
+                  Retry connection
                 </button>
               </div>
             </div>
-          )}
+          ) : null}
 
-          {teamActive && (
-            <div className="pointer-events-none absolute left-1/2 top-14 z-[5] -translate-x-1/2 sm:top-16">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/35 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-800 shadow-sm animate-pulse dark:text-emerald-300">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+          {showReconnectBanner ? (
+            <div
+              className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-3 py-2 dark:bg-amber-500/15 sm:px-4"
+              role="status"
+              aria-live="polite"
+            >
+              <div className="mx-auto flex max-w-4xl items-center justify-center gap-2 text-center text-xs text-amber-950 dark:text-amber-100 sm:text-sm">
+                <Spinner size="sm" />
+                <span>
+                  {connectionStatus === 'syncing'
+                    ? 'Connection restored — reloading mission state…'
+                    : `Live channel interrupted — reconnecting${reconnectAttempt > 0 ? ` (attempt ${reconnectAttempt})` : ''}…`}
                 </span>
-                Mission active — multi-operator
-              </span>
+              </div>
             </div>
-          )}
+          ) : null}
 
-          <div className="flex min-h-0 flex-1 flex-col gap-3 p-2 sm:p-3 lg:flex-row lg:gap-4 lg:p-4">
-            <div className="relative flex min-h-[280px] flex-1 flex-col sm:min-h-[320px] lg:min-h-0">
+          </div>
+
+          <PhaseBar variant="cockpit" currentPhase={currentPhase} timeRemaining={timeRemaining} score={score} />
+
+          <p className="shrink-0 border-b border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-1.5 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--text-muted)] sm:px-4">
+            Phase {phaseIndex} of {phaseOrder.length}
+            <span className="mx-2 text-[var(--border-color)]">·</span>
+            <span className="text-[var(--text-secondary)]">{currentPhase.replace(/_/g, ' ')}</span>
+            {resolvedStep?.step_id ? (
+              <>
+                <span className="mx-2 text-[var(--border-color)]">·</span>
+                <span className="font-mono text-[var(--text-muted)]">{resolvedStep.step_id}</span>
+              </>
+            ) : null}
+          </p>
+
+          <div className="mission-player__workspace">
+            <div className="mission-player__main">
               <div
-                className={[
-                  'relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border shadow-md',
-                  'border-slate-800/80 bg-slate-950 dark:border-slate-700/90',
-                  teamActive ? 'ring-2 ring-emerald-500/25 ring-offset-2 ring-offset-slate-950 dark:ring-emerald-500/30' : '',
-                ].join(' ')}
+                className={['mission-player__tactical', teamActive ? 'mission-player__tactical--team' : ''].join(' ')}
               >
-                <div className="relative z-0 min-h-0 flex-1 p-2 sm:p-3">
+                <div className="mission-player__tactical-viewport">
                   {mode === 'atc' ? (
                     <RadarScope
                       threatType={threatType}
@@ -786,61 +1113,107 @@ const MissionPlayerPage: React.FC = () => {
                       teamActive={teamActive}
                     />
                   )}
+                  {glitchOverlay}
                 </div>
-                {glitchOverlay}
+
+                <div className="mission-player__decision-slot">
+                  <DecisionPanel
+                    key={`${currentPhase}-${activeStepIndex ?? 0}-${resolvedStep?.step_id ?? 'no-step'}`}
+                    variant="immersive"
+                    description={channelLive ? resolvedStep?.description : undefined}
+                    options={channelLive ? panelOptions : []}
+                    onSubmitAction={handleSubmitOption}
+                    onRequestHint={handleRequestHint}
+                    isSubmitting={isSubmitting}
+                    hintText={hintText}
+                    hintsUsed={hintsUsed}
+                    channelConnected={channelLive}
+                    awaitingNextStep={isSubmitting}
+                  />
+                </div>
               </div>
             </div>
 
-            <aside className="flex w-full shrink-0 flex-col gap-3 lg:w-[min(100%,320px)] xl:w-[340px]">
-              <div className="min-h-[180px] flex-1 sm:min-h-[200px] lg:min-h-0">
-                <EventFeed events={events} />
-              </div>
-              <ParticipantBadges
-                variant="studio"
-                participants={participants}
-                currentUserEmail={user?.email}
-                currentUserUsername={user?.username}
-                socketConnected={isConnected}
-              />
+            <aside className="mission-player__sidebar">
+              {showSoloModeBanner ? (
+                <div className="mission-player__sidebar-card">
+                  <div className="mission-player__solo-banner">
+                    <strong>Solo mode</strong>
+                    <p>Complete this mission alone, or share the invite link for optional teammates.</p>
+                    <button
+                      type="button"
+                      onClick={() => void handleCopyMissionLink()}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[color-mix(in_srgb,var(--info)_40%,transparent)] bg-[var(--bg-secondary)] px-3 py-1.5 text-xs font-semibold text-[var(--info)] hover:bg-[var(--bg-hover)]"
+                    >
+                      <Copy className="h-3.5 w-3.5" aria-hidden />
+                      Copy invite link
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
-              <div className="rounded-xl border border-slate-700/70 bg-slate-900/70 p-3 text-xs text-slate-300 shadow-inner backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/80">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold uppercase tracking-wide text-slate-400">Telemetry</span>
-                  <span className={isConnected ? 'font-medium text-emerald-400' : 'font-medium text-amber-300'}>
-                    {isConnected ? 'Connected' : 'Offline'}
-                  </span>
+              <div className="mission-player__sidebar-card">
+                <ParticipantBadges
+                  variant="cockpit"
+                  participants={participants}
+                  currentUserEmail={user?.email}
+                  currentUserUsername={user?.username}
+                  socketConnected={channelLive}
+                />
+              </div>
+
+              <div className="mission-player__sidebar-scroll">
+                <div className="mission-player__sidebar-card min-h-[200px] flex-1 lg:min-h-[240px]">
+                  <EventFeed events={events} variant="immersive" />
                 </div>
-                <div className="mt-2 flex items-center justify-between border-t border-slate-700/50 pt-2">
-                  <span className="text-slate-500">Phase</span>
-                  <span className="font-mono text-slate-100">{phaseOrder.indexOf(currentPhase) + 1}/6</span>
-                </div>
-                <div className="mt-1 flex items-center justify-between">
-                  <span className="text-slate-500">Timer stress</span>
-                  <span className={timerWarning ? 'font-medium text-amber-300' : 'text-slate-500'}>
-                    {timerWarning ? 'Elevated' : 'Normal'}
-                  </span>
+
+                <div className="mission-player__sidebar-card mission-player__telemetry">
+                  <div className="mission-player__telemetry-row">
+                    <span className="mission-player__telemetry-label">Status</span>
+                    <span
+                      className={[
+                        'mission-player__telemetry-value',
+                        channelTone === 'live' ? 'mission-player__telemetry-value--live' : '',
+                        channelTone === 'warn' ? 'mission-player__telemetry-value--warn' : '',
+                      ].join(' ')}
+                    >
+                      {channelStatusLabel(connectionStatus)}
+                    </span>
+                  </div>
+                  <div className="mission-player__telemetry-row">
+                    <span className="mission-player__telemetry-label">Phase</span>
+                    <span className="mission-player__telemetry-value">
+                      {phaseIndex}/{phaseOrder.length}
+                    </span>
+                  </div>
+                  <div className="mission-player__telemetry-row">
+                    <span className="mission-player__telemetry-label">Timer stress</span>
+                    <span
+                      className={[
+                        'mission-player__telemetry-value',
+                        timerWarning ? 'mission-player__telemetry-value--warn' : '',
+                      ].join(' ')}
+                    >
+                      {timerWarning ? 'Elevated' : 'Normal'}
+                    </span>
+                  </div>
+                  {teamActive ? (
+                    <div className="mission-player__telemetry-row">
+                      <span className="mission-player__telemetry-label">Operators</span>
+                      <span className="mission-player__telemetry-value mission-player__telemetry-value--live">
+                        Multi-operator active
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </aside>
           </div>
-
-          <DecisionPanel
-            key={resolvedStep?.step_id ?? 'no-step'}
-            description={resolvedStep?.description}
-            options={panelOptions}
-            onSubmitAction={handleSubmitOption}
-            onRequestHint={handleRequestHint}
-            isSubmitting={isSubmitting}
-            hintText={hintText}
-            hintsUsed={hintsUsed}
-            channelConnected={isConnected}
-            awaitingNextStep={isSubmitting}
-          />
         </div>
       )}
 
       <StressHUD
-        surface="studio"
+        surface="cockpit"
         timeRemaining={timeRemaining}
         phaseTimeLimit={phaseTimeLimit}
         isEscalated={isEscalated}

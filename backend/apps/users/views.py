@@ -106,34 +106,78 @@ class TerminateOtherSessionsResponseSerializer(serializers.Serializer):
 # SOCIAL AUTH VIEWS
 # ==============================================================================
 
+def _social_callback_url(provider: str) -> str:
+    base = settings.FRONTEND_URL.rstrip('/')
+    return f'{base}/auth/callback/{provider}'
+
+
+def _resolve_social_callback_url(provider: str, request) -> str:
+    """Use redirect_uri from the client when it matches an allowed callback URL."""
+    default = _social_callback_url(provider)
+    redirect_uri = None
+    if hasattr(request, 'data') and isinstance(request.data, dict):
+        redirect_uri = request.data.get('redirect_uri')
+    if not redirect_uri:
+        return default
+
+    redirect_uri = str(redirect_uri).strip().rstrip('/')
+    suffix = f'/auth/callback/{provider}'
+    if not redirect_uri.endswith(suffix):
+        return default
+
+    allowed = {default}
+    base = settings.FRONTEND_URL.rstrip('/')
+    for origin in (base, 'http://localhost:5173', 'http://127.0.0.1:5173'):
+        allowed.add(f'{origin.rstrip("/")}{suffix}')
+
+    return redirect_uri if redirect_uri in allowed else default
+
+
+def _finalize_social_user(user) -> None:
+    updates = []
+    if not user.email_verified:
+        user.email_verified = True
+        updates.append('email_verified')
+    if user.status != 'active':
+        user.status = 'active'
+        updates.append('status')
+    if updates:
+        user.save(update_fields=updates)
+
+
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
-    callback_url = "https://skyshieldedu.com/auth/callback/google"
     client_class = OAuth2Client
+
+    def post(self, request, *args, **kwargs):
+        self.callback_url = _resolve_social_callback_url('google', request)
+        return super().post(request, *args, **kwargs)
 
     def get_response(self):
         response = super().get_response()
         if response.status_code == 200:
-            user = self.user
-            if not user.email_verified:
-                user.email_verified = True
-                user.status = 'active'
-                user.save(update_fields=['email_verified', 'status'])
+            _finalize_social_user(self.user)
+            data = dict(response.data)
+            data['user'] = UserProfileSerializer(self.user).data
+            return Response(data, status=status.HTTP_200_OK)
         return response
+
 
 class GitHubLogin(SocialLoginView):
     adapter_class = GitHubOAuth2Adapter
-    callback_url = "https://skyshieldedu.com/auth/callback/github"
     client_class = OAuth2Client
+
+    def post(self, request, *args, **kwargs):
+        self.callback_url = _resolve_social_callback_url('github', request)
+        return super().post(request, *args, **kwargs)
 
     def get_response(self):
         response = super().get_response()
         if response.status_code == 200:
-            user = self.user
-            if not user.email_verified:
-                user.email_verified = True
-                user.status = 'active'
-                user.save(update_fields=['email_verified', 'status'])
+            _finalize_social_user(self.user)
+            data = dict(response.data)
+            data['user'] = UserProfileSerializer(self.user).data
+            return Response(data, status=status.HTTP_200_OK)
         return response
 
 

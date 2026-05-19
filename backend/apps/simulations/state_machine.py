@@ -17,6 +17,55 @@ VALID_TRANSITIONS = {
     'review': [],
 }
 
+# Phases that contain scripted decision steps (excludes briefing / review).
+OPERATIONAL_PHASES = ('detection', 'investigation', 'containment', 'recovery')
+
+
+def mission_phase_for_step(step_dict, step_index, n_steps):
+    """
+    Map a scenario step index to an operational mission phase.
+
+    Steps may set ``mission_phase`` explicitly. Otherwise indices are spread
+    across OPERATIONAL_PHASES so multi-step scenarios advance phases without
+    requiring every step to complete before leaving detection.
+    """
+    st = step_dict if isinstance(step_dict, dict) else {}
+    explicit = st.get('mission_phase')
+    if explicit in OPERATIONAL_PHASES:
+        return explicit
+    if n_steps <= 0:
+        return OPERATIONAL_PHASES[0]
+    p_count = len(OPERATIONAL_PHASES)
+    if n_steps >= p_count:
+        if step_index < p_count:
+            return OPERATIONAL_PHASES[step_index]
+        return OPERATIONAL_PHASES[-1]
+    phase_i = min(int(step_index * p_count / n_steps), p_count - 1)
+    return OPERATIONAL_PHASES[phase_i]
+
+
+def indices_for_scenario_phase(steps, phase):
+    """0-based step indices whose mission_phase equals ``phase``."""
+    if not steps or phase not in OPERATIONAL_PHASES:
+        return []
+    n = len(steps)
+    out = []
+    for i, raw in enumerate(steps):
+        st = raw if isinstance(raw, dict) else {}
+        if mission_phase_for_step(st, i, n) == phase:
+            out.append(i)
+    return out
+
+
+def linear_phase_successor(phase):
+    """Normal forward progression (timeouts / wrong paths may differ)."""
+    return {
+        'detection': 'investigation',
+        'investigation': 'containment',
+        'containment': 'recovery',
+        'recovery': 'review',
+    }.get(phase)
+
 
 class MissionPhase(str, Enum):
     BRIEFING = 'briefing'

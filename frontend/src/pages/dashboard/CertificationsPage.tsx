@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield } from 'lucide-react';
+import { Award, Download, Shield } from 'lucide-react';
 import type { CourseCertificate } from '../../types/course';
 import { getMyCertificates } from '../../services/courseService';
 import Toast from '../../components/Toast';
+import '../../assets/css/CertificationsPage.css';
 
 function formatIssuedDate(iso: string): string {
   try {
@@ -17,23 +18,163 @@ function formatIssuedDate(iso: string): string {
   }
 }
 
-function gradeFromScore(score: number): { letter: 'A' | 'B' | 'C'; className: string } | null {
-  if (score >= 90) return { letter: 'A', className: 'bg-emerald-600/90 text-white border-emerald-500/50' };
-  if (score >= 80) return { letter: 'B', className: 'bg-blue-600/90 text-white border-blue-500/50' };
-  if (score >= 70) return { letter: 'C', className: 'bg-amber-600/90 text-white border-amber-500/50' };
+type GradeInfo = {
+  letter: 'A' | 'B' | 'C';
+  label: string;
+  color: string;
+  bg: string;
+  fillClass: string;
+};
+
+function gradeFromScore(score: number): GradeInfo | null {
+  if (score >= 90) {
+    return {
+      letter: 'A',
+      label: 'Distinction',
+      color: 'var(--cyan)',
+      bg: 'var(--cyan-dim)',
+      fillClass: '',
+    };
+  }
+  if (score >= 80) {
+    return {
+      letter: 'B',
+      label: 'Merit',
+      color: '#7eb8d4',
+      bg: 'rgba(126, 184, 212, 0.15)',
+      fillClass: 'credential-score-fill--merit',
+    };
+  }
+  if (score >= 70) {
+    return {
+      letter: 'C',
+      label: 'Pass',
+      color: 'var(--success)',
+      bg: 'var(--success-dim)',
+      fillClass: 'credential-score-fill--pass',
+    };
+  }
   return null;
 }
 
-const CertificateCardSkeleton: React.FC = () => (
-  <div className="rounded-xl border border-amber-500/25 bg-gradient-to-br from-amber-950/40 to-zinc-900/80 p-6 animate-pulse">
-    <div className="h-3 w-3/4 rounded bg-amber-500/20 mb-4" />
-    <div className="h-8 w-full rounded bg-amber-500/15 mb-3" />
-    <div className="h-4 w-1/2 rounded bg-zinc-700/50 mb-2" />
-    <div className="h-4 w-2/5 rounded bg-zinc-700/50 mb-4" />
-    <div className="h-px bg-amber-500/20 mb-4" />
-    <div className="h-4 w-1/3 rounded bg-zinc-700/50" />
+const CornerMark: React.FC = () => (
+  <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden>
+    <path d="M2 2 L12 2 M2 2 L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="2" cy="2" r="1.5" fill="currentColor" opacity="0.6" />
+  </svg>
+);
+
+const CredentialSkeleton: React.FC<{ delay?: number }> = ({ delay = 0 }) => (
+  <div className="credential-skeleton" style={{ animationDelay: `${delay}ms` }}>
+    <div className="credential-skel-bar" style={{ width: '55%' }} />
+    <div className="credential-skel-bar" style={{ height: 22, width: '85%' }} />
+    <div className="credential-skel-bar" style={{ width: '45%' }} />
+    <div className="credential-skel-bar" style={{ width: '50%' }} />
   </div>
 );
+
+interface CredentialCardProps {
+  cert: CourseCertificate;
+  index: number;
+  isPrinting: boolean;
+  onPrint: (id: string) => void;
+}
+
+const CredentialCard: React.FC<CredentialCardProps> = ({ cert, index, isPrinting, onPrint }) => {
+  const grade = gradeFromScore(cert.final_score);
+
+  return (
+    <article
+      className={`credential-card print-certificate ${isPrinting ? 'printing-active' : ''}`}
+      style={{ animationDelay: `${index * 70}ms` }}
+      data-certificate-id={cert.id}
+    >
+      <span className="credential-corner credential-corner--tl">
+        <CornerMark />
+      </span>
+      <span className="credential-corner credential-corner--tr">
+        <CornerMark />
+      </span>
+      <span className="credential-corner credential-corner--bl">
+        <CornerMark />
+      </span>
+      <span className="credential-corner credential-corner--br">
+        <CornerMark />
+      </span>
+
+      <div className="credential-card-inner">
+        <p className="credential-eyebrow">Certificate of completion</p>
+        <h2 className="credential-title">{cert.course_title}</h2>
+
+        <dl className="credential-meta">
+          <dt>Certificate no.</dt>
+          <dd>{cert.certificate_number}</dd>
+          <dt>Final score</dt>
+          <dd>{cert.final_score}%</dd>
+          <dt>Issued</dt>
+          <dd>{formatIssuedDate(cert.issued_at)}</dd>
+        </dl>
+
+        <div className="credential-score-track" aria-hidden>
+          <div
+            className={`credential-score-fill ${grade?.fillClass ?? ''}`}
+            style={{ width: `${Math.min(100, Math.max(0, cert.final_score))}%` }}
+          />
+        </div>
+
+        <p className="credential-trainee">Awarded to {cert.trainee_username}</p>
+
+        <div className="credential-footer cert-no-print">
+          {grade ? (
+            <div
+              className="credential-grade"
+              style={
+                {
+                  '--grade-color': grade.color,
+                  '--grade-bg': grade.bg,
+                } as React.CSSProperties
+              }
+            >
+              <span className="credential-grade-letter">{grade.letter}</span>
+              <span className="credential-grade-label">{grade.label}</span>
+            </div>
+          ) : (
+            <span className="credential-below-threshold">Below certificate threshold</span>
+          )}
+
+          <button
+            type="button"
+            className="credential-print-btn"
+            onClick={() => onPrint(cert.id)}
+            aria-label={`Print or save certificate for ${cert.course_title}`}
+          >
+            <Download className="h-4 w-4 shrink-0" aria-hidden />
+            Print / Save PDF
+          </button>
+        </div>
+
+        {grade ? (
+          <div className="credential-grade-print" aria-hidden>
+            <div
+              className="credential-grade"
+              style={
+                {
+                  '--grade-color': grade.color,
+                  '--grade-bg': grade.bg,
+                  width: 56,
+                  height: 56,
+                } as React.CSSProperties
+              }
+            >
+              <span className="credential-grade-letter">{grade.letter}</span>
+              <span className="credential-grade-label">{grade.label}</span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </article>
+  );
+};
 
 const CertificationsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -43,183 +184,124 @@ const CertificationsPage: React.FC = () => {
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [printingCertificateId, setPrintingCertificateId] = useState<string | null>(null);
 
-  const clearPrinting = useCallback(() => {
-    setPrintingCertificateId(null);
-  }, []);
+  const clearPrinting = useCallback(() => setPrintingCertificateId(null), []);
 
   useEffect(() => {
-    window.addEventListener('afterprint', clearPrinting);
-    return () => window.removeEventListener('afterprint', clearPrinting);
+    const onAfterPrint = () => clearPrinting();
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => window.removeEventListener('afterprint', onAfterPrint);
   }, [clearPrinting]);
 
   useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        setLoading(true);
-        const data = await getMyCertificates();
-        if (!cancelled) {
-          setCertificates(data);
-          setLoadError(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setCertificates([]);
-          setLoadError(true);
-          setToast({ type: 'error', message: 'Failed to load certificates' });
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    void load();
-    return () => {
-      cancelled = true;
-    };
+    if (printingCertificateId) {
+      document.body.classList.add('cert-printing');
+    } else {
+      document.body.classList.remove('cert-printing');
+    }
+    return () => document.body.classList.remove('cert-printing');
+  }, [printingCertificateId]);
+
+  const loadCerts = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const data = await getMyCertificates();
+      setCertificates(data);
+    } catch {
+      setCertificates([]);
+      setLoadError(true);
+      setToast({ type: 'error', message: 'Failed to load certificates.' });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handlePrint = (certificateId: string) => {
+  useEffect(() => {
+    void loadCerts();
+  }, [loadCerts]);
+
+  const handlePrint = useCallback((certificateId: string) => {
     setPrintingCertificateId(certificateId);
-    window.requestAnimationFrame(() => {
-      window.print();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.print();
+      });
     });
-  };
-
-  if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="h-9 w-48 rounded-lg bg-zinc-800 animate-pulse mb-8" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <CertificateCardSkeleton />
-          <CertificateCardSkeleton />
-        </div>
-      </div>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-        <p className="text-zinc-300 mb-6">We could not load your certificates. Please try again.</p>
-        <button
-          type="button"
-          onClick={() => {
-            setLoadError(false);
-            setLoading(true);
-            void getMyCertificates()
-              .then((data) => {
-                setCertificates(data);
-                setLoadError(false);
-              })
-              .catch(() => {
-                setLoadError(true);
-                setToast({ type: 'error', message: 'Failed to load certificates' });
-              })
-              .finally(() => setLoading(false));
-          }}
-          className="inline-flex rounded-lg border border-amber-500/50 bg-amber-500/10 px-5 py-2.5 text-sm font-semibold text-amber-100 hover:bg-amber-500/20"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (certificates.length === 0) {
-    return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 mb-6">
-          <Shield className="w-8 h-8 text-amber-400" aria-hidden />
-        </div>
-        <h1 className="text-2xl font-semibold text-zinc-100 mb-2">No certificates yet</h1>
-        <p className="text-zinc-400 mb-8">Complete a course to earn your first certificate</p>
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard/courses')}
-          className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3 text-sm font-semibold text-zinc-950 shadow-lg shadow-amber-900/30 hover:from-amber-400 hover:to-amber-500 transition-colors"
-        >
-          Browse Courses
-        </button>
-      </div>
-    );
-  }
+  }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="certifications-page">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="flex flex-wrap items-center gap-3 mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-zinc-100 tracking-tight">My Certificates</h1>
-        <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-0.5 text-sm font-medium text-amber-200">
-          {certificates.length}
-        </span>
-      </div>
+      {loading && (
+        <>
+          <header className="certifications-header cert-no-print">
+            <div className="header-content">
+              <h1 className="header-title">My credentials</h1>
+              <p className="header-subtitle">Loading your earned certificates…</p>
+            </div>
+          </header>
+          <div className="credentials-grid">
+            <CredentialSkeleton delay={0} />
+            <CredentialSkeleton delay={80} />
+          </div>
+        </>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {certificates.map((cert) => {
-          const grade = gradeFromScore(cert.final_score);
-          const isPrinting = printingCertificateId === cert.id;
-          return (
-            <article
-              key={cert.id}
-              className={`print-certificate flex flex-col rounded-xl border-2 border-amber-500/35 bg-gradient-to-br from-amber-950/50 via-zinc-900/90 to-zinc-950 p-6 shadow-xl shadow-black/40 ring-1 ring-amber-500/10 ${
-                isPrinting ? 'printing-active' : ''
-              }`}
-            >
-              <p className="text-xs font-bold tracking-[0.2em] text-amber-400/95 mb-3">
-                🏆 CERTIFICATE OF COMPLETION
+      {!loading && loadError && (
+        <div className="empty-state cert-no-print">
+          <p>We could not load your certificates. Please try again.</p>
+          <button type="button" className="export-button" onClick={() => void loadCerts()}>
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !loadError && certificates.length === 0 && (
+        <div className="credentials-empty cert-no-print">
+          <div className="credentials-empty-icon">
+            <Shield size={32} aria-hidden />
+          </div>
+          <h2>No credentials yet</h2>
+          <p>Complete a course to earn your first certificate of completion.</p>
+          <button type="button" className="view-certificate-btn" onClick={() => navigate('/dashboard/courses')}>
+            Browse courses
+          </button>
+        </div>
+      )}
+
+      {!loading && !loadError && certificates.length > 0 && (
+        <>
+          <header className="certifications-header cert-no-print">
+            <div className="header-content">
+              <h1 className="header-title">My credentials</h1>
+              <p className="header-subtitle">
+                Official certificates for completed courses. Use Print / Save PDF to download a copy.
               </p>
-              <h2 className="text-xl md:text-2xl font-bold text-amber-50 leading-snug mb-4">{cert.course_title}</h2>
-              <dl className="space-y-2 text-sm text-zinc-300 mb-4">
-                <div>
-                  <dt className="sr-only">Certificate number</dt>
-                  <dd>Certificate No: {cert.certificate_number}</dd>
-                </div>
-                <div>
-                  <dt className="sr-only">Final score</dt>
-                  <dd>Final Score: {cert.final_score}%</dd>
-                </div>
-                <div>
-                  <dt className="sr-only">Issued</dt>
-                  <dd>Issued: {formatIssuedDate(cert.issued_at)}</dd>
-                </div>
-              </dl>
-              <div className="border-t border-amber-500/25 my-2" role="presentation" />
-              <p className="text-zinc-200 font-medium mb-6">{cert.trainee_username}</p>
+            </div>
+            <div className="header-actions">
+              <span className="status-badge completed">
+                <Award size={12} aria-hidden />
+                {certificates.length} earned
+              </span>
+            </div>
+          </header>
 
-              <div className="mt-auto flex flex-wrap items-center justify-between gap-3 no-print">
-                {grade ? (
-                  <span
-                    className={`inline-flex h-10 w-10 items-center justify-center rounded-full border text-lg font-bold ${grade.className}`}
-                  >
-                    {grade.letter}
-                  </span>
-                ) : (
-                  <span className="text-xs text-zinc-500">Score below course threshold</span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => handlePrint(cert.id)}
-                  className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/20 transition-colors"
-                >
-                  Download
-                </button>
-              </div>
+          <div className="credentials-band cert-no-print" aria-hidden />
 
-              {grade && (
-                <div className="hidden print:flex print:mt-4 print:items-center print:justify-center">
-                  <span
-                    className={`inline-flex h-12 w-12 items-center justify-center rounded-full border-2 text-xl font-bold ${grade.className}`}
-                  >
-                    {grade.letter}
-                  </span>
-                </div>
-              )}
-            </article>
-          );
-        })}
-      </div>
+          <div className="credentials-grid">
+            {certificates.map((cert, i) => (
+              <CredentialCard
+                key={cert.id}
+                cert={cert}
+                index={i}
+                isPrinting={printingCertificateId === cert.id}
+                onPrint={handlePrint}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -38,3 +38,249 @@ INFO 2026-05-14 19:06:29,646 signals 23840 7756 Participant demo.trainee@skyshie
 INFO 2026-05-14 19:09:58,267 signals 16952 6496 Meeting created: [SEED] Office hours - instructor drop-in by demo.supervisor@skyshield.demo
 INFO 2026-05-14 19:09:59,059 signals 16952 6496 Participant demo.supervisor@skyshield.demo joined meeting [SEED] Office hours - instructor drop-in
 INFO 2026-05-14 19:09:59,728 signals 16952 6496 Participant demo.trainee@skyshield.demo joined meeting [SEED] Office hours - instructor drop-in
+INFO 2026-05-14 19:10:52,258 signals 3868 24608 Participant polaniyan007@gmail.com joined meeting [SEED] Internal: weekly sim debrief room
+INFO 2026-05-14 19:11:12,903 signals 3868 22572 Participant theonlypermactech@gmail.com joined meeting [SEED] Internal: weekly sim debrief room
+INFO 2026-05-15 16:48:18,582 signals 27060 7256 Meeting created: [SEED] Scenario Debrief by babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-15 16:48:18,918 signals 27060 7256 Participant fatima.ogunleye.tr16@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:19,230 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:19,546 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:19,864 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:20,192 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:20,497 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:20,811 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:21,120 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:21,429 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:21,737 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:22,048 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:22,356 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:22,663 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:22,980 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:23,296 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:23,629 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:23,942 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:24,261 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:24,570 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:24,890 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:25,223 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:25,546 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:26,632 signals 27060 7256 Meeting created: [SEED] ATC Cyber Workshop by ngozi.adeyemi.ins2@instructors.skyshield.africa
+INFO 2026-05-15 16:48:26,961 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:27,274 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:27,603 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:27,903 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:28,212 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:28,523 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:28,851 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:29,172 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:29,495 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:29,807 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:30,116 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:30,432 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:32,423 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by uche.chukwu.sup4@ncaa-training.gov.ng
+INFO 2026-05-15 16:48:32,733 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:33,043 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:33,358 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:33,680 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:33,992 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:34,317 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:34,627 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:34,942 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:35,249 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:35,565 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:35,872 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:36,184 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:36,502 signals 27060 7256 Participant musa.diallo.tr21@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:36,809 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:37,126 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:37,437 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:37,750 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:38,069 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:39,507 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by yusuf.chukwu.ins1@instructors.skyshield.africa
+INFO 2026-05-15 16:48:39,837 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:40,220 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:40,625 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:41,036 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:41,432 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:41,836 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:42,626 signals 27060 7256 Participant musa.obi.tr10@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:43,028 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:43,440 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:43,841 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:44,241 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:45,683 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:46,100 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:46,922 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:47,336 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:47,743 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:48,952 signals 27060 7256 Participant musa.diallo.tr21@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:49,354 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:49,759 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:50,160 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:52,159 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by ngozi.adeyemi.ins2@instructors.skyshield.africa
+INFO 2026-05-15 16:48:53,367 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:53,763 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:54,573 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:54,974 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:55,372 signals 27060 7256 Participant ibrahim.sani.tr30@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:55,770 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:56,179 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:56,988 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:57,404 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:58,213 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:58,627 signals 27060 7256 Participant olumide.eze.tr32@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:59,027 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:59,431 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:59,828 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:00,232 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:00,637 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:01,047 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:01,856 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:06,626 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by aisha.danjuma.ins3@instructors.skyshield.africa
+INFO 2026-05-15 16:49:07,029 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:07,431 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:07,832 signals 27060 7256 Participant ibrahim.sani.tr30@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:08,233 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:08,631 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:09,042 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:09,436 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:09,841 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:10,241 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:10,643 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:11,454 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:12,662 signals 27060 7256 Participant olumide.eze.tr32@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:13,061 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:13,460 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:13,864 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:14,674 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:15,090 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:15,899 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:16,310 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:16,708 signals 27060 7256 Participant musa.obi.tr10@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:17,105 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:17,509 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:19,712 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-15 16:49:20,124 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:20,988 signals 27060 7256 Participant musa.obi.tr10@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:21,899 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:22,488 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:23,343 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:23,751 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:25,545 signals 27060 7256 Meeting created: [SEED] Scenario Debrief by supervisor@skyshield.africa
+INFO 2026-05-15 16:49:26,356 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:26,761 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:27,171 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:27,567 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:28,369 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:28,766 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:29,579 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:30,004 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:30,822 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:33,619 signals 27060 7256 Meeting created: [SEED] Scenario Debrief by amina.sani.sup1@ncaa-training.gov.ng
+INFO 2026-05-15 16:49:34,033 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:35,245 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:35,652 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:36,872 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:37,668 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:38,066 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:38,870 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:39,695 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:40,093 signals 27060 7256 Participant musa.diallo.tr21@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:40,890 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:41,702 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:42,108 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:42,519 signals 27060 7256 Participant fatima.ogunleye.tr16@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:42,919 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:43,319 signals 27060 7256 Participant musa.obi.tr10@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:44,119 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:44,520 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:44,926 signals 27060 7256 Participant ibrahim.sani.tr30@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:45,333 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:45,734 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:46,139 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:46,535 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:46,945 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:50,340 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by amina.sani.sup1@ncaa-training.gov.ng
+INFO 2026-05-15 16:49:50,741 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:51,155 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:51,571 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:51,971 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:52,375 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:52,775 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:53,595 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:54,003 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:54,829 signals 27060 7256 Participant ibrahim.sani.tr30@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:55,225 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:56,028 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:56,435 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:56,836 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:57,239 signals 27060 7256 Participant olumide.eze.tr32@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:57,652 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:58,071 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:59,748 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:00,182 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:00,646 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:01,506 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:02,185 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:04,150 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:05,375 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:05,770 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:06,168 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:07,356 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by aisha.danjuma.ins3@instructors.skyshield.africa
+INFO 2026-05-15 16:50:08,215 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:08,619 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:09,032 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:09,855 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:10,258 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:11,486 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:11,888 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:12,291 signals 27060 7256 Participant fatima.ogunleye.tr16@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:13,098 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:13,507 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:13,934 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:16,564 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by yusuf.chukwu.ins1@instructors.skyshield.africa
+INFO 2026-05-15 16:50:17,379 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:17,787 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:18,598 signals 27060 7256 Participant olumide.eze.tr32@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:18,999 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:19,404 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:20,206 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:20,613 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:21,020 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:21,434 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:21,837 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:22,239 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:22,632 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:23,438 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:23,840 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:24,236 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:25,038 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:25,434 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:25,832 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:27,026 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:27,451 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:27,859 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:28,268 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:32,032 signals 27060 7256 Meeting created: [SEED] ATC Cyber Workshop by kemi.adebayo.sup3@ncaa-training.gov.ng
+INFO 2026-05-15 16:50:32,682 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:33,089 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:34,086 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:34,483 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:35,883 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:36,759 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:37,159 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:37,563 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:37,961 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:39,959 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by aisha.danjuma.ins3@instructors.skyshield.africa
+INFO 2026-05-15 16:50:40,778 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:41,188 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:41,585 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:41,984 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:42,379 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:42,783 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:43,201 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:45,216 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-15 16:50:46,028 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:47,227 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:47,633 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:48,026 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:48,426 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing

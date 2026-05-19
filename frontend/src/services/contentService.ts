@@ -1,4 +1,25 @@
+import axios, { isAxiosError } from 'axios';
 import api from './api';
+
+const API_BASE = import.meta.env.VITE_API_URL ?? 'https://skyshield-backend.onrender.com/api';
+
+/** AllowAny content reads: retry without JWT when an invalid token would otherwise 401. */
+async function getWithAuthPublicFallback<T>(path: string): Promise<T> {
+  try {
+    const res = await api.get<T>(path);
+    return res.data;
+  } catch (err) {
+    if (isAxiosError(err) && err.response?.status === 401) {
+      const res = await axios.get<T>(`${API_BASE}${path}`, { timeout: 15000 });
+      return res.data;
+    }
+    throw err;
+  }
+}
+
+function encodeSlug(slug: string): string {
+  return encodeURIComponent(slug.trim());
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -12,11 +33,19 @@ export interface ContentCategory {
   is_active: boolean;
 }
 
+export interface UserProgress {
+  completed: boolean;
+  percentage: number;
+  started_at?: string;
+  completed_at?: string;
+}
+
 export interface ContentMaterial {
   id: string;
   title: string;
   slug: string;
   description: string;
+  content?: string;
   material_type: string;
   difficulty: string;
   tags: string[];
@@ -24,14 +53,37 @@ export interface ContentMaterial {
   video_url?: string;
   external_url?: string;
   estimated_read_time?: number;
-  is_published: boolean;
-  is_featured: boolean;
-  views_count: number;
-  average_rating: number;
+  is_published?: boolean;
+  is_featured?: boolean;
+  views_count?: number;
+  likes_count?: number;
+  average_rating?: number;
+  ratings_count?: number;
   created_at: string;
   category?: string;
   category_name?: string;
   author_name?: string;
+  is_bookmarked?: boolean;
+  is_liked?: boolean;
+  user_rating?: number | null;
+  user_progress?: UserProgress | null;
+  related_materials?: ContentMaterial[];
+  comments?: ContentComment[];
+}
+
+export interface PathUserProgress {
+  status: string;
+  progress: number;
+  completed_materials: string[];
+}
+
+export interface PathEnrollment {
+  status: string;
+  progress: number;
+  completed_materials: string[];
+  started_at?: string;
+  completed_at?: string;
+  last_accessed?: string;
 }
 
 export interface LearningPath {
@@ -41,10 +93,12 @@ export interface LearningPath {
   description: string;
   difficulty: string;
   estimated_duration?: number;
-  materials_count?: number;
+  material_count?: number;
   enrolled_count?: number;
-  is_enrolled?: boolean;
-  progress?: number;
+  user_enrolled?: boolean;
+  user_progress?: PathUserProgress | null;
+  materials?: ContentMaterial[];
+  user_enrollment?: PathEnrollment | null;
   created_at: string;
 }
 
@@ -69,7 +123,7 @@ export interface Announcement {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   is_read?: boolean;
   created_at: string;
-  expires_at?: string | null;
+  publish_until?: string | null;
 }
 
 export interface MeetingInvitation {
@@ -87,18 +141,25 @@ export interface MeetingInvitation {
   created_at: string;
 }
 
-// ─── Content Comments ────────────────────────────────────────────────────────
+export interface CommentUserDetails {
+  id: string;
+  email: string;
+  username: string;
+  full_name: string;
+  profile_picture?: string | null;
+  role?: string;
+}
 
 export interface ContentComment {
   id: string;
   user: string;
-  user_name: string;
-  user_email: string;
+  user_details: CommentUserDetails;
   material: string;
   content: string;
+  parent?: string | null;
+  replies?: ContentComment[];
   created_at: string;
   updated_at: string;
-  is_author: boolean;
 }
 
 export interface CreateContentCommentRequest {
@@ -108,8 +169,6 @@ export interface CreateContentCommentRequest {
 export interface UpdateContentCommentRequest {
   content: string;
 }
-
-// ─── Content Rating ──────────────────────────────────────────────────────────
 
 export interface ContentRating {
   id: string;
@@ -126,12 +185,108 @@ export interface CreateRatingRequest {
   review?: string;
 }
 
+export interface MaterialBookmark {
+  id: string;
+  material: ContentMaterial;
+  created_at: string;
+}
+
+export interface SearchResultItem {
+  id: string;
+  title: string;
+  type: 'material' | 'path' | 'glossary' | 'faq';
+  description: string;
+  url: string;
+  score: number;
+  created_at?: string | null;
+  author_name?: string | null;
+}
+
+export interface GroupedSearchResults {
+  materials: SearchResultItem[];
+  paths: SearchResultItem[];
+  glossary: SearchResultItem[];
+  faqs: SearchResultItem[];
+  total: number;
+}
+
+export interface MaterialProgressResponse {
+  id: string;
+  completed: boolean;
+  progress_percentage: number;
+  started_at?: string;
+  completed_at?: string;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function unwrap<T>(data: T[] | { results: T[] }): T[] {
   if (Array.isArray(data)) return data;
-  if (data && 'results' in data) return data.results;
+  if (data && typeof data === 'object' && 'results' in data) return data.results;
   return [];
+}
+
+const API_ORIGIN = (import.meta.env.VITE_API_URL ?? '').replace(/\/api\/?$/, '');
+
+/** Resolve relative media URLs from the API. */
+export function resolveContentMediaUrl(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/') && API_ORIGIN) return `${API_ORIGIN}${url}`;
+  return url;
+}
+
+export function searchItemToRoute(item: SearchResultItem): string {
+  switch (item.type) {
+    case 'material': {
+      const slug = slugFromSearchUrl(item.url, 'materials');
+      return slug ? `/dashboard/learning-materials/${slug}` : '/dashboard/learning-materials';
+    }
+    case 'path': {
+      const slug = slugFromSearchUrl(item.url, 'paths');
+      return slug ? learningPathDetailRoute(slug) : '/dashboard/learning-materials';
+    }
+    case 'glossary':
+    case 'faq':
+      return '/dashboard/help';
+    default:
+      return '/dashboard/learning-materials';
+  }
+}
+
+/** Extract slug from API search url like `/content/materials/my-slug/`. */
+export function slugFromSearchUrl(url: string, segment: 'materials' | 'paths'): string | null {
+  const match = url.match(new RegExp(`/content/${segment}/([^/]+)/?`));
+  return match?.[1] ?? null;
+}
+
+export function normalizeSearchResults(data: unknown): GroupedSearchResults {
+  const empty: GroupedSearchResults = {
+    materials: [],
+    paths: [],
+    glossary: [],
+    faqs: [],
+    total: 0,
+  };
+  if (!Array.isArray(data)) return empty;
+
+  const items = data as SearchResultItem[];
+  const materials = items.filter((i) => i.type === 'material');
+  const paths = items.filter((i) => i.type === 'path');
+  const glossary = items.filter((i) => i.type === 'glossary');
+  const faqs = items.filter((i) => i.type === 'faq');
+
+  return {
+    materials,
+    paths,
+    glossary,
+    faqs,
+    total: items.length,
+  };
+}
+
+export function pathProgressPercent(path: LearningPath): number {
+  return path.user_progress?.progress ?? path.user_enrollment?.progress ?? 0;
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
@@ -141,22 +296,32 @@ export const getCategories = async (): Promise<ContentCategory[]> => {
   return unwrap(res.data);
 };
 
-// ── Materials (public content library) ────────────────────────────────────────
+// ── Materials ─────────────────────────────────────────────────────────────────
 
 export const getContentMaterials = async (params?: {
   category?: string;
+  type?: string;
   difficulty?: string;
-  material_type?: string;
   search?: string;
-  is_featured?: boolean;
-  is_published?: boolean;
-  limit?: number;
+  featured?: boolean;
+  sort?: string;
+  page?: number;
 }): Promise<ContentMaterial[]> => {
   const res = await api.get<ContentMaterial[] | { results: ContentMaterial[] }>(
     '/content/materials/',
-    { params: { is_published: true, ...params } },
+    { params },
   );
   return unwrap(res.data);
+};
+
+export const getContentMaterial = async (
+  slug: string,
+  options?: { signal?: AbortSignal },
+): Promise<ContentMaterial> => {
+  const res = await api.get<ContentMaterial>(`/content/materials/${slug}/`, {
+    signal: options?.signal,
+  });
+  return res.data;
 };
 
 export const bookmarkContentMaterial = async (slug: string): Promise<{ bookmarked: boolean }> => {
@@ -164,11 +329,42 @@ export const bookmarkContentMaterial = async (slug: string): Promise<{ bookmarke
   return res.data;
 };
 
-// ── Material Comments ─────────────────────────────────────────────────────────
-
-export const getMaterialComments = async (slug: string): Promise<ContentComment[]> => {
-  const res = await api.get<ContentComment[]>(`/content/materials/${slug}/comments/`);
+export const likeMaterial = async (
+  slug: string,
+): Promise<{ liked: boolean; likes_count: number }> => {
+  const res = await api.post<{ liked: boolean; likes_count: number }>(
+    `/content/materials/${slug}/like/`,
+  );
   return res.data;
+};
+
+export const rateMaterial = async (
+  slug: string,
+  data: CreateRatingRequest,
+): Promise<ContentRating> => {
+  const res = await api.post<ContentRating>(`/content/materials/${slug}/rate/`, data);
+  return res.data;
+};
+
+export const updateMaterialProgress = async (
+  slug: string,
+  data: { progress_percentage?: number; completed?: boolean },
+): Promise<MaterialProgressResponse> => {
+  const res = await api.post<MaterialProgressResponse>(`/content/materials/${slug}/progress/`, data);
+  return res.data;
+};
+
+// ── Comments ──────────────────────────────────────────────────────────────────
+
+export const getMaterialComments = async (
+  slug: string,
+  options?: { signal?: AbortSignal },
+): Promise<ContentComment[]> => {
+  const res = await api.get<ContentComment[] | { results: ContentComment[] }>(
+    `/content/materials/${slug}/comments/`,
+    { signal: options?.signal },
+  );
+  return unwrap(res.data);
 };
 
 export const createMaterialComment = async (
@@ -184,7 +380,10 @@ export const updateMaterialComment = async (
   commentId: string,
   data: UpdateContentCommentRequest,
 ): Promise<ContentComment> => {
-  const res = await api.put<ContentComment>(`/content/materials/${slug}/comments/${commentId}/`, data);
+  const res = await api.patch<ContentComment>(
+    `/content/materials/${slug}/comments/${commentId}/`,
+    data,
+  );
   return res.data;
 };
 
@@ -192,31 +391,52 @@ export const deleteMaterialComment = async (slug: string, commentId: string): Pr
   await api.delete(`/content/materials/${slug}/comments/${commentId}/`);
 };
 
-// ── Material Likes & Ratings ─────────────────────────────────────────────────
-
-export const likeMaterial = async (slug: string): Promise<{ liked: boolean }> => {
-  const res = await api.post<{ liked: boolean }>(`/content/materials/${slug}/like/`);
-  return res.data;
-};
-
-export const rateMaterial = async (
-  slug: string,
-  data: CreateRatingRequest,
-): Promise<ContentRating> => {
-  const res = await api.post<ContentRating>(`/content/materials/${slug}/rate/`, data);
-  return res.data;
-};
-
-// ── Learning Paths ────────────────────────────────────────────────────────────
+// ── Learning paths ────────────────────────────────────────────────────────────
 
 export const getLearningPaths = async (): Promise<LearningPath[]> => {
-  const res = await api.get<LearningPath[] | { results: LearningPath[] }>('/content/paths/');
+  const data = await getWithAuthPublicFallback<LearningPath[] | { results: LearningPath[] }>(
+    '/content/paths/',
+  );
+  return unwrap(data);
+};
+
+export const getLearningPath = async (slug: string): Promise<LearningPath> => {
+  const safe = encodeSlug(slug);
+  if (!safe || safe === 'undefined' || safe === 'null') {
+    throw new Error('Invalid path slug');
+  }
+  return getWithAuthPublicFallback<LearningPath>(`/content/paths/${safe}/`);
+};
+
+export const learningPathDetailRoute = (slug: string): string =>
+  `/dashboard/learning-paths/${encodeSlug(slug)}`;
+
+export const enrollInLearningPath = async (slug: string): Promise<{ enrolled: boolean }> => {
+  const res = await api.post<{ enrolled: boolean }>(`/content/paths/${encodeSlug(slug)}/enroll/`);
+  return res.data;
+};
+
+export const completePathMaterial = async (
+  pathSlug: string,
+  materialId: string,
+): Promise<{ status: string; progress: number; completed_materials: string[] }> => {
+  const res = await api.post(`/content/paths/${encodeSlug(pathSlug)}/complete-material/`, {
+    material_id: materialId,
+  });
+  return res.data;
+};
+
+// ── Bookmarks ─────────────────────────────────────────────────────────────────
+
+export const getBookmarks = async (): Promise<MaterialBookmark[]> => {
+  const res = await api.get<MaterialBookmark[] | { results: MaterialBookmark[] }>(
+    '/content/bookmarks/',
+  );
   return unwrap(res.data);
 };
 
-export const enrollInLearningPath = async (slug: string): Promise<{ enrolled: boolean }> => {
-  const res = await api.post<{ enrolled: boolean }>(`/content/paths/${slug}/enroll/`);
-  return res.data;
+export const clearBookmarks = async (): Promise<void> => {
+  await api.delete('/content/bookmarks/clear/');
 };
 
 // ── Glossary ──────────────────────────────────────────────────────────────────
@@ -252,31 +472,29 @@ export const getAnnouncements = async (): Promise<Announcement[]> => {
   return unwrap(res.data);
 };
 
-export const getUnreadAnnouncements = async (): Promise<Announcement[]> => {
-  const res = await api.get<Announcement[]>('/content/announcements/unread/');
-  return res.data;
+export const getUnreadAnnouncementsCount = async (): Promise<number> => {
+  const res = await api.get<{ unread_count: number }>('/content/announcements/unread/');
+  return res.data.unread_count ?? 0;
 };
 
-export const getUnreadAnnouncementsCount = async (): Promise<number> => {
-  const res = await api.get<{ count: number } | number>('/content/announcements/unread_count/');
-  if (typeof res.data === 'number') return res.data;
-  return (res.data as { count: number }).count ?? 0;
+export const markAnnouncementRead = async (id: string): Promise<Announcement> => {
+  const res = await api.get<Announcement>(`/content/announcements/${id}/`);
+  return res.data;
 };
 
 // ── Search ────────────────────────────────────────────────────────────────────
 
-export interface SearchResult {
-  materials?: ContentMaterial[];
-  paths?: LearningPath[];
-  total?: number;
-}
-
-export const searchContent = async (query: string): Promise<SearchResult> => {
-  const res = await api.get<SearchResult>('/content/search/', { params: { q: query } });
-  return res.data;
+export const searchContent = async (
+  query: string,
+  type?: 'all' | 'materials' | 'paths' | 'glossary' | 'faqs',
+): Promise<GroupedSearchResults> => {
+  const res = await api.get<SearchResultItem[]>('/content/search/', {
+    params: { q: query, ...(type && type !== 'all' ? { type } : {}) },
+  });
+  return normalizeSearchResults(res.data);
 };
 
-// ── Meeting Invitations ────────────────────────────────────────────────────────
+// ── Meeting Invitations ───────────────────────────────────────────────────────
 
 export const getInvitations = async (): Promise<MeetingInvitation[]> => {
   const res = await api.get<MeetingInvitation[] | { results: MeetingInvitation[] }>(

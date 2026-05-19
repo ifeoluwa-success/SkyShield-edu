@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { MissionPhase } from '../../types/incident';
+import type { IncidentEvent, MissionPhase } from '../../types/incident';
 import { applyIntervention } from '../../services/incidentService';
 import { useMissionSocket } from '../../hooks/useMissionSocket';
 import { ParticipantBadges } from './ParticipantBadges';
@@ -40,7 +40,7 @@ export const LiveMissionPanel: React.FC<LiveMissionPanelProps> = ({ runId, token
   const eventsRef = useRef<ReturnType<typeof useMissionSocket>['lastEvent'][]>([]);
   const [events, setEvents] = useState<ReturnType<typeof useMissionSocket>['lastEvent'][]>([]);
 
-  const { missionState, isConnected, lastEvent } = useMissionSocket({ runId, token });
+  const { missionState, connectionStatus, lastEvent, retryConnection } = useMissionSocket({ runId, token });
 
   useEffect(() => {
     if (!lastEvent) return;
@@ -131,9 +131,25 @@ export const LiveMissionPanel: React.FC<LiveMissionPanelProps> = ({ runId, token
         <div className="flex items-center gap-2">
           <span
             className="h-2 w-2 rounded-full"
-            style={{ backgroundColor: isConnected ? '#22c55e' : '#64748b' }}
-            title={isConnected ? 'connected' : 'disconnected'}
+            style={{
+              backgroundColor:
+                connectionStatus === 'connected'
+                  ? '#22c55e'
+                  : connectionStatus === 'disconnected'
+                    ? '#64748b'
+                    : '#f59e0b',
+            }}
+            title={connectionStatus}
           />
+          {connectionStatus === 'failed' ? (
+            <button
+              type="button"
+              className="rounded-md border border-amber-500/40 px-2 py-1 text-[10px] text-amber-200"
+              onClick={() => retryConnection()}
+            >
+              Retry
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onClose}
@@ -165,7 +181,10 @@ export const LiveMissionPanel: React.FC<LiveMissionPanelProps> = ({ runId, token
       <div className="mt-4 rounded-xl border border-slate-800/70 bg-slate-950/30 p-4">
         <div className="mb-2 text-xs tracking-[0.22em] text-slate-300">LIVE EVENTS</div>
         <div className="h-[260px] overflow-y-auto pr-1">
-          <EventFeed events={(events as NonNullable<typeof events>[number][]) ?? []} maxVisible={10} />
+          <EventFeed
+            events={events.filter((e): e is IncidentEvent => e != null)}
+            maxVisible={10}
+          />
         </div>
       </div>
 

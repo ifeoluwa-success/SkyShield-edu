@@ -1,0 +1,53 @@
+# Example Nginx fronting Daphne/Uvicorn for SkyShield (HTTP + WebSocket).
+# Adjust server_name, upstream, and TLS paths for your environment.
+
+upstream skyshield_asgi {
+    server 127.0.0.1:8000;
+    keepalive 32;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name skyshield-backend.example.com;
+
+    # ssl_certificate ...
+    # ssl_certificate_key ...
+
+    client_max_body_size 20m;
+
+    location / {
+        proxy_pass http://skyshield_asgi;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Long REST calls (actions can be slow on cold DB)
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
+    }
+
+    location /ws/ {
+        proxy_pass http://skyshield_asgi;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Mission runs can be idle between decisions — keep WS open (app pings every 25s)
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 3600s;
+        proxy_read_timeout 3600s;
+
+        # Disable buffering for WebSocket
+        proxy_buffering off;
+    }
+}
+
+# Daphne (example systemd): daphne -b 0.0.0.0 -p 8000 config.asgi:application
+# Uvicorn: uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --ws-ping-interval 20 --ws-ping-timeout 20

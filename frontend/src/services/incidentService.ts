@@ -95,10 +95,20 @@ export const submitAction = async (
 
 export const acknowledgeBriefing = async (
   runId: string,
-): Promise<{ phase: MissionPhase; time_remaining: number; all_ready: boolean }> => {
-  const response = await api.post<{ phase: MissionPhase; time_remaining: number; all_ready: boolean }>(
-    `/simulations/incidents/${runId}/acknowledge/`,
-  );
+): Promise<{
+  phase: MissionPhase;
+  time_remaining: number | null;
+  all_ready: boolean;
+  briefing_complete?: boolean;
+  current_state?: MissionState;
+}> => {
+  const response = await api.post<{
+    phase: MissionPhase;
+    time_remaining: number | null;
+    all_ready: boolean;
+    briefing_complete?: boolean;
+    current_state?: MissionState;
+  }>(`/simulations/incidents/${runId}/acknowledge/`);
   return response.data;
 };
 

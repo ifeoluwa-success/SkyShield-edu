@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { updateProfile, changePassword } from '../../services/authService';
-import { User, Camera, Eye, EyeOff } from 'lucide-react';
+import { User, Camera, Eye, EyeOff, Lock, UserCircle } from 'lucide-react';
 import Toast from '../../components/Toast';
 import SuccessModal from '../../components/SuccessModal';
 import '../../assets/css/ProfilePage.css';
@@ -12,8 +12,7 @@ const ProfilePage: React.FC = () => {
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [successModal, setSuccessModal] = useState<{ title: string; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Profile form state
+
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -27,11 +26,9 @@ const ProfilePage: React.FC = () => {
     date_of_birth: '',
     address: '',
   });
-  
-  // Avatar state
+
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  
-  // Password change state
+
   const [passwordData, setPasswordData] = useState({
     old_password: '',
     new_password: '',
@@ -41,8 +38,7 @@ const ProfilePage: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
-  
-  // Load user data
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -63,32 +59,31 @@ const ProfilePage: React.FC = () => {
       }
     }
   }, [user]);
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  
+
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
-  
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
-        // Here you would upload the file to backend
         setToast({ type: 'info', message: 'Avatar upload will be implemented soon.' });
       };
       reader.readAsDataURL(file);
     }
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const updated = await updateProfile({
         first_name: formData.first_name,
@@ -100,9 +95,9 @@ const ProfilePage: React.FC = () => {
         bio: formData.bio,
         date_of_birth: formData.date_of_birth,
         address: formData.address,
-        email_notifications: true, // will be handled in settings
+        email_notifications: true,
       });
-      
+
       updateUser(updated);
       setSuccessModal({
         title: 'Profile Updated',
@@ -114,7 +109,7 @@ const ProfilePage: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.new_password !== passwordData.new_password2) {
@@ -139,234 +134,283 @@ const ProfilePage: React.FC = () => {
       setPasswordLoading(false);
     }
   };
-  
+
+  const displayName =
+    [formData.first_name, formData.last_name].filter(Boolean).join(' ') ||
+    user?.full_name ||
+    user?.email ||
+    'User';
+
+  const initials = displayName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
-    <div className="profile-page">
+    <div className="role-dashboard profile-page">
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
       {successModal && (
         <SuccessModal
-          isOpen={true}
+          isOpen
           onClose={() => setSuccessModal(null)}
           title={successModal.title}
           message={successModal.message}
         />
       )}
-      
-      <div className="page-header">
-        <h1>Profile Settings</h1>
-        <p>Manage your personal information and account details</p>
-      </div>
-      
-      <div className="profile-content">
-        <form onSubmit={handleSubmit} className="profile-form">
-          <div className="form-section">
-            <h2>Personal Information</h2>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>First Name</label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleChange}
-                  placeholder="John"
-                />
-              </div>
-              <div className="form-group">
-                <label>Last Name</label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  placeholder="Doe"
-                />
-              </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input type="email" value={formData.email} disabled readOnly />
-              </div>
-              <div className="form-group">
-                <label>Username</label>
-                <input
-                  type="text"
-                  value={formData.username}
-                  disabled
-                  readOnly
-                />
-              </div>
-              <div className="form-group">
-                <label>Organization</label>
-                <input
-                  type="text"
-                  name="organization"
-                  value={formData.organization}
-                  onChange={handleChange}
-                  placeholder="Company/Institution"
-                />
-              </div>
-              <div className="form-group">
-                <label>Department</label>
-                <input
-                  type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  placeholder="e.g., IT, Security"
-                />
-              </div>
-              <div className="form-group">
-                <label>Job Title</label>
-                <input
-                  type="text"
-                  name="job_title"
-                  value={formData.job_title}
-                  onChange={handleChange}
-                  placeholder="e.g., Security Analyst"
-                />
-              </div>
-              <div className="form-group">
-                <label>Phone Number</label>
-                <input
-                  type="tel"
-                  name="phone_number"
-                  value={formData.phone_number}
-                  onChange={handleChange}
-                  placeholder="+1234567890"
-                />
-              </div>
-              <div className="form-group full-width">
-                <label>Bio</label>
-                <textarea
-                  name="bio"
-                  rows={4}
-                  value={formData.bio}
-                  onChange={handleChange}
-                  placeholder="Tell us about yourself..."
-                />
-              </div>
-              <div className="form-group">
-                <label>Date of Birth</label>
-                <input
-                  type="date"
-                  name="date_of_birth"
-                  value={formData.date_of_birth}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="form-group full-width">
-                <label>Address</label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Street, City, Country"
-                />
-              </div>
-            </div>
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
+
+      <header className="page-header">
+        <div className="header-content">
+          <div>
+            <h1 className="page-title">Profile Settings</h1>
+            <p className="page-subtitle">
+              Manage your personal information and account security
+            </p>
           </div>
-        </form>
-        
-        <div className="profile-sidebar">
-          <div className="avatar-section">
-            <div className="avatar" onClick={handleAvatarClick}>
+        </div>
+      </header>
+
+      <div className="profile-layout">
+        <aside className="profile-aside">
+          <div className="profile-card profile-identity">
+            <button
+              type="button"
+              className="avatar-wrap"
+              onClick={handleAvatarClick}
+              aria-label="Change profile photo"
+            >
               {avatarPreview ? (
-                <img src={avatarPreview} alt={user?.full_name || 'Avatar'} />
+                <img src={avatarPreview} alt={displayName} className="avatar-img" />
               ) : (
-                <div className="avatar-placeholder">
-                  <User size={48} />
+                <div className="avatar-placeholder" aria-hidden>
+                  {initials || <User size={36} />}
                 </div>
               )}
-              <button className="change-avatar-btn" type="button">
-                <Camera size={16} />
-              </button>
-            </div>
+              <span className="avatar-edit">
+                <Camera size={14} />
+              </span>
+            </button>
             <input
               type="file"
               ref={fileInputRef}
-              style={{ display: 'none' }}
+              className="sr-only"
               accept="image/*"
               onChange={handleAvatarChange}
             />
-            <h3>{user?.full_name || user?.email}</h3>
-            <p className="role">{user?.role}</p>
+            <h2 className="profile-name">{displayName}</h2>
+            <p className="profile-email">{formData.email}</p>
+            {user?.role && <span className="profile-role">{user.role}</span>}
           </div>
-          
-          <div className="change-password-section">
-            <h3>Change Password</h3>
-            <form onSubmit={handlePasswordChange}>
+        </aside>
+
+        <div className="profile-main">
+          <form onSubmit={handleSubmit} className="profile-card">
+            <div className="card-header">
+              <UserCircle size={20} />
+              <h2>Personal Information</h2>
+            </div>
+            <div className="card-body">
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="first_name">First Name</label>
+                  <input
+                    id="first_name"
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    placeholder="John"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="last_name">Last Name</label>
+                  <input
+                    id="last_name"
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleChange}
+                    placeholder="Doe"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="email">Email</label>
+                  <input id="email" type="email" value={formData.email} disabled readOnly />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="username">Username</label>
+                  <input id="username" type="text" value={formData.username} disabled readOnly />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="organization">Organization</label>
+                  <input
+                    id="organization"
+                    type="text"
+                    name="organization"
+                    value={formData.organization}
+                    onChange={handleChange}
+                    placeholder="Company or institution"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="department">Department</label>
+                  <input
+                    id="department"
+                    type="text"
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    placeholder="e.g. IT, Security"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="job_title">Job Title</label>
+                  <input
+                    id="job_title"
+                    type="text"
+                    name="job_title"
+                    value={formData.job_title}
+                    onChange={handleChange}
+                    placeholder="e.g. Security Analyst"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="phone_number">Phone Number</label>
+                  <input
+                    id="phone_number"
+                    type="tel"
+                    name="phone_number"
+                    value={formData.phone_number}
+                    onChange={handleChange}
+                    placeholder="+1234567890"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="date_of_birth">Date of Birth</label>
+                  <input
+                    id="date_of_birth"
+                    type="date"
+                    name="date_of_birth"
+                    value={formData.date_of_birth}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label htmlFor="address">Address</label>
+                  <input
+                    id="address"
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder="Street, city, country"
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label htmlFor="bio">Bio</label>
+                  <textarea
+                    id="bio"
+                    name="bio"
+                    rows={4}
+                    value={formData.bio}
+                    onChange={handleChange}
+                    placeholder="Tell us about yourself…"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="card-footer">
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+
+          <form onSubmit={handlePasswordChange} className="profile-card">
+            <div className="card-header">
+              <Lock size={20} />
+              <h2>Change Password</h2>
+            </div>
+            <div className="card-body password-fields">
               <div className="form-group password-group">
-                <label>Current Password</label>
+                <label htmlFor="old_password">Current Password</label>
                 <div className="password-input-wrapper">
                   <input
-                    type={showOldPassword ? "text" : "password"}
+                    id="old_password"
+                    type={showOldPassword ? 'text' : 'password'}
                     value={passwordData.old_password}
-                    onChange={(e) => setPasswordData({ ...passwordData, old_password: e.target.value })}
+                    onChange={(e) =>
+                      setPasswordData({ ...passwordData, old_password: e.target.value })
+                    }
                     required
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowOldPassword(!showOldPassword)}
-                    tabIndex={-1}
+                    aria-label={showOldPassword ? 'Hide password' : 'Show password'}
                   >
                     {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
               <div className="form-group password-group">
-                <label>New Password</label>
+                <label htmlFor="new_password">New Password</label>
                 <div className="password-input-wrapper">
                   <input
-                    type={showNewPassword ? "text" : "password"}
+                    id="new_password"
+                    type={showNewPassword ? 'text' : 'password'}
                     value={passwordData.new_password}
-                    onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                    onChange={(e) =>
+                      setPasswordData({ ...passwordData, new_password: e.target.value })
+                    }
                     required
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    tabIndex={-1}
+                    aria-label={showNewPassword ? 'Hide password' : 'Show password'}
                   >
                     {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
               <div className="form-group password-group">
-                <label>Confirm New Password</label>
+                <label htmlFor="new_password2">Confirm New Password</label>
                 <div className="password-input-wrapper">
                   <input
-                    type={showConfirmPassword ? "text" : "password"}
+                    id="new_password2"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     value={passwordData.new_password2}
-                    onChange={(e) => setPasswordData({ ...passwordData, new_password2: e.target.value })}
+                    onChange={(e) =>
+                      setPasswordData({ ...passwordData, new_password2: e.target.value })
+                    }
                     required
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
+            </div>
+            <div className="card-footer">
               <button type="submit" className="btn-secondary" disabled={passwordLoading}>
-                {passwordLoading ? 'Changing...' : 'Change Password'}
+                {passwordLoading ? 'Changing…' : 'Change Password'}
               </button>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
       </div>
     </div>

@@ -40,7 +40,7 @@ const TutorDashboardPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="tutor-dashboard-page loading">
+      <div className="role-dashboard tutor-dashboard-page loading">
         <PageLoader message="Loading dashboard…" className="min-h-0 py-12" />
       </div>
     );
@@ -118,7 +118,7 @@ const TutorDashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="tutor-dashboard-page">
+    <div className="role-dashboard tutor-dashboard-page">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div className="welcome-header">
         <div className="welcome-content">

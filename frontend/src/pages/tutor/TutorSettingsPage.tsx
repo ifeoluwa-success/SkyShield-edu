@@ -15,6 +15,23 @@ import '../../assets/css/SettingsPage.css';
 
 type AlertType = 'success' | 'error' | 'info';
 
+function toDisplayText(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value === 'string') {
+    const s = value.trim();
+    return s.length > 0 ? s : null;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const o = value as Record<string, unknown>;
+    for (const key of ['browser', 'name', 'label', 'value', 'os', 'version', 'device']) {
+      const inner = o[key];
+      if (typeof inner === 'string' && inner.trim()) return inner.trim();
+    }
+  }
+  return null;
+}
+
 const TutorSettingsPage: React.FC = () => {
   const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -179,7 +196,13 @@ const TutorSettingsPage: React.FC = () => {
                   <div key={session.id} className="device-row">
                     <div className="device-icon"><Monitor size={20} /></div>
                     <div className="device-info">
-                      <span className="device-name">{[session.browser, session.os].filter(Boolean).join(' on ') || session.device_info || 'Unknown device'}</span>
+                      <span className="device-name">
+                        {[toDisplayText(session.browser), toDisplayText(session.os)]
+                          .filter(Boolean)
+                          .join(' on ') ||
+                          toDisplayText(session.device_info) ||
+                          'Unknown device'}
+                      </span>
                       <span className="device-meta">{session.ip_address && `IP: ${session.ip_address} · `}Signed in {fmtDate(session.login_time)}</span>
                     </div>
                     <div className="device-actions">

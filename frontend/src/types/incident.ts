@@ -116,6 +116,11 @@ export interface MissionState {
   last_5_events: IncidentEvent[];
   score_so_far: number;
   active_threats: ThreatNode[];
+  /** 0-based cursor from orchestrator — authoritative for which scenario step is active */
+  current_step?: number;
+  steps_completed?: number;
+  total_steps?: number;
+  phase_step_indices?: number[];
 }
 
 export interface StartMissionPayload {

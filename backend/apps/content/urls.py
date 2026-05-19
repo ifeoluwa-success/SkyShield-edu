@@ -14,10 +14,12 @@ router.register(r'bookmarks', views.MaterialBookmarkViewSet, basename='bookmark'
 urlpatterns = [
     path('', include(router.urls)),
     path('search/', views.SearchView.as_view(), name='search'),
-    path('materials/<uuid:material_pk>/comments/',
+    path('materials/<slug:material_slug>/comments/',
          views.MaterialCommentViewSet.as_view({'get': 'list', 'post': 'create'}),
          name='material-comments'),
-    path('materials/<uuid:material_pk>/comments/<uuid:pk>/',
-         views.MaterialCommentViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}),
+    path('materials/<slug:material_slug>/comments/<uuid:pk>/',
+         views.MaterialCommentViewSet.as_view({
+             'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy',
+         }),
          name='material-comment-detail'),
 ]

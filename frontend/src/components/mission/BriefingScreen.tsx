@@ -15,7 +15,12 @@ interface BriefingScreenProps {
   threatType?: string
   operatorRole?: string
   onAcknowledge?: () => void
+  /** Team briefing: all operators acknowledged */
   isReady?: boolean
+  /** Solo or single-operator run */
+  soloMode?: boolean
+  /** Acknowledge API in flight — show launch / prepare feedback */
+  isAcknowledging?: boolean
   /** e.g. copy invite link — shown in footer row */
   inviteSlot?: React.ReactNode
 }
@@ -27,6 +32,8 @@ export function BriefingScreen({
   operatorRole = "Operator",
   onAcknowledge,
   isReady = false,
+  soloMode = false,
+  isAcknowledging = false,
   inviteSlot,
 }: BriefingScreenProps) {
   const text = useMemo(() => narrative?.trim() ?? "", [narrative])
@@ -79,13 +86,32 @@ export function BriefingScreen({
     return () => clearRevealInterval()
   }, [text, instantMode, clearRevealInterval])
 
-  const canClick = revealComplete && !clickedReady
+  const canClick = revealComplete && !clickedReady && !isAcknowledging
+  const showTeamWait = clickedReady && !isAcknowledging && !isReady && !soloMode
+  const showSoloPrepare = isAcknowledging && soloMode
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-neutral-50/95 backdrop-blur-sm">
       <div className="flex min-h-full items-start justify-center px-4 py-8 sm:px-6 sm:py-10">
         <div className="w-full max-w-2xl">
-          <div className="flex max-h-[min(92vh,56rem)] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl">
+          <div className="relative flex max-h-[min(92vh,56rem)] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl">
+            {showSoloPrepare ? (
+              <div
+                className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 rounded-2xl bg-slate-900/85 px-6 text-center backdrop-blur-sm"
+                role="status"
+                aria-live="polite"
+                aria-busy="true"
+              >
+                <Spinner size="lg" />
+                <div>
+                  <p className="text-base font-semibold text-white">Preparing your simulation</p>
+                  <p className="mt-2 max-w-xs text-sm text-slate-300">
+                    Loading scenario state, syncing the live channel, and opening the first incident step…
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             {/* Header */}
             <div className="shrink-0 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-4 sm:px-6 sm:py-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -96,9 +122,14 @@ export function BriefingScreen({
                   <span className="text-sm font-medium text-amber-400 tracking-wider uppercase">
                     Mission Briefing
                   </span>
+                  {soloMode && !showSoloPrepare ? (
+                    <span className="rounded-full border border-sky-400/30 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-200">
+                      Solo mode
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 px-3 py-1 text-xs font-medium text-amber-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
                     <AlertTriangle className="h-3 w-3" />
                     {threatType}
                   </span>
@@ -118,7 +149,7 @@ export function BriefingScreen({
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
                     Intelligence package
                   </span>
-                  {!instantMode && text.length > 0 && !revealComplete && (
+                  {!instantMode && text.length > 0 && !revealComplete && !showSoloPrepare && (
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-white px-2 py-1 text-[11px] font-semibold text-amber-900 hover:bg-amber-50"
@@ -142,15 +173,24 @@ export function BriefingScreen({
               {/* Footer */}
               <div className="mt-5 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="text-sm text-neutral-500">
-                    {clickedReady && !isReady && (
+                  <div className="min-h-[1.25rem] text-sm text-neutral-500">
+                    {showSoloPrepare ? (
+                      <span className="inline-flex items-center gap-2 text-amber-800">
+                        <Spinner size="sm" />
+                        Stand by — mission console loading…
+                      </span>
+                    ) : showTeamWait ? (
                       <span className="inline-flex items-center gap-2">
                         <Spinner size="sm" />
-                        Waiting for other participants...
+                        Waiting for other participants…
                       </span>
-                    )}
+                    ) : soloMode && !clickedReady ? (
+                      <span className="text-neutral-600">
+                        Solo run — you can start as soon as you acknowledge the briefing.
+                      </span>
+                    ) : null}
                   </div>
-                  {inviteSlot ? <div className="flex shrink-0">{inviteSlot}</div> : null}
+                  {inviteSlot && !showSoloPrepare ? <div className="flex shrink-0">{inviteSlot}</div> : null}
                 </div>
                 <button
                   type="button"
@@ -160,13 +200,24 @@ export function BriefingScreen({
                     onAcknowledge?.()
                   }}
                   className={cn(
-                    "inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-200",
+                    "inline-flex min-w-[10.5rem] items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-200",
                     canClick
-                      ? "bg-amber-500 text-white hover:bg-amber-600 shadow-lg shadow-amber-500/25"
-                      : "bg-neutral-100 text-neutral-400 cursor-not-allowed",
+                      ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25 hover:bg-amber-600"
+                      : "cursor-not-allowed bg-neutral-100 text-neutral-400",
+                    isAcknowledging && "cursor-wait bg-amber-600/90",
                   )}
                 >
-                  {clickedReady ? (
+                  {showSoloPrepare ? (
+                    <>
+                      <Spinner size="sm" />
+                      Launching…
+                    </>
+                  ) : isAcknowledging ? (
+                    <>
+                      <Spinner size="sm" />
+                      Confirming…
+                    </>
+                  ) : clickedReady && isReady ? (
                     <>
                       <CheckCircle2 className="h-4 w-4" />
                       Ready

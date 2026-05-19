@@ -1,6 +1,6 @@
 .tutor-dashboard-layout { display: flex; min-height: 100vh; background: var(--bg-primary); }
 .tutor-main-content { flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column; min-height: 100vh; transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1); }
-.tutor-content-area { flex: 1; padding: 1.75rem 2rem; overflow-y: auto; }
+.tutor-content-area { flex: 1; padding: 0; overflow-y: auto; }
 
 /* Mobile toggle button — hidden on desktop */
 .tutor-mobile-menu-btn {

@@ -64,6 +64,13 @@ class Scenario(models.Model):
     version = models.CharField(max_length=10, default='1.0')
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
+    requires_team_participation = models.BooleanField(
+        default=False,
+        help_text=(
+            "Team-training mode: every participant must acknowledge the briefing, "
+            "and only the lead operator advances mission steps."
+        ),
+    )
     tags = models.JSONField(default=list, blank=True)
     
     # Statistics
@@ -296,6 +303,9 @@ class IncidentRun(models.Model):
 
     class Meta:
         ordering = ['-started_at']
+        indexes = [
+            models.Index(fields=['status', '-started_at']),
+        ]
 
     def __str__(self):
         return f"IncidentRun {self.id} — {self.scenario.title}"
@@ -333,6 +343,9 @@ class MissionParticipant(models.Model):
 
     class Meta:
         unique_together = [('run', 'user')]
+        indexes = [
+            models.Index(fields=['run', 'user']),
+        ]
 
     def __str__(self):
         return f"{self.user.username} in run {self.run.id} as {self.role}"
@@ -370,6 +383,9 @@ class IncidentEvent(models.Model):
 
     class Meta:
         ordering = ['timestamp']
+        indexes = [
+            models.Index(fields=['run', 'timestamp']),
+        ]
 
     def __str__(self):
         return f"{self.event_type} @ {self.timestamp} in run {self.run.id}"
@@ -401,6 +417,11 @@ class ThreatNode(models.Model):
         related_name='children'
     )
     phase = models.CharField(max_length=20)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['scenario', 'phase']),
+        ]
 
     def __str__(self):
         return f"{self.label} (severity {self.severity})"

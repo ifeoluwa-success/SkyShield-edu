@@ -1,4 +1,5 @@
 from pathlib import Path
+import importlib.util
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -16,7 +17,7 @@ ALLOWED_HOSTS = os.getenv(
 ).split(",")
 
 # Application definition
-INSTALLED_APPS = [
+_INSTALLED_APPS = [
     # Custom apps (order matters - users first)
     "apps.users",
     "apps.core",
@@ -56,6 +57,12 @@ INSTALLED_APPS = [
     "django.contrib.sites",
 ]
 
+# Daphne must be first when installed — otherwise `runserver` is WSGI-only and /ws/* returns 404.
+if importlib.util.find_spec("daphne") is not None:
+    INSTALLED_APPS = ["daphne", *_INSTALLED_APPS]
+else:
+    INSTALLED_APPS = list(_INSTALLED_APPS)
+
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
@@ -65,6 +72,7 @@ AUTHENTICATION_BACKENDS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "config.middleware.ClientDisconnectLogMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -131,11 +139,15 @@ CHANNEL_LAYERS = {
         "CONFIG": {
             "hosts": [REDIS_URL],
             "capacity": 1500,
-            "expiry": 10,
+            # Mission events must survive brief subscriber gaps during reconnect.
+            "expiry": 60,
             "symmetric_encryption_keys": [SECRET_KEY],
         },
     },
 }
+
+# Immersive mission WebSocket keepalive (application-level JSON ping)
+MISSION_WS_PING_INTERVAL_SECONDS = int(os.getenv("MISSION_WS_PING_INTERVAL_SECONDS", "25"))
 
 # Celery Configuration
 CELERY_BROKER_URL = REDIS_URL
@@ -245,6 +257,7 @@ REST_AUTH = {
     'JWT_AUTH_COOKIE': 'jwt-auth',
     'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh-token',
     'JWT_AUTH_HTTPONLY': False,
+    'USER_DETAILS_SERIALIZER': 'apps.users.serializers.UserProfileSerializer',
 }
 
 # allauth settings
@@ -254,6 +267,8 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_ADAPTER = 'apps.users.adapters.SkyShieldSocialAccountAdapter'
+SOCIALACCOUNT_QUERY_EMAIL = True
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -266,7 +281,7 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     },
     'github': {
-        'SCOPE': ['user', 'repo', 'read:org'],
+        'SCOPE': ['user:email'],
         'APP': {
             'client_id': os.getenv('SOCIAL_AUTH_GITHUB_CLIENT_ID'),
             'secret': os.getenv('SOCIAL_AUTH_GITHUB_SECRET'),
@@ -360,6 +375,14 @@ if not DEBUG:
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'broken_pipe_noise': {
+            '()': 'config.logging_filters.BrokenPipeNoiseFilter',
+        },
+        'asyncio_cancelled_noise': {
+            '()': 'config.logging_filters.AsyncioCancelledNoiseFilter',
+        },
+    },
     'formatters': {
         'verbose': {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
@@ -378,10 +401,12 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+            'filters': ['asyncio_cancelled_noise'],
         },
         'api_console': {
             'class': 'logging.StreamHandler',
             'formatter': 'api',
+            'filters': ['broken_pipe_noise'],
         },
         'file': {
             'class': 'logging.FileHandler',

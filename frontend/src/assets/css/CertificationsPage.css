@@ -485,3 +485,294 @@
   .certification-actions { flex-wrap: wrap; }
   .header-actions { flex-direction: column; align-items: flex-start; }
 }
+
+/* ─── Earned credentials (course certificates) ─────────────────────────────── */
+.credentials-band {
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--cyan) 40%, transparent);
+  margin-bottom: 1.75rem;
+  opacity: 0.85;
+}
+
+.credentials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.credential-card {
+  position: relative;
+  background: var(--gradient-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: var(--ease-l);
+  animation: credential-fade-up 0.45s ease both;
+}
+
+.credential-card:hover {
+  border-color: var(--border-active);
+  box-shadow: var(--shadow-cyan);
+  transform: translateY(-2px);
+}
+
+@keyframes credential-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.credential-card-inner {
+  padding: 1.5rem 1.5rem 1.25rem;
+}
+
+.credential-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  opacity: 0.35;
+  color: var(--cyan);
+}
+
+.credential-corner--tl { top: 8px; left: 8px; }
+.credential-corner--tr { top: 8px; right: 8px; transform: scaleX(-1); }
+.credential-corner--bl { bottom: 8px; left: 8px; transform: scaleY(-1); }
+.credential-corner--br { bottom: 8px; right: 8px; transform: scale(-1, -1); }
+
+.credential-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.credential-eyebrow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--border-active), transparent);
+}
+
+.credential-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+}
+
+.credential-meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 0.85rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.85rem;
+}
+
+.credential-meta dt {
+  font-weight: 600;
+  color: var(--cyan);
+  opacity: 0.85;
+}
+
+.credential-meta dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.credential-score-track {
+  height: 4px;
+  width: 100%;
+  background: var(--bg-elevated);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.credential-score-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--gradient-primary);
+  transition: width 0.6s ease;
+}
+
+.credential-score-fill--merit {
+  background: linear-gradient(90deg, #5b9cc0, #7eb8d4);
+}
+
+.credential-score-fill--pass {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
+.credential-trainee {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.credential-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.credential-grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--grade-color, var(--cyan));
+  background: var(--grade-bg, var(--cyan-dim));
+  flex-shrink: 0;
+}
+
+.credential-grade-letter {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--grade-color, var(--cyan));
+}
+
+.credential-grade-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--grade-color, var(--cyan));
+  opacity: 0.9;
+}
+
+.credential-below-threshold {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.credential-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--ease);
+  background: var(--cyan-dim);
+  border: 1px solid var(--border-active);
+  color: var(--cyan);
+}
+
+.credential-print-btn:hover {
+  background: rgba(251, 191, 36, 0.18);
+  box-shadow: var(--shadow-cyan);
+}
+
+.credential-grade-print {
+  display: none;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.credential-skeleton {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  animation: credential-fade-up 0.4s ease both;
+}
+
+.credential-skel-bar {
+  height: 12px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: credential-shimmer 1.4s infinite;
+  margin-bottom: 0.65rem;
+}
+
+@keyframes credential-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.credentials-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1.5rem;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.credentials-empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 1px solid var(--border-active);
+  background: var(--cyan-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+  margin-bottom: 0.5rem;
+}
+
+.credentials-empty h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.credentials-empty p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+  max-width: 28rem;
+}
+
+@media print {
+  body.cert-printing .print-certificate.printing-active {
+    background: #fff !important;
+    border: 2px solid #b45309 !important;
+    color: #09090b !important;
+  }
+
+  body.cert-printing .print-certificate.printing-active .credential-title,
+  body.cert-printing .print-certificate.printing-active .credential-trainee,
+  body.cert-printing .print-certificate.printing-active .credential-meta dd {
+    color: #09090b !important;
+  }
+
+  body.cert-printing .print-certificate.printing-active .credential-eyebrow,
+  body.cert-printing .print-certificate.printing-active .credential-meta dt {
+    color: #b45309 !important;
+  }
+
+  body.cert-printing .credential-grade-print {
+    display: flex !important;
+    visibility: visible !important;
+  }
+}

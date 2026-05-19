@@ -134,26 +134,19 @@ const CategoryBar: React.FC<{ stat: CategoryStat; maxCount: number; colorIndex: 
   colorIndex,
 }) => {
   const color = CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length];
-  const pct   = maxCount > 0 ? Math.round((stat.count / maxCount) * 100) : 0;
+  const pct = maxCount > 0 ? Math.round((stat.count / maxCount) * 100) : 0;
+  const label = stat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
   return (
-    <div className="category-item">
-      <div className="category-header">
-        <span className="category-name">
-          {stat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+    <div className="dashboard-bar-row">
+      <div className="dashboard-bar-header">
+        <strong>{label}</strong>
+        <span style={{ color }}>
+          {stat.count} completed · {stat.avg_score}%
         </span>
-        <div className="category-meta">
-          <span className="category-count">{stat.count} completed</span>
-          <span className="category-score" style={{ color }}>
-            {stat.avg_score}%
-          </span>
-        </div>
       </div>
-      <div className="threat-bar">
-        <div
-          className="bar-fill"
-          style={{ width: `${pct}%`, background: color }}
-        />
+      <div className="dashboard-bar-track">
+        <div className="dashboard-bar-fill" style={{ width: `${pct}%`, background: color }} />
       </div>
     </div>
   );
@@ -355,7 +348,7 @@ const DashboardPage: React.FC = () => {
   // ── Render: loading ─────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="dashboard-page loading">
+      <div className="role-dashboard dashboard-page loading">
         <PageLoader message="Loading dashboard…" className="min-h-0 py-12" />
       </div>
     );
@@ -363,7 +356,7 @@ const DashboardPage: React.FC = () => {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="dashboard-page">
+    <div className="role-dashboard dashboard-page">
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
@@ -547,7 +540,7 @@ const DashboardPage: React.FC = () => {
 
         {/* Category Performance — replaces the fake Threat Landscape */}
         <div className="threat-landscape card-3d">
-          <div className="section-header">
+          <div className="section-header p-5">
             <div>
               <h2 className="section-title">
                 <Activity size={20} />
@@ -564,7 +557,7 @@ const DashboardPage: React.FC = () => {
             )}
           </div>
 
-          <div className="threats-list">
+          <div className="threats-list p-5">
             {categoryStats.length === 0 ? (
               <div className="empty-state threats-empty">
                 <BarChart3 size={32} />

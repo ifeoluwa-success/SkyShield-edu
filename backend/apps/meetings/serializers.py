@@ -121,21 +121,21 @@ class MeetingListSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return False
-        
+
         user = request.user
-        
-        if obj.host == user:
+
+        if obj.host_id == user.id:
             return True
-        
+
         if obj.status not in ['scheduled', 'live']:
             return False
-        
-        if obj.participants.filter(user=user).exists():
+
+        if getattr(obj, '_user_is_participant', False):
             return True
-        
+
         if obj.participant_count >= obj.max_participants:
             return False
-        
+
         return True
 
 

@@ -1,7 +1,8 @@
 // src/pages/meetings/MeetingRoom.tsx
+import '../../polyfills';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { JoinMeetingResponse } from '../../services/tutorService';
+import type { JoinMeetingResponse } from '../../types/tutor';
 import { joinMeeting, trackMeetingAttendance } from '../../services/tutorService';
 import { useAuth } from '../../hooks/useAuth';
 import SimplePeer from 'simple-peer';

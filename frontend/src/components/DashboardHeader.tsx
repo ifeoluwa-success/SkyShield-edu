@@ -14,30 +14,16 @@ import {
   X,
   ChevronDown,
 } from 'lucide-react';
-import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import NotificationPanel from './NotificationPanel';
-import { searchContent, type SearchResult } from '../services/contentService';
+import {
+  searchContent,
+  searchItemToRoute,
+  type GroupedSearchResults,
+} from '../services/contentService';
 import { applyThemeToDocument, readStoredTheme, type AppTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
-
-const LogoMark = () => (
-  <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-    <path
-      d="M16 3L27.3 9.5V22.5L16 29L4.7 22.5V9.5Z"
-      stroke="#fbbf24"
-      strokeWidth="1.8"
-      strokeLinejoin="round"
-    />
-    <polyline
-      points="10,21 16,13.5 22,21"
-      stroke="#fbbf24"
-      strokeWidth="2.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 
 interface DashboardHeaderProps {
   onMobileToggle: () => void;
@@ -61,7 +47,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
   const [notificationsCount, setNotificationsCount] = useState(0);
 
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult | null>(null);
+  const [results, setResults] = useState<GroupedSearchResults | null>(null);
   const [searching, setSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -151,7 +137,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
     navigate('/login');
   };
 
-  const totalHits = (results?.materials?.length ?? 0) + (results?.paths?.length ?? 0);
+  const totalHits = results?.total ?? 0;
 
   return (
     <>
@@ -180,7 +166,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
                 <Menu size={24} />
               </button>
 
-              <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
                 <LogoMark />
                 <div
                   className={cn(
@@ -190,7 +176,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
                 >
                   SkyShield <span className="text-amber-600">Edu</span>
                 </div>
-              </Link>
+              </Link> */}
 
               <nav
                 className="hidden xl:flex items-center justify-center gap-0 flex-1 min-w-0 px-2"
@@ -293,12 +279,12 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
                         >
                           <BookOpen size={14} /> Materials
                         </div>
-                        {results.materials.slice(0, 5).map((m, idx) => (
+                        {results.materials.slice(0, 5).map((m) => (
                           <button
                             type="button"
-                            key={String(m.id ?? m.slug ?? `m-${idx}`)}
+                            key={`material-${m.id}`}
                             onClick={() => {
-                              navigate('/dashboard/learning-materials');
+                              navigate(searchItemToRoute(m));
                               clearSearch();
                             }}
                             className={cn(
@@ -309,8 +295,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
                             <BookOpen size={18} className="text-amber-600 shrink-0" />
                             <div className="min-w-0">
                               <p className="font-medium truncate">{m.title}</p>
-                              {m.difficulty ? (
-                                <p className="text-xs text-zinc-500">{m.difficulty}</p>
+                              {m.description ? (
+                                <p className="text-xs text-zinc-500 truncate">{m.description}</p>
                               ) : null}
                             </div>
                           </button>
@@ -330,12 +316,12 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
                         >
                           <Map size={14} /> Learning Paths
                         </div>
-                        {results.paths.slice(0, 3).map((p, idx) => (
+                        {results.paths.slice(0, 3).map((p) => (
                           <button
                             type="button"
-                            key={String(p.id ?? p.slug ?? `p-${idx}`)}
+                            key={`path-${p.id}`}
                             onClick={() => {
-                              navigate('/dashboard/learning-materials');
+                              navigate(searchItemToRoute(p));
                               clearSearch();
                             }}
                             className={cn(
@@ -360,7 +346,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
                         <button
                           type="button"
                           onClick={() => {
-                            navigate('/dashboard/learning-materials');
+                            navigate(`/dashboard/search?q=${encodeURIComponent(query.trim())}`);
                             clearSearch();
                           }}
                           className={cn(

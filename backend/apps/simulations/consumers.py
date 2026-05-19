@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import AccessToken
@@ -17,8 +18,14 @@ from .orchestrator import (
 )
 from .models import IncidentRun, MissionParticipant
 from .state_machine import MissionStateMachine
+from .ws_support import channel_safe, is_client_disconnect, log_client_disconnect, peer_from_scope
+from .ws_channel import ensure_channel_layer, redis_ping
 
 logger = logging.getLogger(__name__)
+
+PING_INTERVAL_S = getattr(settings, 'MISSION_WS_PING_INTERVAL_SECONDS', 25)
+# 4006 = replaced by a newer socket (tab refresh); not auth failure (4001).
+EVICT_CLOSE_CODE = 4006
 
 
 class MissionConsumer(AsyncJsonWebsocketConsumer):
@@ -28,15 +35,18 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
     Auth: JWT token in ?token= query string
     Group: mission_{run_id}
 
-    This is SEPARATE from MeetingConsumer — it handles incident
-    state only, not WebRTC.
+    Reconnect contract:
+      1. Old socket is evicted (same user, same run) via socket_evict group message.
+      2. connect() sends connection_confirmed with full mission state (direct to socket).
+      3. Group membership is optional when Redis is down — state still rehydrates.
     """
 
     async def connect(self):
-        """
-        Authenticate, ensure MissionParticipant (fallback if HTTP join was skipped),
-        join channel group, send state_snapshot, broadcast roster/state to the group.
-        """
+        self._timer_task = None
+        self._ping_task = None
+        self._accepted = False
+        self._cleaned_up = False
+
         self.user = await self.get_user_from_token()
         if not self.user or isinstance(self.user, AnonymousUser):
             await self.close(code=4001)
@@ -48,10 +58,17 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=4004)
             return
 
+        self.run_id = str(run_id)
+        self.group_name = f'mission_{self.run_id}'
+        self._peer = peer_from_scope(self.scope)
+
+        await self.accept()
+        self._accepted = True
+
         orchestrator = ScenarioOrchestrator()
         try:
             await database_sync_to_async(orchestrator.join_mission)(
-                str(run_id), self.user, 'support_operator'
+                str(run_id), self.user, 'support_operator', broadcast=False
             )
         except MissionAlreadyComplete:
             logger.info(
@@ -70,86 +87,140 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=4004)
             return
 
-        self.run_id = str(run_id)
-        self.group_name = f'mission_{self.run_id}'
+        self.participant_id = str(self.participant.id)
 
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
-        await self.accept()
+        self._channel_ok = await self._try_join_group()
 
-        state = await database_sync_to_async(orchestrator.get_current_state)(self.run_id)
-        await self.send_json({'type': 'state_snapshot', 'data': state})
+        await self._send_connection_confirmed(reason='connect')
 
-        await self.channel_layer.group_send(
-            self.group_name,
-            {
-                'type': 'mission_event',
-                'event': {
-                    'event_type': 'participant_joined',
-                    'username': self.user.username,
-                    'user_id': self.user.pk,
-                },
-            },
-        )
+        if self._channel_ok:
+            asyncio.create_task(self._evict_stale_sockets_for_user())
+
+        if self._channel_ok:
+            try:
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    channel_safe(
+                        {
+                            'type': 'mission_event',
+                            'event': {
+                                'event_type': 'participant_joined',
+                                'username': self.user.username,
+                                'user_id': self.user.pk,
+                            },
+                        }
+                    ),
+                )
+            except Exception as exc:
+                logger.warning(
+                    'mission.ws_participant_joined_broadcast_failed run_id=%s: %s',
+                    self.run_id,
+                    exc,
+                )
 
         self._timer_task = asyncio.create_task(self._schedule_timer_warning())
+        self._ping_task = asyncio.create_task(self._server_ping_loop())
+
         logger.info(
-            'mission.ws_connected run_id=%s user_id=%s',
+            'mission.ws_connected run_id=%s user_id=%s participant_id=%s channel_ok=%s',
             self.run_id,
             self.user.pk,
+            self.participant_id,
+            self._channel_ok,
         )
 
-    async def disconnect(self, code):
-        """
-        Stamp presence offline (last_heartbeat), notify group, push updated mission state,
-        then leave the channel group.
-        """
+    async def _try_join_group(self) -> bool:
         try:
-            if hasattr(self, '_timer_task') and self._timer_task:
-                self._timer_task.cancel()
+            await ensure_channel_layer()
+            await self.channel_layer.group_add(self.group_name, self.channel_name)
+            return True
+        except Exception as exc:
+            logger.warning(
+                'mission.ws_group_add_skipped run_id=%s user_id=%s redis_ping=%s err=%s',
+                getattr(self, 'run_id', '-'),
+                getattr(self.user, 'pk', '-'),
+                redis_ping(),
+                exc,
+            )
+            return False
+
+    async def _evict_stale_sockets_for_user(self):
+        """Close older sockets for this user on the same run (tab refresh / reconnect)."""
+        try:
+            await self.channel_layer.group_send(
+                self.group_name,
+                channel_safe(
+                    {
+                        'type': 'socket_evict',
+                        'user_id': self.user.pk,
+                        'keep_channel': self.channel_name,
+                    }
+                ),
+            )
+        except Exception as exc:
+            logger.debug('mission.socket_evict_send_failed: %s', exc)
+
+    async def socket_evict(self, event):
+        """Drop duplicate connections for the same user (keep the newest channel)."""
+        if not getattr(self, '_accepted', False):
+            return
+        if str(event.get('user_id')) != str(self.user.pk):
+            return
+        if event.get('keep_channel') == self.channel_name:
+            return
+        logger.info(
+            'mission.ws_evicting_stale_socket run_id=%s user_id=%s old_channel=%s',
+            getattr(self, 'run_id', '-'),
+            self.user.pk,
+            self.channel_name,
+        )
+        try:
+            await self.close(code=EVICT_CLOSE_CODE)
         except Exception:
             pass
 
-        if hasattr(self, 'run_id') and hasattr(self, 'user'):
-            await self.mark_participant_disconnected(self.run_id, self.user.id)
+    async def disconnect(self, code):
+        await self._cleanup(code=code)
+
+    async def _group_discard_safe(self, group_name: str) -> None:
+        try:
+            await asyncio.wait_for(
+                self.channel_layer.group_discard(group_name, self.channel_name),
+                timeout=2.0,
+            )
+        except Exception as exc:
+            if not is_client_disconnect(exc):
+                logger.debug('mission.ws_group_discard_failed: %s', exc)
+
+    async def _cleanup(self, code=None):
+        if getattr(self, '_cleaned_up', False):
+            return
+        self._cleaned_up = True
+
+        for attr in ('_timer_task', '_ping_task'):
             try:
-                await self.channel_layer.group_send(
-                    f'mission_{self.run_id}',
-                    {
-                        'type': 'mission_event',
-                        'event': {
-                            'event_type': 'participant_left',
-                            'username': self.user.username,
-                            'user_id': self.user.pk,
-                        },
-                    },
-                )
+                task = getattr(self, attr, None)
+                if task:
+                    task.cancel()
             except Exception:
                 pass
-            try:
-                ScenarioOrchestrator().broadcast_mission_state_update(self.run_id)
-            except Exception:
-                logger.exception('mission.ws_disconnect_broadcast_failed run_id=%s', self.run_id)
-            logger.info(
-                'mission.ws_disconnected run_id=%s user_id=%s code=%s',
-                self.run_id,
-                self.user.pk,
-                code,
-            )
 
-        if hasattr(self, 'group_name'):
-            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        group_name = getattr(self, 'group_name', None)
+        if group_name and getattr(self, '_channel_ok', False):
+            asyncio.create_task(self._group_discard_safe(group_name))
+
+        if hasattr(self, 'run_id') and hasattr(self, 'user') and self.user:
+            asyncio.create_task(self.mark_participant_disconnected(self.run_id, self.user.id))
+
+        logger.info(
+            'mission.ws_disconnected run_id=%s user_id=%s participant_id=%s code=%s',
+            getattr(self, 'run_id', '-'),
+            getattr(self.user, 'pk', '-'),
+            getattr(self, 'participant_id', '-'),
+            code,
+        )
 
     async def receive_json(self, content):
-        """
-        Route incoming WS messages by content['type']:
-          'submit_action'           → handle_submit_action(content)
-          'acknowledge_briefing'    → handle_acknowledge_briefing(content)
-          'request_hint'            → handle_request_hint(content)
-          'abandon'                 → handle_abandon(content)
-          'supervisor_intervention' → handle_supervisor_intervention(content)
-          'get_state'               → send state to this connection only
-          unknown type              → send error message back
-        """
         try:
             msg_type = (content or {}).get('type')
             handlers = {
@@ -160,24 +231,84 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
                 'supervisor_intervention': self.handle_supervisor_intervention,
                 'get_state': self._handle_get_state,
                 'heartbeat': self.handle_heartbeat,
-                'ping': self.handle_heartbeat,
+                'pong': self.handle_pong,
             }
             handler = handlers.get(msg_type)
             if handler:
                 await handler(content or {})
+            elif msg_type == 'ping':
+                await self.handle_pong(content or {})
             else:
-                await self.send_json({'type': 'error', 'message': 'Unknown message type'})
+                await self.safe_send_json({'type': 'error', 'message': 'Unknown message type'})
         except Exception as e:
-            logger.error(f"Error handling message: {e}")
+            if is_client_disconnect(e):
+                self._log_disconnect(e, detail='receive_json')
+                return
+            logger.error(
+                'mission.ws_message_error run_id=%s user_id=%s: %s',
+                getattr(self, 'run_id', '-'),
+                getattr(self.user, 'pk', '-'),
+                e,
+            )
+
+    async def _server_ping_loop(self):
+        try:
+            while True:
+                await asyncio.sleep(PING_INTERVAL_S)
+                sent = await self.safe_send_json({
+                    'type': 'ping',
+                    'ts': timezone.now().isoformat(),
+                    'run_id': getattr(self, 'run_id', None),
+                })
+                if not sent:
+                    break
+        except asyncio.CancelledError:
+            return
+        except Exception as exc:
+            if is_client_disconnect(exc):
+                self._log_disconnect(exc, detail='ping_loop')
+            else:
+                logger.debug('mission.ws_ping_loop_end', exc_info=True)
+
+    async def _send_connection_confirmed(self, reason='connect'):
+        orchestrator = ScenarioOrchestrator()
+        state = await database_sync_to_async(
+            lambda: orchestrator.get_current_state(self.run_id, trim_session=True)
+        )()
+        payload = channel_safe({
+            'type': 'connection_confirmed',
+            'state': state,
+            'reason': reason,
+            'run_id': self.run_id,
+            'user_id': self.user.pk,
+            'channel_layer_ok': getattr(self, '_channel_ok', False),
+        })
+        await self.safe_send_json(payload)
+
+    async def safe_send_json(self, content) -> bool:
+        if not getattr(self, '_accepted', False):
+            return False
+        try:
+            await self.send_json(content)
+            return True
+        except Exception as exc:
+            if is_client_disconnect(exc):
+                self._log_disconnect(exc, detail='send_json')
+                return False
+            raise
+
+    def _log_disconnect(self, exc, detail=None):
+        log_client_disconnect(
+            channel='websocket',
+            exc=exc,
+            run_id=getattr(self, 'run_id', None),
+            participant_id=getattr(self, 'participant_id', None),
+            user_id=str(self.user.pk) if getattr(self, 'user', None) else None,
+            peer=getattr(self, '_peer', None),
+            detail=detail,
+        )
 
     async def handle_submit_action(self, content):
-        """
-        1. Call orchestrator.submit_action() via database_sync_to_async
-        2. On PhaseTimedOut exception: send timeout message to group
-        3. On UnauthorizedAction: send error to this connection only
-        4. On success: result is already broadcast by orchestrator
-           — also send personal confirmation to this connection
-        """
         orchestrator = ScenarioOrchestrator()
         payload = content.get('payload') or content
         try:
@@ -185,33 +316,32 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
                 self.run_id, self.user, payload
             )
         except PhaseTimedOut:
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    'type': 'mission_event',
-                    'event': {'event_type': 'timeout_occurred', 'phase': getattr(self.run, 'phase', None)},
-                }
-            )
+            if getattr(self, '_channel_ok', False):
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    channel_safe(
+                        {
+                            'type': 'mission_event',
+                            'event': {
+                                'event_type': 'timeout_occurred',
+                                'phase': getattr(self.run, 'phase', None),
+                            },
+                        }
+                    ),
+                )
             return
         except UnauthorizedAction:
-            await self.send_json({'type': 'error', 'message': 'Unauthorized'})
+            await self.safe_send_json({'type': 'error', 'message': 'Unauthorized'})
             return
         except (MissionNotFound, MissionAlreadyComplete) as e:
-            await self.send_json({'type': 'error', 'message': str(e)})
+            await self.safe_send_json({'type': 'error', 'message': str(e)})
             return
 
-        await self.send_json({'type': 'action_received', 'data': result})
+        await self.safe_send_json({'type': 'action_received', 'data': result})
 
     async def handle_supervisor_intervention(self, content):
-        """
-        1. Verify self.user.role in ['supervisor', 'admin']
-           If not: send {'type': 'error', 'message': 'Unauthorized'}
-           and close with code 4003
-        2. Call orchestrator.apply_supervisor_intervention()
-        3. Result is broadcast by orchestrator
-        """
         if getattr(self.user, 'role', None) not in ['supervisor', 'admin']:
-            await self.send_json({'type': 'error', 'message': 'Unauthorized'})
+            await self.safe_send_json({'type': 'error', 'message': 'Unauthorized'})
             await self.close(code=4003)
             return
 
@@ -223,41 +353,44 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def handle_acknowledge_briefing(self, content):
-        """Call orchestrator.acknowledge_briefing() and send result"""
         orchestrator = ScenarioOrchestrator()
-        result = await database_sync_to_async(orchestrator.acknowledge_briefing)(self.run_id, self.user)
-        await self.send_json({'type': 'acknowledge_result', 'data': result})
+        result = await database_sync_to_async(orchestrator.acknowledge_briefing)(
+            self.run_id, self.user
+        )
+        await self.safe_send_json({'type': 'acknowledge_result', 'data': result})
 
     async def handle_request_hint(self, content):
-        """Call orchestrator.request_hint() and send result"""
         orchestrator = ScenarioOrchestrator()
         result = await database_sync_to_async(orchestrator.request_hint)(self.run_id, self.user)
-        await self.send_json({'type': 'hint', 'data': result})
+        await self.safe_send_json({'type': 'hint', 'data': result})
 
     async def handle_abandon(self, content):
-        """Call orchestrator.abandon_mission() and send result"""
         orchestrator = ScenarioOrchestrator()
         result = await database_sync_to_async(orchestrator.abandon_mission)(self.run_id, self.user)
-        await self.send_json({'type': 'abandoned', 'data': result})
+        await self.safe_send_json({'type': 'abandoned', 'data': result})
 
     async def _handle_get_state(self, content):
-        """Send current state snapshot to this connection only."""
-        orchestrator = ScenarioOrchestrator()
-        state = await database_sync_to_async(orchestrator.get_current_state)(self.run_id)
-        await self.send_json({'type': 'state_snapshot', 'data': state})
+        await self._send_connection_confirmed(reason='get_state')
 
     async def handle_heartbeat(self, content):
-        """Refresh last_heartbeat; optional light broadcast for presence UIs."""
         orchestrator = ScenarioOrchestrator()
         await database_sync_to_async(orchestrator.touch_participant_heartbeat)(
             self.run_id, self.user
         )
-        await self.send_json({'type': 'heartbeat_ack', 'ok': True})
+        await self.safe_send_json({'type': 'heartbeat_ack', 'ok': True})
+
+    async def handle_pong(self, content):
+        orchestrator = ScenarioOrchestrator()
+        await database_sync_to_async(orchestrator.touch_participant_heartbeat)(
+            self.run_id, self.user
+        )
+        await self.safe_send_json({
+            'type': 'pong_ack',
+            'ok': True,
+            'ts': timezone.now().isoformat(),
+        })
 
     async def _schedule_timer_warning(self):
-        """
-        Background task that schedules a timer warning when 15 seconds remain.
-        """
         try:
             run = await self.get_run(self.run_id)
             if not run:
@@ -267,39 +400,54 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
             if remaining is None:
                 return
             if remaining <= 15:
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {'type': 'timer_warning', 'seconds_remaining': int(remaining), 'phase': run.phase}
-                )
+                if getattr(self, '_channel_ok', False):
+                    await self.channel_layer.group_send(
+                        self.group_name,
+                        channel_safe(
+                            {
+                                'type': 'timer_warning',
+                                'seconds_remaining': int(remaining),
+                                'phase': run.phase,
+                            }
+                        ),
+                    )
                 return
             await asyncio.sleep(max(0, remaining - 15))
             run = await self.get_run(self.run_id)
             if not run:
                 return
-            await self.channel_layer.group_send(
-                self.group_name,
-                {'type': 'timer_warning', 'seconds_remaining': 15, 'phase': run.phase}
-            )
+            if getattr(self, '_channel_ok', False):
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    channel_safe(
+                        {
+                            'type': 'timer_warning',
+                            'seconds_remaining': 15,
+                            'phase': run.phase,
+                        }
+                    ),
+                )
         except asyncio.CancelledError:
             return
         except Exception:
             return
 
-    # --- Channel layer broadcast receivers ---
-    # These are called by the orchestrator via channel_layer.group_send()
-    # They forward the message to the WebSocket client
-
     async def mission_event(self, event):
-        """Forward any IncidentEvent to all group members."""
-        await self.send_json({'type': 'mission_event', 'event': event['event']})
+        await self.safe_send_json({'type': 'mission_event', 'event': event['event']})
 
     async def state_update(self, event):
-        """Send full state snapshot to all group members."""
-        await self.send_json({'type': 'state_update', 'data': event['data']})
+        await self.safe_send_json({'type': 'state_update', 'data': event['data']})
+        phase = (event.get('data') or {}).get('phase')
+        if phase and phase not in ('briefing', 'review'):
+            try:
+                if self._timer_task:
+                    self._timer_task.cancel()
+            except Exception:
+                pass
+            self._timer_task = asyncio.create_task(self._schedule_timer_warning())
 
     async def participants_updated(self, event):
-        """Roster-only refresh for clients that prefer a smaller payload."""
-        await self.send_json(
+        await self.safe_send_json(
             {
                 'type': 'participants_updated',
                 'participants': event.get('participants') or [],
@@ -307,22 +455,13 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def timer_warning(self, event):
-        """
-        Broadcast when 15 seconds remain in current phase.
-        Orchestrator calls this — also set up a background task
-        in connect() to trigger this at the right time.
-        """
-        await self.send_json(
+        await self.safe_send_json(
             {
                 'type': 'timer_warning',
                 'seconds_remaining': event['seconds_remaining'],
                 'phase': event['phase'],
             }
         )
-
-    # =========================================================================
-    # DATABASE HELPERS (JWT pattern copied from meetings consumer)
-    # =========================================================================
 
     @database_sync_to_async
     def get_user_from_token(self):
@@ -349,15 +488,14 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def get_participant(self, run_id, user_id):
         try:
-            return MissionParticipant.objects.select_related('user').get(run_id=run_id, user_id=user_id)
+            return MissionParticipant.objects.select_related('user').get(
+                run_id=run_id, user_id=user_id
+            )
         except MissionParticipant.DoesNotExist:
             return None
 
     @database_sync_to_async
     def mark_participant_disconnected(self, run_id, user_id):
-        """
-        Mark WebSocket presence as stale (does not remove mission membership).
-        """
         try:
             stale = timezone.now() - timedelta(seconds=120)
             MissionParticipant.objects.filter(run_id=run_id, user_id=user_id).update(
@@ -365,4 +503,3 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
             )
         except Exception:
             return
-

@@ -114,3 +114,466 @@ INFO 2026-05-14 19:06:29,646 signals 23840 7756 Participant demo.trainee@skyshie
 INFO 2026-05-14 19:09:58,267 signals 16952 6496 Meeting created: [SEED] Office hours - instructor drop-in by demo.supervisor@skyshield.demo
 INFO 2026-05-14 19:09:59,059 signals 16952 6496 Participant demo.supervisor@skyshield.demo joined meeting [SEED] Office hours - instructor drop-in
 INFO 2026-05-14 19:09:59,728 signals 16952 6496 Participant demo.trainee@skyshield.demo joined meeting [SEED] Office hours - instructor drop-in
+INFO 2026-05-14 19:10:52,258 signals 3868 24608 Participant polaniyan007@gmail.com joined meeting [SEED] Internal: weekly sim debrief room
+INFO 2026-05-14 19:11:12,903 signals 3868 22572 Participant theonlypermactech@gmail.com joined meeting [SEED] Internal: weekly sim debrief room
+INFO 2026-05-14 19:13:54,280 views 3868 24608 User logged out: polaniyan007@gmail.com
+INFO 2026-05-14 19:17:57,898 views 3868 28636 User logged out: theonlypermactech@gmail.com
+INFO 2026-05-14 19:21:24,065 views 3868 27280 User logged in: theonlypermactech@gmail.com (role=trainee)
+INFO 2026-05-14 19:55:52,207 views 3868 18996 User logged in: polaniyan007@gmail.com (role=trainee)
+INFO 2026-05-14 20:05:40,469 orchestrator 3868 11332 mission.join_mission run_id=1aa69983-df09-45a5-945a-8af3d3da3393 user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 username=josh created=True role=support_operator
+INFO 2026-05-14 20:05:47,039 incident_views 3868 11332 mission.http_join run_id=1aa69983-df09-45a5-945a-8af3d3da3393 user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 created=True
+INFO 2026-05-14 23:43:09,120 views 2524 18460 Password reset requested for: theonlypermactech@gmail.com
+INFO 2026-05-14 23:44:58,990 views 2524 18460 User logged in: theonlypermactech@gmail.com (role=trainee)
+INFO 2026-05-14 23:45:19,381 orchestrator 2524 18712 mission.join_mission run_id=d46bc6da-9c38-44e8-829d-82ffc2d0cd25 user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 username=josh created=True role=support_operator
+INFO 2026-05-14 23:45:24,395 incident_views 2524 18712 mission.http_join run_id=d46bc6da-9c38-44e8-829d-82ffc2d0cd25 user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 created=True
+WARNING 2026-05-15 00:18:17,860 views 14988 22536 AdaptiveLearningService not available for ML update
+INFO 2026-05-15 00:27:38,946 orchestrator 14988 17380 mission.join_mission run_id=342c96d8-5ac4-496d-86c5-5395094ceaeb user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 username=josh created=True role=support_operator
+INFO 2026-05-15 00:27:45,284 incident_views 14988 17380 mission.http_join run_id=342c96d8-5ac4-496d-86c5-5395094ceaeb user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 created=True
+WARNING 2026-05-15 14:12:20,740 ws_support 15168 15184 mission.client_disconnect channel=http-wsgi run_id=- participant_id=- user_id=- peer=127.0.0.1', 60239 detail=- Broken pipe from ('127.0.0.1', 60239) exc=-
+INFO 2026-05-15 14:20:17,837 orchestrator 15168 15460 mission.join_mission run_id=9ab0d84f-aac2-4b8c-a1c4-5e59b0ba91a6 user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 username=josh created=True role=support_operator
+INFO 2026-05-15 14:20:28,351 incident_views 15168 15460 mission.http_join run_id=9ab0d84f-aac2-4b8c-a1c4-5e59b0ba91a6 user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 created=True
+WARNING 2026-05-15 14:20:28,896 ws_support 15168 15460 mission.client_disconnect channel=http-wsgi run_id=- participant_id=- user_id=- peer=127.0.0.1', 50366 detail=- Broken pipe from ('127.0.0.1', 50366) exc=-
+INFO 2026-05-15 14:21:48,343 orchestrator 15168 9872 mission.join_mission run_id=01c69521-c22c-48db-bd74-6654708421bf user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 username=josh created=True role=support_operator
+INFO 2026-05-15 14:22:01,588 incident_views 15168 9872 mission.http_join run_id=01c69521-c22c-48db-bd74-6654708421bf user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 created=True
+WARNING 2026-05-15 14:22:01,959 ws_support 15168 9872 mission.client_disconnect channel=http-wsgi run_id=- participant_id=- user_id=- peer=127.0.0.1', 55286 detail=- Broken pipe from ('127.0.0.1', 55286) exc=-
+WARNING 2026-05-15 14:31:24,977 ws_support 15168 18660 mission.client_disconnect channel=http-wsgi run_id=- participant_id=- user_id=- peer=127.0.0.1', 53083 detail=- Broken pipe from ('127.0.0.1', 53083) exc=-
+WARNING 2026-05-15 14:31:24,987 ws_support 15168 13376 mission.client_disconnect channel=http-wsgi run_id=- participant_id=- user_id=- peer=127.0.0.1', 53924 detail=- Broken pipe from ('127.0.0.1', 53924) exc=-
+INFO 2026-05-15 14:45:27,180 orchestrator 27528 5956 mission.join_mission run_id=a7976b35-0702-486b-8e81-ee1e00be499d user_id=4cfd86a7-ffd5-438e-878b-5eb6c313e2ad username=pelumi6 created=False role=lead_operator
+DEBUG 2026-05-15 14:45:35,778 consumers 27528 18000 mission.socket_evict_send_failed: can not serialize 'UUID' object
+ERROR 2026-05-15 14:45:39,558 orchestrator 27528 17376 mission.deferred_notify_failed run_id=a7976b35-0702-486b-8e81-ee1e00be499d
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\Mr Busoye\SkyShield-edu\backend\apps\simulations\orchestrator.py", line 68, in _work
+    orch.broadcast_mission_state_update(rid)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\user\Documents\Mr Busoye\SkyShield-edu\backend\apps\simulations\orchestrator.py", line 656, in broadcast_mission_state_update
+    async_to_sync(channel_layer.group_send)(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        f'mission_{rid}',
+        ^^^^^^^^^^^^^^^^^
+        {'type': 'state_update', 'data': state},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\user\Documents\Mr Busoye\SkyShield-edu\backend\.venv\Lib\site-packages\asgiref\sync.py", line 325, in __call__
+    return call_result.result()
+           ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\user\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\_base.py", line 443, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\user\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\_base.py", line 395, in __get_result
+    raise self._exception
+  File "C:\Users\user\Documents\Mr Busoye\SkyShield-edu\backend\.venv\Lib\site-packages\asgiref\sync.py", line 365, in main_wrap
+    result = await awaitable
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Mr Busoye\SkyShield-edu\backend\.venv\Lib\site-packages\channels_redis\core.py", line 528, in group_send
+    ) = self._map_channel_keys_to_connection(channel_names, message)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Mr Busoye\SkyShield-edu\backend\.venv\Lib\site-packages\channels_redis\core.py", line 628, in _map_channel_keys_to_connection
+    channel_key_to_message[key] = self.serialize(value)
+                                  ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\user\Documents\Mr Busoye\SkyShield-edu\backend\.venv\Lib\site-packages\channels_redis\core.py", line 648, in serialize
+    return self._serializer.serialize(message)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\user\Documents\Mr Busoye\SkyShield-edu\backend\.venv\Lib\site-packages\channels_redis\serializers.py", line 71, in serialize
+    message = self.as_bytes(message)
+  File "C:\Users\user\Documents\Mr Busoye\SkyShield-edu\backend\.venv\Lib\site-packages\msgpack\__init__.py", line 36, in packb
+    return Packer(**kwargs).pack(o)
+           ~~~~~~~~~~~~~~~~~~~~~^^^
+  File "msgpack/_packer.pyx", line 279, in msgpack._cmsgpack.Packer.pack
+  File "msgpack/_packer.pyx", line 276, in msgpack._cmsgpack.Packer.pack
+  File "msgpack/_packer.pyx", line 270, in msgpack._cmsgpack.Packer._pack
+  File "msgpack/_packer.pyx", line 213, in msgpack._cmsgpack.Packer._pack_inner
+  File "msgpack/_packer.pyx", line 270, in msgpack._cmsgpack.Packer._pack
+  File "msgpack/_packer.pyx", line 213, in msgpack._cmsgpack.Packer._pack_inner
+  File "msgpack/_packer.pyx", line 270, in msgpack._cmsgpack.Packer._pack
+  File "msgpack/_packer.pyx", line 213, in msgpack._cmsgpack.Packer._pack_inner
+  File "msgpack/_packer.pyx", line 270, in msgpack._cmsgpack.Packer._pack
+  File "msgpack/_packer.pyx", line 232, in msgpack._cmsgpack.Packer._pack_inner
+  File "msgpack/_packer.pyx", line 270, in msgpack._cmsgpack.Packer._pack
+  File "msgpack/_packer.pyx", line 257, in msgpack._cmsgpack.Packer._pack_inner
+TypeError: can not serialize 'UUID' object
+INFO 2026-05-15 14:50:42,497 orchestrator 10136 27456 mission.join_mission run_id=d194b91a-e4a9-4259-9d8d-fd294861253e user_id=4cfd86a7-ffd5-438e-878b-5eb6c313e2ad username=pelumi6 created=False role=lead_operator
+INFO 2026-05-15 14:54:25,845 orchestrator 27016 27428 mission.join_mission run_id=46b99f5b-46f0-4667-99e9-238a6a3db45b user_id=4cfd86a7-ffd5-438e-878b-5eb6c313e2ad username=pelumi6 created=False role=lead_operator
+INFO 2026-05-15 14:54:31,783 consumers 27016 26608 mission.ws_connected run_id=46b99f5b-46f0-4667-99e9-238a6a3db45b user_id=4cfd86a7-ffd5-438e-878b-5eb6c313e2ad participant_id=ec57d8e8-3f80-45ff-a353-0b12eb6d853c channel_ok=True
+INFO 2026-05-15 14:55:13,680 orchestrator 27016 9636 mission.join_mission run_id=46b99f5b-46f0-4667-99e9-238a6a3db45b user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 username=josh created=True role=support_operator
+INFO 2026-05-15 14:55:17,642 incident_views 27016 9636 mission.http_join run_id=46b99f5b-46f0-4667-99e9-238a6a3db45b user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 created=True
+INFO 2026-05-15 14:55:25,874 orchestrator 27016 27428 mission.join_mission run_id=46b99f5b-46f0-4667-99e9-238a6a3db45b user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 username=josh created=False role=support_operator
+INFO 2026-05-15 14:55:31,005 consumers 27016 26608 mission.ws_connected run_id=46b99f5b-46f0-4667-99e9-238a6a3db45b user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 participant_id=0cd32fc1-5707-472b-869f-bd3656577cde channel_ok=True
+INFO 2026-05-15 14:56:39,433 consumers 27016 26608 mission.ws_disconnected run_id=46b99f5b-46f0-4667-99e9-238a6a3db45b user_id=4cfd86a7-ffd5-438e-878b-5eb6c313e2ad participant_id=ec57d8e8-3f80-45ff-a353-0b12eb6d853c code=1000
+INFO 2026-05-15 14:56:42,280 consumers 27016 26608 mission.ws_disconnected run_id=46b99f5b-46f0-4667-99e9-238a6a3db45b user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 participant_id=0cd32fc1-5707-472b-869f-bd3656577cde code=1000
+INFO 2026-05-15 14:58:20,764 orchestrator 27016 27428 mission.join_mission run_id=ea70e846-9b31-44d3-8c1e-7bb06ab7e884 user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 username=josh created=False role=lead_operator
+INFO 2026-05-15 14:58:27,495 consumers 27016 26608 mission.ws_connected run_id=ea70e846-9b31-44d3-8c1e-7bb06ab7e884 user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 participant_id=33f90101-0e00-44d3-ae55-07dce7ad7e58 channel_ok=True
+INFO 2026-05-15 15:00:26,876 consumers 27016 26608 mission.ws_disconnected run_id=ea70e846-9b31-44d3-8c1e-7bb06ab7e884 user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 participant_id=33f90101-0e00-44d3-ae55-07dce7ad7e58 code=1000
+INFO 2026-05-15 15:01:00,913 orchestrator 27016 27428 mission.join_mission run_id=cdf1a017-01ce-41f0-9f5a-c23c3d30f81e user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 username=josh created=False role=lead_operator
+INFO 2026-05-15 15:01:06,734 consumers 27016 26608 mission.ws_connected run_id=cdf1a017-01ce-41f0-9f5a-c23c3d30f81e user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 participant_id=b70eff25-824e-4708-8069-01aa628a0f68 channel_ok=True
+INFO 2026-05-15 15:02:34,842 consumers 27016 26608 mission.ws_disconnected run_id=cdf1a017-01ce-41f0-9f5a-c23c3d30f81e user_id=d06ecab9-ea24-4b12-9cd2-2df1dd16e6c2 participant_id=b70eff25-824e-4708-8069-01aa628a0f68 code=1000
+INFO 2026-05-15 16:48:18,582 signals 27060 7256 Meeting created: [SEED] Scenario Debrief by babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-15 16:48:18,918 signals 27060 7256 Participant fatima.ogunleye.tr16@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:19,230 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:19,546 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:19,864 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:20,192 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:20,497 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:20,811 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:21,120 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:21,429 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:21,737 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:22,048 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:22,356 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:22,663 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:22,980 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:23,296 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:23,629 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:23,942 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:24,261 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:24,570 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:24,890 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:25,223 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:25,546 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:48:26,632 signals 27060 7256 Meeting created: [SEED] ATC Cyber Workshop by ngozi.adeyemi.ins2@instructors.skyshield.africa
+INFO 2026-05-15 16:48:26,961 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:27,274 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:27,603 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:27,903 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:28,212 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:28,523 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:28,851 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:29,172 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:29,495 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:29,807 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:30,116 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:30,432 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:48:32,423 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by uche.chukwu.sup4@ncaa-training.gov.ng
+INFO 2026-05-15 16:48:32,733 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:33,043 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:33,358 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:33,680 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:33,992 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:34,317 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:34,627 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:34,942 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:35,249 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:35,565 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:35,872 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:36,184 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:36,502 signals 27060 7256 Participant musa.diallo.tr21@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:36,809 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:37,126 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:37,437 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:37,750 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:38,069 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:39,507 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by yusuf.chukwu.ins1@instructors.skyshield.africa
+INFO 2026-05-15 16:48:39,837 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:40,220 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:40,625 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:41,036 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:41,432 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:41,836 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:42,626 signals 27060 7256 Participant musa.obi.tr10@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:43,028 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:43,440 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:43,841 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:44,241 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:45,683 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:46,100 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:46,922 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:47,336 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:47,743 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:48,952 signals 27060 7256 Participant musa.diallo.tr21@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:49,354 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:49,759 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:50,160 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:52,159 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by ngozi.adeyemi.ins2@instructors.skyshield.africa
+INFO 2026-05-15 16:48:53,367 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:53,763 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:54,573 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:54,974 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:55,372 signals 27060 7256 Participant ibrahim.sani.tr30@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:55,770 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:56,179 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:56,988 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:57,404 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:58,213 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:58,627 signals 27060 7256 Participant olumide.eze.tr32@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:59,027 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:59,431 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:48:59,828 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:00,232 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:00,637 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:01,047 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:01,856 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:06,626 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by aisha.danjuma.ins3@instructors.skyshield.africa
+INFO 2026-05-15 16:49:07,029 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:07,431 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:07,832 signals 27060 7256 Participant ibrahim.sani.tr30@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:08,233 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:08,631 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:09,042 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:09,436 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:09,841 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:10,241 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:10,643 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:11,454 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:12,662 signals 27060 7256 Participant olumide.eze.tr32@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:13,061 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:13,460 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:13,864 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:14,674 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:15,090 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:15,899 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:16,310 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:16,708 signals 27060 7256 Participant musa.obi.tr10@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:17,105 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:17,509 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:19,712 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-15 16:49:20,124 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:20,988 signals 27060 7256 Participant musa.obi.tr10@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:21,899 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:22,488 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:23,343 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:23,751 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:25,545 signals 27060 7256 Meeting created: [SEED] Scenario Debrief by supervisor@skyshield.africa
+INFO 2026-05-15 16:49:26,356 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:26,761 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:27,171 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:27,567 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:28,369 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:28,766 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:29,579 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:30,004 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:30,822 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:33,619 signals 27060 7256 Meeting created: [SEED] Scenario Debrief by amina.sani.sup1@ncaa-training.gov.ng
+INFO 2026-05-15 16:49:34,033 signals 27060 7256 Participant ahmed.kamau.tr31@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:35,245 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:35,652 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:36,872 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:37,668 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:38,066 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:38,870 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:39,695 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:40,093 signals 27060 7256 Participant musa.diallo.tr21@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:40,890 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:41,702 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:42,108 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:42,519 signals 27060 7256 Participant fatima.ogunleye.tr16@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:42,919 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:43,319 signals 27060 7256 Participant musa.obi.tr10@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:44,119 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:44,520 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:44,926 signals 27060 7256 Participant ibrahim.sani.tr30@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:45,333 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:45,734 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:46,139 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:46,535 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:46,945 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] Scenario Debrief
+INFO 2026-05-15 16:49:50,340 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by amina.sani.sup1@ncaa-training.gov.ng
+INFO 2026-05-15 16:49:50,741 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:51,155 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:51,571 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:51,971 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:52,375 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:52,775 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:53,595 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:54,003 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:54,829 signals 27060 7256 Participant ibrahim.sani.tr30@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:55,225 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:56,028 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:56,435 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:56,836 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:57,239 signals 27060 7256 Participant olumide.eze.tr32@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:57,652 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:58,071 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:49:59,748 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:00,182 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:00,646 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:01,506 signals 27060 7256 Participant nnamdi.kamau.tr33@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:02,185 signals 27060 7256 Participant ibrahim.adebayo.tr4@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:04,150 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:05,375 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:05,770 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:06,168 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:07,356 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by aisha.danjuma.ins3@instructors.skyshield.africa
+INFO 2026-05-15 16:50:08,215 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:08,619 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:09,032 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:09,855 signals 27060 7256 Participant uche.mensah.tr1@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:10,258 signals 27060 7256 Participant tunde.danjuma.tr19@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:11,486 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:11,888 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:12,291 signals 27060 7256 Participant fatima.ogunleye.tr16@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:13,098 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:13,507 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:13,934 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:16,564 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by yusuf.chukwu.ins1@instructors.skyshield.africa
+INFO 2026-05-15 16:50:17,379 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:17,787 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:18,598 signals 27060 7256 Participant olumide.eze.tr32@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:18,999 signals 27060 7256 Participant uche.adebayo.tr2@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:19,404 signals 27060 7256 Participant uche.ogunleye.tr18@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:20,206 signals 27060 7256 Participant adaeze.boateng.tr27@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:20,613 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:21,020 signals 27060 7256 Participant babatunde.mensah.tr35@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:21,434 signals 27060 7256 Participant femi.danjuma.tr7@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:21,837 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:22,239 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:22,632 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:23,438 signals 27060 7256 Participant uche.okonkwo.tr12@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:23,840 signals 27060 7256 Participant fatima.mensah.tr3@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:24,236 signals 27060 7256 Participant babatunde.obi.tr34@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:25,038 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:25,434 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:25,832 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:27,026 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:27,451 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:27,859 signals 27060 7256 Participant hadiza.sani.tr23@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:28,268 signals 27060 7256 Participant trainee@skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:32,032 signals 27060 7256 Meeting created: [SEED] ATC Cyber Workshop by kemi.adebayo.sup3@ncaa-training.gov.ng
+INFO 2026-05-15 16:50:32,682 signals 27060 7256 Participant femi.mwangi.tr29@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:33,089 signals 27060 7256 Participant oluwaseun.mensah.tr22@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:34,086 signals 27060 7256 Participant uche.okonkwo.tr11@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:34,483 signals 27060 7256 Participant aisha.adebayo.tr15@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:35,883 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:36,759 signals 27060 7256 Participant yewande.danjuma.tr9@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:37,159 signals 27060 7256 Participant ronke.adeyemi.tr6@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:37,563 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:37,961 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] ATC Cyber Workshop
+INFO 2026-05-15 16:50:39,959 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by aisha.danjuma.ins3@instructors.skyshield.africa
+INFO 2026-05-15 16:50:40,778 signals 27060 7256 Participant musa.bello.tr13@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:41,188 signals 27060 7256 Participant kemi.mohammed.tr26@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:41,585 signals 27060 7256 Participant ronke.mwangi.tr24@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:41,984 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:42,379 signals 27060 7256 Participant tunde.oladipo.tr28@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:42,783 signals 27060 7256 Participant adaeze.bello.tr25@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:43,201 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:45,216 signals 27060 7256 Meeting created: [SEED] AVSEC Briefing by babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-15 16:50:46,028 signals 27060 7256 Participant yusuf.nwosu.tr20@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:47,227 signals 27060 7256 Participant aisha.mohammed.tr8@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:47,633 signals 27060 7256 Participant kelechi.sani.tr14@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:48,026 signals 27060 7256 Participant blessing.nwosu.tr5@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 16:50:48,426 signals 27060 7256 Participant chioma.danjuma.tr17@trainees.skyshield.africa joined meeting [SEED] AVSEC Briefing
+INFO 2026-05-15 17:10:27,171 views 8620 28244 New user registered: olaniyanp11@gmail.com
+INFO 2026-05-15 17:23:53,895 views 8620 28564 User logged in: olaniyanp11@gmail.com (role=trainee)
+WARNING 2026-05-15 17:24:29,382 ws_support 8620 27100 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+INFO 2026-05-15 17:29:48,351 orchestrator 8620 28092 mission.join_mission run_id=da10598b-6bde-4aad-a972-1f00446cc1bf user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d username=permactech created=False role=lead_operator
+INFO 2026-05-15 17:30:00,916 consumers 8620 12600 mission.ws_connected run_id=da10598b-6bde-4aad-a972-1f00446cc1bf user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d participant_id=fa0ca81d-97c1-4f2a-8af2-74c0b920d2ce channel_ok=True
+WARNING 2026-05-15 17:30:50,590 ws_support 8620 24424 mission.client_disconnect channel=http run_id=da10598b-6bde-4aad-a972-1f00446cc1bf participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=POST /api/simulations/incidents/da10598b-6bde-4aad-a972-1f00446cc1bf/actions/ exc=CancelledError()
+WARNING 2026-05-15 17:31:55,394 ws_support 8620 17428 mission.client_disconnect channel=http run_id=da10598b-6bde-4aad-a972-1f00446cc1bf participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=POST /api/simulations/incidents/da10598b-6bde-4aad-a972-1f00446cc1bf/actions/ exc=CancelledError()
+INFO 2026-05-15 17:32:25,145 consumers 8620 12600 mission.ws_disconnected run_id=da10598b-6bde-4aad-a972-1f00446cc1bf user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d participant_id=fa0ca81d-97c1-4f2a-8af2-74c0b920d2ce code=1001
+WARNING 2026-05-15 17:32:26,786 ws_support 8620 28136 mission.client_disconnect channel=http run_id=da10598b-6bde-4aad-a972-1f00446cc1bf participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=POST /api/simulations/incidents/da10598b-6bde-4aad-a972-1f00446cc1bf/actions/ exc=CancelledError()
+DEBUG 2026-05-15 17:32:27,155 consumers 8620 12600 mission.ws_group_discard_failed: 
+WARNING 2026-05-15 17:32:32,864 ws_support 8620 24872 mission.client_disconnect channel=http run_id=da10598b-6bde-4aad-a972-1f00446cc1bf participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=POST /api/simulations/incidents/da10598b-6bde-4aad-a972-1f00446cc1bf/actions/ exc=CancelledError()
+INFO 2026-05-15 17:32:52,405 consumers 8620 12600 mission.ws_connect_denied_ended run_id=da10598b-6bde-4aad-a972-1f00446cc1bf user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d
+INFO 2026-05-15 17:32:57,459 consumers 8620 12600 mission.ws_disconnected run_id=da10598b-6bde-4aad-a972-1f00446cc1bf user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d participant_id=- code=4005
+WARNING 2026-05-15 17:33:00,029 ws_support 8620 28224 mission.client_disconnect channel=http run_id=da10598b-6bde-4aad-a972-1f00446cc1bf participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/simulations/incidents/da10598b-6bde-4aad-a972-1f00446cc1bf/score/ exc=CancelledError()
+WARNING 2026-05-15 17:49:03,317 ws_support 8620 2172 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-15 17:49:29,744 ws_support 8620 14080 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+INFO 2026-05-16 21:13:30,196 views 18872 5696 User logged in: olaniyanp11@gmail.com (role=trainee)
+WARNING 2026-05-16 21:15:39,797 ws_support 18872 20960 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/simulations/scenarios/ exc=CancelledError()
+INFO 2026-05-16 21:16:11,806 orchestrator 18872 16948 mission.join_mission run_id=7f5cd0b7-76a3-4a09-99fe-edd380fe90ad user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d username=permactech created=False role=lead_operator
+INFO 2026-05-16 21:17:22,983 orchestrator 18872 16948 mission.join_mission run_id=7f5cd0b7-76a3-4a09-99fe-edd380fe90ad user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d username=permactech created=False role=lead_operator
+INFO 2026-05-16 21:30:01,363 views 13884 23072 User logged out: olaniyanp11@gmail.com
+INFO 2026-05-16 22:09:29,057 views 21880 26008 User logged in: amina.sani.sup1@ncaa-training.gov.ng (role=supervisor)
+WARNING 2026-05-16 22:09:44,195 ws_support 21880 12808 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/dashboard/ exc=CancelledError()
+INFO 2026-05-16 22:12:11,006 views 21880 6012 User logged in: olaniyanp11@gmail.com (role=trainee)
+WARNING 2026-05-16 22:12:33,522 ws_support 21880 26332 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:12:43,665 ws_support 21880 2932 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:13:20,556 ws_support 21880 13852 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:15:16,565 ws_support 21880 14556 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:23:42,312 ws_support 21880 25236 mission.client_disconnect channel=http run_id=- participant_id=- user_id=- peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-16 22:23:42,711 ws_support 21880 26496 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/paths/ exc=CancelledError()
+WARNING 2026-05-16 22:23:44,295 ws_support 21880 25724 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-16 22:23:44,416 ws_support 21880 2028 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/categories/ exc=CancelledError()
+WARNING 2026-05-16 22:23:44,425 ws_support 21880 9156 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 22:23:44,772 ws_support 21880 15060 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/with-attempts/ exc=CancelledError()
+WARNING 2026-05-16 22:23:45,116 ws_support 21880 24744 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-16 22:23:45,734 ws_support 21880 11076 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 22:23:58,092 ws_support 21880 26388 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:25:05,224 ws_support 21880 21476 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:25:19,204 ws_support 21880 25924 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:25:37,809 ws_support 21880 8820 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:25:47,665 ws_support 21880 22076 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:26:12,213 ws_support 21880 20548 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:26:23,296 ws_support 21880 26120 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:26:31,010 ws_support 21880 15264 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:26:51,853 ws_support 21880 23480 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:54:45,256 ws_support 1452 3280 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:54:57,356 ws_support 1452 13884 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:55:10,622 ws_support 1452 24964 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/paths/ exc=CancelledError()
+WARNING 2026-05-16 22:55:11,043 ws_support 1452 16708 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/with-attempts/ exc=CancelledError()
+WARNING 2026-05-16 22:55:11,165 ws_support 1452 10196 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/announcements/ exc=CancelledError()
+WARNING 2026-05-16 22:55:11,613 ws_support 1452 27152 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-16 22:55:12,111 ws_support 1452 9176 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 22:55:13,562 ws_support 1452 3036 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/categories/ exc=CancelledError()
+WARNING 2026-05-16 22:55:21,118 ws_support 1452 22804 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:55:39,711 ws_support 1452 27308 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:56:45,411 ws_support 1452 9856 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:57:51,208 ws_support 1452 8172 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/with-attempts/ exc=CancelledError()
+WARNING 2026-05-16 22:57:51,244 ws_support 1452 27012 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 22:57:51,390 ws_support 1452 1624 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/categories/ exc=CancelledError()
+WARNING 2026-05-16 22:57:51,457 ws_support 1452 26620 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 22:57:51,575 ws_support 1452 27144 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/paths/ exc=CancelledError()
+WARNING 2026-05-16 22:57:52,475 ws_support 1452 21940 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/with-attempts/ exc=CancelledError()
+WARNING 2026-05-16 22:57:52,518 ws_support 1452 6116 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-16 22:57:52,753 ws_support 1452 25296 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 22:58:20,774 ws_support 1452 27112 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:00:57,111 ws_support 1452 12056 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:03:03,579 ws_support 1452 26528 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:04:48,526 ws_support 1452 26804 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:04:50,543 ws_support 1452 12940 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:06:02,561 ws_support 1452 8120 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:12:53,358 ws_support 1452 26512 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:13:50,924 ws_support 1452 10484 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:15:56,184 ws_support 1452 13712 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:05,324 ws_support 1452 23496 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-16 23:18:05,576 ws_support 1452 26276 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:05,854 ws_support 1452 5424 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/with-attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:12,286 ws_support 1452 22348 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:15,560 ws_support 1452 15736 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/with-attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:15,652 ws_support 1452 20580 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/announcements/ exc=CancelledError()
+WARNING 2026-05-16 23:18:15,796 ws_support 1452 24680 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:15,886 ws_support 1452 6092 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-16 23:18:17,661 ws_support 1452 21032 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/with-attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:17,783 ws_support 1452 14820 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/categories/ exc=CancelledError()
+WARNING 2026-05-16 23:18:17,882 ws_support 1452 5772 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:17,923 ws_support 1452 20596 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-16 23:18:18,041 ws_support 1452 24296 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/paths/ exc=CancelledError()
+WARNING 2026-05-16 23:18:20,646 ws_support 1452 3912 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/with-attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:21,156 ws_support 1452 24976 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-16 23:18:21,370 ws_support 1452 24480 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:18:21,829 ws_support 1452 25836 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:18:28,073 ws_support 1452 14228 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:18:30,453 ws_support 1452 25176 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:19:54,146 ws_support 1452 15476 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:20:01,130 ws_support 1452 24268 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a99f90fd-5302-4a7b-a7f9-2833348f8b53 peer=127.0.0.1 detail=GET /api/tutor/exercises/dacfaced-08fb-4f9b-9795-d55021088a56/attempts/ exc=CancelledError()
+WARNING 2026-05-16 23:20:01,243 ws_support 1452 24584 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:20:09,478 ws_support 1452 26060 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:20:55,516 ws_support 1452 664 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-16 23:22:22,633 ws_support 1452 12400 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/ exc=CancelledError()
+WARNING 2026-05-17 00:11:56,814 ws_support 1168 9276 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/seed-unauthorized-radar-workstation-access-study-guide-2/ exc=CancelledError()
+WARNING 2026-05-17 00:13:10,301 ws_support 1168 21512 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/paths/seed-path-avsec-operator-track-2/ exc=CancelledError()
+WARNING 2026-05-17 00:13:20,845 ws_support 1168 27928 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/seed-gps-spoofing-over-lagos-tma-study-guide-3/ exc=CancelledError()
+WARNING 2026-05-17 00:21:45,371 ws_support 1168 25368 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/paths/seed-path-incident-commander-track-1/ exc=CancelledError()
+WARNING 2026-05-17 00:22:04,751 ws_support 1168 24864 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/paths/seed-path-atc-cyber-track-4/ exc=CancelledError()
+WARNING 2026-05-17 00:49:23,254 ws_support 1168 13632 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/seed-unauthorized-radar-workstation-access-study-guide-2/ exc=CancelledError()
+INFO 2026-05-18 23:11:27,700 views 21600 15508 User logged in: olaniyanp11@gmail.com (role=trainee)
+WARNING 2026-05-18 23:13:57,148 ws_support 21600 20496 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/seed-ransomware-on-met-briefing-workstation-study-guide-2/ exc=CancelledError()
+WARNING 2026-05-18 23:14:41,709 ws_support 21600 21916 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/seed-ransomware-on-met-briefing-workstation-study-guide-2/ exc=CancelledError()
+WARNING 2026-05-19 00:18:01,741 ws_support 21600 24040 mission.client_disconnect channel=http run_id=- participant_id=- user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d peer=127.0.0.1 detail=GET /api/content/materials/seed-gps-spoofing-over-lagos-tma-study-guide-3/ exc=CancelledError()
+INFO 2026-05-19 01:25:12,858 orchestrator 21600 17908 mission.join_mission run_id=af6a6658-9097-46c2-9e58-edaa0be3edb7 user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d username=permactech created=False role=lead_operator
+INFO 2026-05-19 01:25:18,081 consumers 21600 9004 mission.ws_connected run_id=af6a6658-9097-46c2-9e58-edaa0be3edb7 user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d participant_id=52882860-6e38-46fc-8d77-76072aded7cf channel_ok=True
+INFO 2026-05-19 01:28:03,979 consumers 21600 9004 mission.ws_disconnected run_id=af6a6658-9097-46c2-9e58-edaa0be3edb7 user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d participant_id=52882860-6e38-46fc-8d77-76072aded7cf code=1000
+INFO 2026-05-19 01:33:10,321 orchestrator 21600 17908 mission.join_mission run_id=c9b7e0b3-dd23-4e77-be2b-b230cf7209ef user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d username=permactech created=False role=lead_operator
+INFO 2026-05-19 01:33:15,202 consumers 21600 9004 mission.ws_connected run_id=c9b7e0b3-dd23-4e77-be2b-b230cf7209ef user_id=a3fac81a-00d6-4e84-8f89-4b3cd55a672d participant_id=e4b707b3-78d0-4317-b93c-76931e138b6a channel_ok=True
+INFO 2026-05-19 01:43:52,150 views 18288 9112 User logged out: olaniyanp11@gmail.com
+INFO 2026-05-19 01:48:49,641 views 18288 12420 User logged in: babatunde.mwangi.sup2@ncaa-training.gov.ng (role=supervisor)
+WARNING 2026-05-19 01:53:03,274 ws_support 18288 22788 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c33c0b01-e03f-4392-8249-a74122f821fc peer=127.0.0.1 detail=GET /api/simulations/courses/ exc=CancelledError()
+WARNING 2026-05-19 01:53:04,954 ws_support 18288 7900 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c33c0b01-e03f-4392-8249-a74122f821fc peer=127.0.0.1 detail=GET /api/simulations/scenarios/ exc=CancelledError()
+WARNING 2026-05-19 01:53:53,268 ws_support 18288 21428 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c33c0b01-e03f-4392-8249-a74122f821fc peer=127.0.0.1 detail=GET /api/simulations/courses/ exc=CancelledError()
+INFO 2026-05-19 01:56:43,241 views 18288 19576 User logged out: babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-19 02:04:03,314 views 18288 16908 User logged in: amina.adebayo.ins4@instructors.skyshield.africa (role=instructor)
+WARNING 2026-05-19 02:04:18,521 ws_support 18288 21324 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c6da8950-fb8c-4136-a4e9-41e0059792c0 peer=127.0.0.1 detail=GET /api/tutor/dashboard/ exc=CancelledError()
+INFO 2026-05-19 02:04:48,402 views 18288 23624 User logged out: amina.adebayo.ins4@instructors.skyshield.africa
+INFO 2026-05-19 02:04:54,155 views 18288 15604 User logged in: amina.adebayo.ins4@instructors.skyshield.africa (role=instructor)
+WARNING 2026-05-19 02:05:09,358 ws_support 18288 2500 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c6da8950-fb8c-4136-a4e9-41e0059792c0 peer=127.0.0.1 detail=GET /api/tutor/dashboard/ exc=CancelledError()
+INFO 2026-05-19 02:08:37,468 views 18288 19896 User logged out: amina.adebayo.ins4@instructors.skyshield.africa
+INFO 2026-05-19 02:08:43,479 views 18288 21820 User logged in: babatunde.mwangi.sup2@ncaa-training.gov.ng (role=supervisor)

@@ -1,77 +1,80 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../hooks/useAuth';
 import { AlertCircle } from 'lucide-react';
 import { Spinner } from '../components/ui/Loading';
+import { useAuth } from '../hooks/useAuth';
+import { completeSocialLogin } from '../services/authService';
+import type { User } from '../types/auth';
+
+const TUTOR_ROLES = ['supervisor', 'admin', 'instructor'];
+
+/** Survives React Strict Mode remount so the one-time OAuth code is not exchanged twice. */
+const processedOAuthCodes = new Set<string>();
+
+function dashboardPath(user: User): string {
+  return TUTOR_ROLES.includes(user.role) ? '/tutor/dashboard' : '/dashboard';
+}
 
 const SocialAuthCallback: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  useAuth();
+  const { applySession } = useAuth();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const params = new URLSearchParams(location.search);
-      const code = params.get('code');
-      // Extract provider from URL path (e.g., /auth/callback/google)
-      const provider = location.pathname.includes('google') ? 'google' : 'github';
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    const oauthError = params.get('error_description') || params.get('error');
+    const provider = location.pathname.includes('google') ? 'google' : 'github';
 
-      if (!code) {
-        console.error('No code found in URL search params:', location.search);
-        setError('No authorization code found in the URL. Please try logging in again.');
-        return;
-      }
+    if (oauthError) {
+      setError(oauthError);
+      return;
+    }
 
-      console.log(`Exchanging ${provider} code for tokens...`);
+    if (!code) {
+      setError('No authorization code found. Please try signing in again.');
+      return;
+    }
+
+    const exchangeKey = `${provider}:${code}`;
+    if (processedOAuthCodes.has(exchangeKey)) {
+      return;
+    }
+    processedOAuthCodes.add(exchangeKey);
+
+    let cancelled = false;
+
+    (async () => {
       try {
-        const apiBase = import.meta.env.VITE_API_URL ?? 'https://skyshield-backend.onrender.com/api';
-        const response = await axios.post(`${apiBase}/users/${provider}/`, { code });
-        
-        console.log('Backend response:', response.data);
-        const { access, refresh, user } = response.data;
-        
-        if (!access || !user) {
+        const { access, refresh, user } = await completeSocialLogin(provider, code);
+        if (cancelled) return;
+        if (!access || !user?.role) {
           throw new Error('Invalid response from server: missing access token or user profile');
         }
-
-        // Store tokens and user info
-        localStorage.setItem('access_token', access);
-        localStorage.setItem('refresh_token', refresh);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        const destination = user.role === 'trainee' ? '/dashboard' : '/tutor/dashboard';
-        console.log(`Authentication successful. Redirecting to ${destination}...`);
-        window.location.href = destination;
+        applySession(user, access, refresh);
+        navigate(dashboardPath(user), { replace: true });
       } catch (err: unknown) {
-        console.error('Social login error:', err);
+        if (cancelled) return;
         const detail =
-          (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+          (err as { response?: { data?: { detail?: string; non_field_errors?: string[] } } })
+            ?.response?.data?.detail ||
+          (err as { response?: { data?: { non_field_errors?: string[] } } })?.response?.data
+            ?.non_field_errors?.[0] ||
           (err as { message?: string })?.message ||
           'Unknown error';
         setError(`Failed to complete social authentication: ${detail}`);
       }
-    };
+    })();
 
-    handleCallback();
-  }, [location, navigate]);
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, location.search, navigate, applySession]);
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center border border-red-100 dark:border-red-900">
-          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Authentication Failed</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-          <button 
-            onClick={() => navigate('/login')}
-            className="w-full py-3 px-4 bg-[#fbbf24] hover:bg-[#d97706] text-[#020c1b] rounded-lg font-bold transition-all shadow-lg hover:shadow-[#fbbf24]/20"
-          >
-            Back to Login
-          </button>
-        </div>
-      </div>
+      <SocialAuthError error={error} onBack={() => navigate('/login')} />
     );
   }
 
@@ -87,5 +90,24 @@ const SocialAuthCallback: React.FC = () => {
     </div>
   );
 };
+
+function SocialAuthError({ error, onBack }: { error: string; onBack: () => void }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center border border-red-100 dark:border-red-900">
+        <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Authentication Failed</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+        <button
+          type="button"
+          onClick={onBack}
+          className="w-full py-3 px-4 bg-[#fbbf24] hover:bg-[#d97706] text-[#020c1b] rounded-lg font-bold transition-all shadow-lg hover:shadow-[#fbbf24]/20"
+        >
+          Back to Login
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default SocialAuthCallback;

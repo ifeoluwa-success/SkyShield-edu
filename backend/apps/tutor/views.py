@@ -651,13 +651,23 @@ class TutorDashboardView(APIView):
         if Meeting:
             upcoming_meetings = Meeting.objects.filter(host=request.user, scheduled_start__gte=timezone.now(), status__in=['scheduled']).order_by('scheduled_start')[:5]
         recent_uploads = TeachingMaterial.objects.filter(tutor=tutor).order_by('-created_at')[:5]
-        student_progress = StudentProgress.objects.filter(tutor=tutor).select_related('student')
+        student_progress = list(
+            StudentProgress.objects.filter(tutor=tutor).select_related('student')[:10]
+        )
+        score_by_user = {}
+        if SimulationSession and student_progress:
+            student_ids = [p.student_id for p in student_progress]
+            score_by_user = {
+                row['user_id']: row['avg_score'] or 0
+                for row in SimulationSession.objects.filter(
+                    user_id__in=student_ids, status='completed'
+                )
+                .values('user_id')
+                .annotate(avg_score=Avg('score'))
+            }
         student_performance = []
-        for progress in student_progress[:10]:
-            avg_score = 0
-            if SimulationSession:
-                recent_sims = SimulationSession.objects.filter(user=progress.student, status='completed').order_by('-completed_at')[:5]
-                avg_score = recent_sims.aggregate(Avg('score'))['score__avg'] or 0
+        for progress in student_progress:
+            avg_score = score_by_user.get(progress.student_id, 0)
             student_performance.append({
                 'student_id': str(progress.student.id),
                 'student_name': progress.student.get_full_name(),

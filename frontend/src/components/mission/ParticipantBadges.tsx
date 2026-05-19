@@ -18,7 +18,7 @@ const norm = (s: string | undefined) => (s ?? '').trim().toLowerCase();
 function isSameUser(p: MissionParticipant, email?: string, username?: string): boolean {
   const pe = norm(p.email);
   const pu = norm(p.username);
-  return (email && pe === norm(email)) || (username && pu === norm(username));
+  return Boolean((email && pe === norm(email)) || (username && pu === norm(username)));
 }
 
 function participantOnline(

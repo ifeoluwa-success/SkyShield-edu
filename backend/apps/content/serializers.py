@@ -121,6 +121,10 @@ class LearningMaterialListSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.BooleanField())
     def get_is_bookmarked(self, obj):
+        flags = self.context.get('material_user_flags') or {}
+        bookmarks = flags.get('bookmarks')
+        if bookmarks is not None:
+            return obj.id in bookmarks
         user = self.context.get('user')
         if user and user.is_authenticated:
             return MaterialBookmark.objects.filter(user=user, material=obj).exists()
@@ -128,6 +132,10 @@ class LearningMaterialListSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.BooleanField())
     def get_is_liked(self, obj):
+        flags = self.context.get('material_user_flags') or {}
+        liked = flags.get('liked')
+        if liked is not None:
+            return obj.id in liked
         user = self.context.get('user')
         if user and user.is_authenticated:
             return obj.likes.filter(user=user).exists()
@@ -135,6 +143,10 @@ class LearningMaterialListSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_user_rating(self, obj):
+        flags = self.context.get('material_user_flags') or {}
+        ratings = flags.get('ratings')
+        if ratings is not None:
+            return ratings.get(obj.id)
         user = self.context.get('user')
         if user and user.is_authenticated:
             rating = obj.ratings.filter(user=user).first()
@@ -143,6 +155,10 @@ class LearningMaterialListSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.DictField(allow_null=True))
     def get_user_progress(self, obj):
+        flags = self.context.get('material_user_flags') or {}
+        progress_map = flags.get('progress')
+        if progress_map is not None:
+            return progress_map.get(obj.id)
         user = self.context.get('user')
         if user and user.is_authenticated:
             progress = obj.user_progress.filter(user=user).first()
@@ -363,6 +379,10 @@ class LearningPathListSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.BooleanField())
     def get_user_enrolled(self, obj):
+        path_ctx = self.context.get('path_user_context') or {}
+        entry = path_ctx.get(obj.id)
+        if entry is not None:
+            return bool(entry.get('enrolled'))
         user = self.context.get('user')
         if user and user.is_authenticated:
             return PathEnrollment.objects.filter(user=user, path=obj).exists()
@@ -370,6 +390,10 @@ class LearningPathListSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.DictField(allow_null=True))
     def get_user_progress(self, obj):
+        path_ctx = self.context.get('path_user_context') or {}
+        entry = path_ctx.get(obj.id)
+        if entry is not None:
+            return entry.get('progress')
         user = self.context.get('user')
         if user and user.is_authenticated:
             enrollment = obj.enrollments.filter(user=user).first()

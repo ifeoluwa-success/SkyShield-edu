@@ -14,6 +14,20 @@ class SimulationEngine:
     """
 
     @staticmethod
+    def participant_may_advance_mission(run, user):
+        """
+        When scenario.requires_team_participation is True, only the lead
+        operator's actions advance the mission step cursor. Otherwise any
+        participant may advance (solo-friendly).
+        """
+        if user is None:
+            return True
+        if not getattr(run.scenario, 'requires_team_participation', False):
+            return True
+        p = MissionParticipant.objects.filter(run=run, user=user).first()
+        return p is not None and p.role == 'lead_operator'
+
+    @staticmethod
     def _choice_id_set(value):
         """
         Normalize a submitted decision or a stored 'correct' value into a set of
@@ -138,6 +152,8 @@ class SimulationEngine:
 
         is_correct, consequences, next_state = self.evaluate_decision(run.scenario, action_data)
 
+        user = action_data.get('user')
+
         escalation_payload = None
         if not is_correct:
             escalation_payload = self.check_escalation(run)
@@ -156,7 +172,11 @@ class SimulationEngine:
 
         current_score = float(session_state.get('current_score', 0) or 0)
         session_state['current_score'] = current_score + float(delta)
-        session_state['current_step'] = current_step_idx + 1
+        may_advance = self.participant_may_advance_mission(run, user)
+        if may_advance and is_correct:
+            session_state['current_step'] = current_step_idx + 1
+        else:
+            session_state['current_step'] = current_step_idx
 
         decisions = session_state.get('decisions') or []
         if not isinstance(decisions, list):
@@ -177,7 +197,6 @@ class SimulationEngine:
         session_state['decisions'] = decisions
         run.session_state = session_state
 
-        user = action_data.get('user')
         sim_session = None
         if user is not None:
             sim_session, _ = SimulationSession.objects.get_or_create(

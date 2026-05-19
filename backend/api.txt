@@ -951,82 +951,220 @@ These endpoints manage published **courses** (`Course`), ordered **modules** (`C
 
 ---
 
-## 8. CONTENT / LEGACY LMS APIs
+## 8. CONTENT LIBRARY APIs (Learning Materials & Paths)
 
-> Marked legacy: content implements LMS-style content, materials, learning paths, bookmarks, comments.
+> Base path: `/api/content/`  
+> Distinct from **structured courses** (`/api/simulations/courses/`) and **analytics learning-path** (`/api/analytics/learning-path/` — scenario recommendations).
 
-### `/api/content/categories/`
-- Methods: `GET`
-- Description: List content categories.
+### Data relationships
+- `LearningMaterial` — atomic content (article, video, document, quiz, link, etc.).
+- `LearningPath` — curated curriculum; **many-to-many** with `LearningMaterial` (`path.materials`).
+- `MaterialProgress` — per-user progress on a single material.
+- `PathEnrollment` — per-user enrollment on a path; `completed_materials` is a JSON list of material UUID strings.
+- Completing a material via `POST .../progress/` or `POST .../complete-material/` syncs `PathEnrollment.completed_materials` when the material belongs to enrolled paths.
 
-#### `/api/content/categories/{slug}/materials/`
-- Method: `GET`
-- Description: Materials for category and children
+---
+
+### Categories
+
+#### `GET /api/content/categories/`
+- Auth: **public**
+- Description: List active top-level categories (with nested children in serializer).
+
+#### `GET /api/content/categories/{slug}/`
+- Auth: **public**
+- Description: Single category detail.
+
+#### `GET /api/content/categories/{slug}/materials/`
+- Auth: **public**
+- Description: Published materials in this category and active subcategories.
 - Query params: `type`, `difficulty`, `search`
+- Response: paginated `LearningMaterialListSerializer`
 
-### `/api/content/materials/`
-- Methods: `GET` list, `GET /{slug}/` retrieve
-- Query params: `category`, `type`, `difficulty`, `search`, `featured`, `sort`
+---
 
-#### `/api/content/materials/{slug}/bookmark/`
-- Method: `POST`
-- Description: Toggle bookmark for material
+### Learning materials
 
-#### `/api/content/materials/{slug}/like/`
-- Method: `POST`
-- Description: Toggle like for material
-
-#### `/api/content/materials/{slug}/rate/`
-- Method: `POST`
-- Request body:
-  - `rating`
-  - `review`
-- Description: Rate material and update average rating
-
-#### `/api/content/materials/{slug}/comments/`
-- Method: `GET`
-- Description: List comments
-
-### `/api/content/paths/`
-- Methods: `GET`, `GET /{slug}/`
-- Description: Learning paths list/detail
-
-#### `/api/content/paths/{slug}/enroll/`
-- Method: `POST`
-- Description: Enroll in learning path
-
-### `/api/content/glossary/`
-- Methods: `GET`, `GET /{term}/`
-- Extra action:
-  - `GET /api/content/glossary/search/`
-
-### `/api/content/faqs/`
-- Methods: `GET`
-- Extra action:
-  - `POST /api/content/faqs/{pk}/track-view/`
-
-### `/api/content/announcements/`
-- Methods: `GET`, `GET /{pk}/`
-- Extra action:
-  - `GET /api/content/announcements/unread/`
-
-### `/api/content/bookmarks/`
-- Methods: `GET`
-- Extra action:
-  - `DELETE /api/content/bookmarks/clear/`
-
-### `/api/content/materials/{material_pk}/comments/`
-- Methods: `GET`, `POST`
-
-### `/api/content/materials/{material_pk}/comments/{pk}/`
-- Methods: `GET`, `PUT`, `DELETE`
-
-### `/api/content/search/`
-- Method: `GET`
+#### `GET /api/content/materials/`
+- Auth: **public**
+- Description: List published materials.
 - Query params:
-  - `q`
-  - `type` (`all`, `materials`, `paths`, `glossary`, `faqs`)
-- Description: search across published content
+  - `category` (category slug)
+  - `type` — `article`, `video`, `document`, `quiz`, `simulation`, `audio`, `presentation`, `link`, `other`
+  - `difficulty` — `beginner`, `intermediate`, `advanced`, `expert`
+  - `search` — title, description, content, tags
+  - `featured=true`
+  - `sort` — `created_at`, `-created_at`, `title`, `-title`, `views_count`, `-views_count`, `average_rating`, `-average_rating`
+- Response fields (list): `id`, `title`, `slug`, `description`, `material_type`, `difficulty`, `tags`, `estimated_read_time`, `views_count`, `average_rating`, `is_featured`, plus when JWT present: `is_bookmarked`, `is_liked`, `user_rating`, `user_progress` (`completed`, `percentage`)
+
+#### `GET /api/content/materials/{slug}/`
+- Auth: **public**
+- Description: Full material detail; increments `views_count`; creates `MaterialView` for authenticated users.
+- Response fields (detail): list fields plus `content` (markdown/html body), `file`, `video_url`, `external_url`, `comments` (preview), `related_materials`, extended `user_progress` (`started_at`, `completed_at`)
+
+#### `POST /api/content/materials/{slug}/bookmark/`
+- Auth: **JWT required**
+- Description: Toggle bookmark.
+- Response: `{ "bookmarked": true | false }`
+
+#### `POST /api/content/materials/{slug}/like/`
+- Auth: **JWT required**
+- Description: Toggle like; updates `likes_count`.
+- Response: `{ "liked": bool, "likes_count": int }`
+
+#### `POST /api/content/materials/{slug}/rate/`
+- Auth: **JWT required**
+- Request body: `{ "rating": 1-5, "review": "optional string" }`
+- Description: Create/update user rating; recalculates material `average_rating`.
+- Response: `MaterialRatingSerializer`
+
+#### `GET /api/content/materials/{slug}/comments/`
+- Auth: **public**
+- Description: Top-level comments for material (paginated); same URL namespace as nested CRUD below.
+
+#### `POST | PATCH /api/content/materials/{slug}/progress/`
+- Auth: **JWT required**
+- Request body:
+  - `progress_percentage` (float 0–100, optional)
+  - `completed` (boolean, optional; sets percentage to 100 and `completed_at`)
+- Description: Create/update `MaterialProgress`; when `completed=true`, also appends material ID to `PathEnrollment.completed_materials` for any enrolled path containing this material.
+- Response: `MaterialProgressSerializer`
+
+---
+
+### Material comments (nested by material slug)
+
+#### `GET /api/content/materials/{slug}/comments/`
+- Auth: **JWT required**
+- Description: List comments for material.
+
+#### `POST /api/content/materials/{slug}/comments/`
+- Auth: **JWT required**
+- Request body: `{ "content": "..." }`
+- Description: Create comment.
+
+#### `GET /api/content/materials/{slug}/comments/{id}/`
+- Auth: **JWT required**
+
+#### `PUT | PATCH /api/content/materials/{slug}/comments/{id}/`
+- Auth: **JWT required** (owner)
+- Description: Update comment.
+
+#### `DELETE /api/content/materials/{slug}/comments/{id}/`
+- Auth: **JWT required** (owner)
+- Description: Soft-delete (`is_deleted=true`).
+
+---
+
+### Learning paths
+
+#### `GET /api/content/paths/`
+- Auth: **public**
+- Description: List published learning paths.
+- Query params: `category`, `difficulty`, `search`, `featured=true`
+- Response fields: `id`, `title`, `slug`, `description`, `difficulty`, `estimated_duration`, `material_count`, `enrolled_count`, `is_featured`, plus when JWT present: `user_enrolled`, `user_progress` (`status`, `progress`, `completed_materials`)
+
+#### `GET /api/content/paths/{slug}/`
+- Auth: **public**
+- Description: Path detail with nested `materials[]` (published only) and `user_enrollment`.
+
+#### `POST /api/content/paths/{slug}/enroll/`
+- Auth: **JWT required**
+- Description: Enroll current user (once).
+- Response: `{ "enrolled": true }`
+- Errors: `400` `{ "error": "Already enrolled in this path" }`
+
+#### `POST /api/content/paths/{slug}/complete-material/`
+- Auth: **JWT required**
+- Request body: `{ "material_id": "<uuid>" }`
+- Description: Mark one path material complete; updates `PathEnrollment` and `MaterialProgress` (100%, completed). Auto-sets enrollment `status` to `in_progress` or `completed` when all path materials are done.
+- Response:
+  ```json
+  {
+    "status": "in_progress | completed",
+    "progress": 75.0,
+    "completed_materials": ["uuid1", "uuid2"]
+  }
+  ```
+
+---
+
+### Bookmarks (saved materials)
+
+#### `GET /api/content/bookmarks/`
+- Auth: **JWT required**
+- Description: Current user's bookmarked materials.
+
+#### `GET /api/content/bookmarks/{id}/`
+- Auth: **JWT required**
+
+#### `DELETE /api/content/bookmarks/clear/`
+- Auth: **JWT required**
+- Description: Remove all bookmarks for current user.
+- Response: `204 No Content`
+
+---
+
+### Glossary
+
+#### `GET /api/content/glossary/`
+- Auth: **public**
+
+#### `GET /api/content/glossary/{term}/`
+- Auth: **public** (lookup by term string)
+
+#### `GET /api/content/glossary/search/?q=`
+- Auth: **public** (minimum 2 characters)
+
+---
+
+### FAQs
+
+#### `GET /api/content/faqs/`
+- Auth: **public** (published only)
+
+#### `GET /api/content/faqs/{id}/`
+- Auth: **public**
+
+#### `POST /api/content/faqs/{id}/track-view/`
+- Auth: **public**
+- Response: `{ "views_count": int }`
+
+---
+
+### Announcements
+
+#### `GET /api/content/announcements/`
+- Auth: **JWT required**
+- Description: Active announcements within publish window; may filter by `target_roles` on model.
+
+#### `GET /api/content/announcements/{id}/`
+- Auth: **JWT required**
+- Description: Marks announcement as read (`AnnouncementRead`).
+
+#### `GET /api/content/announcements/unread/`
+- Auth: **JWT required**
+- Description: Returns `{ "unread_count": int }` (not a list of announcements).
+
+---
+
+### Global search
+
+#### `GET /api/content/search/`
+- Auth: **public**
+- Query params:
+  - `q` (required, min 2 chars)
+  - `type` — `all` | `materials` | `paths` | `glossary` | `faqs`
+- Response: array of `{ id, title, type, description, url, score, created_at, author_name }`
+
+---
+
+### Content API gaps / notes (for integrators)
+- No public **create/update** endpoints for materials or paths (staff use Django admin or seed commands).
+- No **unenroll** from path endpoint.
+- Path material order is not stored (M2M only; no step index).
+- `GET /api/analytics/learning-path/` is **not** this module — it returns recommended **simulation scenarios**.
+- Frontend service: `frontend/src/services/contentService.ts` wraps the endpoints above.
 
 ---
 
@@ -1298,6 +1436,6 @@ These endpoints manage published **courses** (`Course`), ordered **modules** (`C
 - **Command center**: no separate command-center API; supervisor control is implemented through meetings and analytics.
 - **Adaptive difficulty**: internal update is invoked via `AdaptiveLearningService.update_user_profile(user, session)` if the service exists, but service implementation is not present in searched source.
 - **OAuth routes**: `google` and `github` social login endpoints are custom; default `dj_rest_auth` routes are also mounted.
-- **Legacy LMS**: content exposes materials, paths, glossary, FAQs, announcements, bookmarks, and comments.
+- **Content library**: `/api/content/` exposes materials, paths, progress, bookmarks, comments, glossary, FAQs, announcements, and search (see §8).
 
 If you want, I can next convert this into a structured Markdown API reference file for your frontend and QA teams.

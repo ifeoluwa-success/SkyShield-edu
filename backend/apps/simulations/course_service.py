@@ -1,3 +1,4 @@
+import logging
 import uuid
 from statistics import mean
 
@@ -10,7 +11,10 @@ from .models import (
     ModuleProgress,
     CourseCertificate,
     SimulationSession,
+    IncidentRun,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CourseService:
@@ -93,6 +97,92 @@ class CourseService:
         self._advance_enrollment(progress.enrollment.id, trainee)
         progress.refresh_from_db()
         return progress
+
+    @transaction.atomic
+    def sync_session_from_incident_run(self, run, trainee, result=None):
+        """
+        Mirror a finalized IncidentRun onto the legacy SimulationSession row
+        used by course checkpoints (same user/scenario/attempt_number=1).
+        """
+        if run.scenario_id is None:
+            return None
+
+        if result is None:
+            from .engine import SimulationEngine
+            result = SimulationEngine().compute_final_score(run)
+
+        state = run.session_state or {}
+        if not isinstance(state, dict):
+            state = {}
+
+        session, _ = SimulationSession.objects.get_or_create(
+            user=trainee,
+            scenario=run.scenario,
+            attempt_number=1,
+            defaults={'status': 'in_progress'},
+        )
+
+        breakdown = result.get('breakdown') or {}
+        passed = bool(result.get('passed', run.passed))
+        score = float(result.get('score', run.score) or 0)
+
+        session.status = 'completed' if passed else 'failed'
+        session.score = score
+        session.passed = passed
+        session.completed_at = run.completed_at or timezone.now()
+        session.current_step = int(state.get('current_step', 0) or 0)
+        session.hints_used = int(state.get('hints_used', 0) or 0)
+        session.total_choices = int(breakdown.get('decisions_total', 0) or 0)
+        session.correct_choices = int(breakdown.get('decisions_correct', 0) or 0)
+        session.accuracy_rate = (
+            (session.correct_choices / session.total_choices) * 100
+            if session.total_choices
+            else 0.0
+        )
+        session.session_state = {**state, 'incident_run_id': str(run.id)}
+        session.save(
+            update_fields=[
+                'status',
+                'score',
+                'passed',
+                'completed_at',
+                'current_step',
+                'hints_used',
+                'total_choices',
+                'correct_choices',
+                'accuracy_rate',
+                'session_state',
+            ]
+        )
+        return session
+
+    @transaction.atomic
+    def record_incident_run_result(self, run_id, trainee):
+        """
+        After an immersive mission (IncidentRun) finalizes, update SimulationSession
+        and advance linked course module progress (same path as classic sessions).
+        """
+        try:
+            run = IncidentRun.objects.select_related('scenario').get(pk=run_id)
+        except IncidentRun.DoesNotExist:
+            return None
+
+        if run.scenario_id is None:
+            return None
+
+        session = self.sync_session_from_incident_run(run, trainee)
+        if session is None:
+            return None
+
+        try:
+            return self.record_simulation_result(session.id, trainee)
+        except Exception:
+            logger.exception(
+                'course.record_incident_run_result failed run_id=%s user_id=%s',
+                run_id,
+                getattr(trainee, 'pk', None),
+            )
+            return None
 
     @transaction.atomic
     def record_simulation_result(self, session_id, trainee):

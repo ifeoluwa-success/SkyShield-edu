@@ -10,10 +10,11 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { hasAssignedExercises } from '../services/simulationService';
 import { getProfile } from '../services/authService';
 import { useAuth } from '../hooks/useAuth';
+import { queryKeys } from '../lib/queryClient';
 import '../assets/css/DashboardSidebar.css';
 
 const LogoMark = () => (
@@ -48,59 +49,48 @@ const BookCoursesIcon = ({ size = 20 }: { size?: number }) => (
   </svg>
 );
 
+function trainingProgressFromUser(user: ReturnType<typeof useAuth>['user']): {
+  progress: number;
+  label: string;
+} {
+  if (!user) return { progress: 0, label: 'Training Progress' };
+  switch (user.training_level) {
+    case 'Beginner':
+      return { progress: 25, label: 'Beginner Level' };
+    case 'Intermediate':
+      return { progress: 50, label: 'Intermediate Level' };
+    case 'Advanced':
+      return { progress: 75, label: 'Advanced Level' };
+    case 'Expert':
+      return { progress: 100, label: 'Expert Level' };
+    default:
+      return {
+        progress: Math.min(100, Math.floor((user.simulations_completed / 10) * 100)),
+        label: 'Training Progress',
+      };
+  }
+}
+
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, onToggle }) => {
   const { user } = useAuth();
-  const [showExercises, setShowExercises] = useState(false);
-  const [trainingProgress, setTrainingProgress] = useState(0);
-  const [progressLabel, setProgressLabel] = useState('Training Progress');
 
-  useEffect(() => {
-    const checkExercises = async () => {
-      try {
-        const hasExercises = await hasAssignedExercises();
-        setShowExercises(hasExercises);
-      } catch {
-        setShowExercises(false);
-      }
-    };
-    checkExercises();
+  const exercisesQuery = useQuery({
+    queryKey: queryKeys.hasExercises,
+    queryFn: hasAssignedExercises,
+    staleTime: 5 * 60_000,
+  });
 
-    const fetchUserProgress = async () => {
-      try {
-        const user = await getProfile();
-        // Calculate progress based on completed simulations vs total required
-        // For now, use certification level progression
-        let progress = 0;
-        let label = 'Training Progress';
-        switch (user.training_level) {
-          case 'Beginner':
-            progress = 25;
-            label = 'Beginner Level';
-            break;
-          case 'Intermediate':
-            progress = 50;
-            label = 'Intermediate Level';
-            break;
-          case 'Advanced':
-            progress = 75;
-            label = 'Advanced Level';
-            break;
-          case 'Expert':
-            progress = 100;
-            label = 'Expert Level';
-            break;
-          default:
-            progress = Math.min(100, Math.floor((user.simulations_completed / 10) * 100));
-        }
-        setTrainingProgress(progress);
-        setProgressLabel(label);
-      } catch {
-        // Fallback – keep default
-        setTrainingProgress(0);
-      }
-    };
-    fetchUserProgress();
-  }, []);
+  const profileQuery = useQuery({
+    queryKey: queryKeys.profile,
+    queryFn: getProfile,
+    staleTime: 5 * 60_000,
+    enabled: !!user,
+  });
+
+  const progressUser = profileQuery.data ?? user;
+  const { progress: trainingProgress, label: progressLabel } =
+    trainingProgressFromUser(progressUser);
+  const showExercises = exercisesQuery.data === true;
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
@@ -118,36 +108,13 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, onToggle })
   if (showExercises) {
     const certIdx = menuItems.findIndex((i) => i.id === 'certifications');
     if (certIdx !== -1) {
-      menuItems.splice(certIdx + 1, 0, {
+      menuItems.splice(certIdx, 0, {
         id: 'exercises',
         label: 'Exercises',
         icon: ClipboardList,
         path: '/dashboard/exercises',
       });
     }
-  }
-
-  if (user?.role === 'supervisor' || user?.role === 'admin') {
-    const WarRoomIcon = ({ size = 20 }: { size?: number }) => (
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-        className="shrink-0"
-      >
-        <path
-          d="M12 3.5c3.8 0 6.9 3.1 6.9 6.9 0 2.7-1.6 5.1-3.9 6.2l-3 4.1-3-4.1C6.7 15.5 5.1 13.1 5.1 10.4c0-3.8 3.1-6.9 6.9-6.9Z"
-          stroke="#f59e0b"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <circle cx="12" cy="10.6" r="2.6" stroke="#f59e0b" strokeWidth="1.6" />
-      </svg>
-    );
-    menuItems.splice(4, 0, { id: 'war-room', label: 'War Room', icon: WarRoomIcon, path: '/dashboard/war-room' });
   }
 
   return (
@@ -157,25 +124,28 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, onToggle })
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <LogoMark />
-            <span className="sidebar-logo__text">SkyShield <span>Edu</span></span>
+            <span className="sidebar-logo__text">SkyShield</span>
           </div>
         </div>
+
         <nav className="sidebar-nav">
-          <ul className="nav-menu">
-            {menuItems.map((item) => (
-              <li key={item.id}>
-                <NavLink
-                  to={item.path}
-                  end={item.path === '/dashboard'}
-                  className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                >
-                  <item.icon size={20} />
-                  <span>{item.label}</span>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.id}
+              to={item.path}
+              end={item.path === '/dashboard'}
+              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+              onClick={() => {
+                if (window.innerWidth < 1024) onToggle();
+              }}
+            >
+              <item.icon size={20} />
+              <span>{item.label}</span>
+              {item.id === 'exercises' && <span className="nav-badge">New</span>}
+            </NavLink>
+          ))}
         </nav>
+
         <div className="sidebar-footer">
           <div className="training-progress">
             <div className="progress-header">

@@ -1,9 +1,9 @@
-// src/components/DashboardLayout.tsx
-import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
-import DashboardHeader from "./DashboardHeader";
-import DashboardSidebar from "./DashboardSidebar";
-import "../assets/css/DashboardLayout.css";
+import React, { Suspense, useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import DashboardHeader from './DashboardHeader';
+import DashboardSidebar from './DashboardSidebar';
+import { RouteFallback } from './ui/RouteFallback';
+import '../assets/css/DashboardLayout.css';
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -11,8 +11,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const toggleSidebar = () => setSidebarOpen((o) => !o);
 
   return (
     <div className="dashboard-layout">
@@ -20,7 +19,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <div className="dashboard-main">
         <DashboardHeader onMobileToggle={toggleSidebar} />
         <main className="dashboard-content">
-          {children ?? <Outlet />}
+          <Suspense fallback={<RouteFallback />}>{children ?? <Outlet />}</Suspense>
         </main>
       </div>
     </div>

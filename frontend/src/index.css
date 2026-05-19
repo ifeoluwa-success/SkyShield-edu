@@ -445,23 +445,34 @@
 
 /* ─── Certificate print (single card) ─────────────────────────────────────────── */
 @media print {
-  body * {
+  .dashboard-sidebar,
+  .dashboard-header,
+  .cert-no-print,
+  .toast-container {
+    display: none !important;
+  }
+
+  body.cert-printing * {
     visibility: hidden;
   }
-  .print-certificate.printing-active,
-  .print-certificate.printing-active * {
+
+  body.cert-printing .print-certificate.printing-active,
+  body.cert-printing .print-certificate.printing-active * {
     visibility: visible;
   }
-  .print-certificate.printing-active {
+
+  body.cert-printing .print-certificate.printing-active {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     max-width: 100%;
+    margin: 0 !important;
     box-shadow: none !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+
   .no-print,
   .no-print * {
     display: none !important;

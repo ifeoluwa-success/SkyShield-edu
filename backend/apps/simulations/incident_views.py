@@ -1,5 +1,7 @@
 import logging
 
+from django.db.models import Count, Prefetch
+from django.utils.dateparse import parse_datetime
 from rest_framework import status, viewsets, permissions, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,6 +15,8 @@ from .orchestrator import (
     MissionAlreadyComplete,
     PhaseTimedOut,
 )
+from .models import IncidentEvent
+from .pagination import IncidentEventPagination
 from .serializers import (
     IncidentRunListSerializer,
     IncidentRunSerializer,
@@ -79,16 +83,29 @@ class IsSupervisorOrAdmin:
 
 class IncidentRunViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = IncidentEventPagination
 
     def get_queryset(self):
         user = self.request.user
-        base = (
-            IncidentRun.objects.select_related('scenario')
-            .prefetch_related('mission_participants', 'events')
+        action = getattr(self, 'action', None) or ''
+        base = IncidentRun.objects.select_related('scenario').prefetch_related(
+            'mission_participants',
+            'mission_participants__user',
         )
+        if action == 'list':
+            base = base.annotate(_participant_count=Count('mission_participants', distinct=True))
+        elif action in ('retrieve', 'state', 'actions', 'acknowledge', 'abandon', 'intervention'):
+            base = base.prefetch_related(
+                Prefetch(
+                    'events',
+                    queryset=IncidentEvent.objects.select_related('actor').order_by(
+                        '-timestamp'
+                    )[:5],
+                    to_attr='_recent_events',
+                )
+            )
         if getattr(user, 'role', None) in ['supervisor', 'admin']:
             return base.all()
-        action = getattr(self, 'action', None) or ''
         if action in LOBBY_ACTIONS:
             return base.exclude(status__in=['completed', 'failed', 'abandoned'])
         return base.filter(mission_participants__user=user)
@@ -155,24 +172,45 @@ class IncidentRunViewSet(viewsets.ModelViewSet):
         description="GET /incidents/{id}/events/ — list mission events.",
         responses={200: IncidentEventSerializer(many=True)},
     )
+    def _incident_events_queryset(self, run, request):
+        qs = IncidentEvent.objects.filter(run=run).select_related('actor')
+        since = request.query_params.get('since')
+        if since:
+            parsed = parse_datetime(since)
+            if parsed is not None:
+                qs = qs.filter(timestamp__gt=parsed)
+        event_type = request.query_params.get('event_type')
+        if event_type:
+            qs = qs.filter(event_type=event_type)
+        return qs
+
     @action(detail=True, methods=['get'])
     def events(self, request, pk=None):
-        """GET /incidents/{id}/events/ — paginated event list"""
+        """GET /incidents/{id}/events/ — paginated event list (newest first)."""
         run = self.get_object()
-        events = run.events.all()
-        serializer = IncidentEventSerializer(events, many=True)
+        events = self._incident_events_queryset(run, request).order_by('-timestamp')
+        page = self.paginate_queryset(events)
+        if page is not None:
+            serializer = IncidentEventSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = IncidentEventSerializer(events[:200], many=True)
         return Response(serializer.data)
 
     @extend_schema(
-        description="GET /incidents/{id}/timeline/ — full ordered mission timeline.",
+        description="GET /incidents/{id}/timeline/ — paginated ordered mission timeline.",
         responses={200: IncidentEventSerializer(many=True)},
     )
     @action(detail=True, methods=['get'])
     def timeline(self, request, pk=None):
-        """GET /incidents/{id}/timeline/ — full ordered timeline"""
+        """GET /incidents/{id}/timeline/ — paginated chronological timeline."""
         run = self.get_object()
-        events = run.events.order_by('timestamp')
-        return Response(IncidentEventSerializer(events, many=True).data)
+        events = self._incident_events_queryset(run, request).order_by('timestamp')
+        page = self.paginate_queryset(events)
+        if page is not None:
+            serializer = IncidentEventSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = IncidentEventSerializer(events[:200], many=True)
+        return Response(serializer.data)
 
     @extend_schema(
         description="POST /incidents/{id}/acknowledge/ — acknowledge briefing readiness.",
@@ -277,6 +315,17 @@ class IncidentRunViewSet(viewsets.ModelViewSet):
         run = self.get_object()
         if run.status not in ['completed', 'failed']:
             return Response({'error': 'Mission not yet complete'}, status=400)
+
+        # Repair course module progress for runs finalized before course sync existed.
+        try:
+            from .course_service import CourseService
+            CourseService().record_incident_run_result(run.id, request.user)
+        except Exception:
+            logger.exception(
+                'incident.score_course_sync_failed run_id=%s user_id=%s',
+                pk,
+                request.user.pk,
+            )
         # Compute inline (no imports outside .models/.serializers/.orchestrator)
         submitted = run.events.filter(event_type='action_submitted')
         total = submitted.count()

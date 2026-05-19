@@ -90,6 +90,15 @@ class ScenarioViewSet(viewsets.ReadOnlyModelViewSet):
                 Q(tags__icontains=search)
             )
 
+        if self.action == 'list':
+            queryset = queryset.defer(
+                'graph',
+                'correct_actions',
+                'escalation_rules',
+                'initial_state',
+                'supporting_docs',
+            )
+
         return queryset
 
     def get_serializer_class(self):
@@ -100,6 +109,14 @@ class ScenarioViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['user'] = self.request.user
+        if self.action == 'list':
+            queryset = self.filter_queryset(self.get_queryset())
+            scenario_ids = list(queryset.values_list('id', flat=True))
+            from .query_helpers import scenario_user_session_map
+
+            context['user_session_by_scenario'] = scenario_user_session_map(
+                self.request.user, scenario_ids
+            )
         return context
 
     @extend_schema(
@@ -169,8 +186,21 @@ class ScenarioViewSet(viewsets.ReadOnlyModelViewSet):
                 if scenario.id not in recommended_ids and len(recommended) < 5:
                     recommended = list(recommended) + [scenario]
 
+        from .query_helpers import scenario_user_session_map
+
+        if hasattr(recommended, 'values_list'):
+            scenario_ids = list(recommended.values_list('id', flat=True))
+        else:
+            scenario_ids = [s.id for s in recommended]
         serializer = ScenarioListSerializer(
-            recommended, many=True, context={'user': request.user}
+            recommended,
+            many=True,
+            context={
+                'user': request.user,
+                'user_session_by_scenario': scenario_user_session_map(
+                    request.user, scenario_ids
+                ),
+            },
         )
         return Response(serializer.data)
 
@@ -206,8 +236,18 @@ class ScenarioViewSet(viewsets.ReadOnlyModelViewSet):
             user=request.user
         ).select_related('scenario')
         scenarios = [b.scenario for b in bookmarks]
+        from .query_helpers import scenario_user_session_map
+
+        scenario_ids = [s.id for s in scenarios]
         serializer = ScenarioListSerializer(
-            scenarios, many=True, context={'user': request.user}
+            scenarios,
+            many=True,
+            context={
+                'user': request.user,
+                'user_session_by_scenario': scenario_user_session_map(
+                    request.user, scenario_ids
+                ),
+            },
         )
         return Response(serializer.data)
 

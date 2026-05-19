@@ -1,5 +1,5 @@
 .dashboard-layout { display: flex; min-height: 100vh; background: var(--bg-primary); }
 .dashboard-main { flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column; min-height: 100vh; }
-.dashboard-content { flex: 1; padding: 1.75rem 2rem; overflow-y: auto; }
+.dashboard-content { flex: 1; padding: 0; overflow-y: auto; }
 @media (max-width: 1024px) { .dashboard-main { margin-left: 0; } .dashboard-content { padding: 1.25rem; } }
 @media (max-width: 480px) { .dashboard-content { padding: 1rem 0.75rem; } }

@@ -1,5 +1,6 @@
 // src/services/authService.ts
 import api from './api';
+import { getSocialCallbackUrl } from '../utils/socialAuth';
 import type {
   LoginRequest,
   LoginResponse,
@@ -18,6 +19,23 @@ import type {
   ProfileUpdateRequest,
   User,
 } from '../types/auth';
+
+export const completeSocialLogin = async (
+  provider: 'google' | 'github',
+  code: string,
+): Promise<LoginResponse> => {
+  const response = await api.post<LoginResponse>(`/users/${provider}/`, {
+    code,
+    redirect_uri: getSocialCallbackUrl(provider),
+  });
+  const data = response.data;
+  if (data.access) {
+    localStorage.setItem('access_token', data.access);
+    localStorage.setItem('refresh_token', data.refresh);
+    localStorage.setItem('user', JSON.stringify(data.user));
+  }
+  return data;
+};
 
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   const response = await api.post<LoginResponse>('/users/login/', credentials);
@@ -101,12 +119,15 @@ export const resendVerification = async (
 
 // ─── Devices ──────────────────────────────────────────────────────────────────
 
+/** Backend may send browser/os as a string or nested object (e.g. `{ browser: "Chrome" }`). */
+export type DeviceField = string | Record<string, unknown>;
+
 export interface UserDevice {
   id: string;
   device_name?: string;
   device_type?: string;
-  browser?: string;
-  os?: string;
+  browser?: DeviceField;
+  os?: DeviceField;
   ip_address?: string;
   is_trusted: boolean;
   last_used?: string;
@@ -117,9 +138,9 @@ export interface UserSession {
   id: string;
   session_id?: string;
   ip_address?: string;
-  device_info?: string;
-  browser?: string;
-  os?: string;
+  device_info?: DeviceField;
+  browser?: DeviceField;
+  os?: DeviceField;
   is_active: boolean;
   login_time: string;
   logout_time?: string | null;

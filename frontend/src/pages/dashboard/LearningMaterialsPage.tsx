@@ -1,15 +1,19 @@
-// src/pages/dashboard/LearningMaterialsPage.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
-  Video,
-  FileText,
   Clock,
-  ExternalLink,
   Search,
   X,
   Bookmark,
   ChevronRight,
+  Video,
+  FileText,
+  ExternalLink,
+  Users,
+  Layers,
+  Star,
 } from 'lucide-react';
 import {
   getContentMaterials,
@@ -18,287 +22,441 @@ import {
   getAnnouncements,
   bookmarkContentMaterial,
   enrollInLearningPath,
+  learningPathDetailRoute,
+  markAnnouncementRead,
+  pathProgressPercent,
   type ContentMaterial,
-  type ContentCategory,
   type LearningPath,
   type Announcement,
 } from '../../services/contentService';
+import { queryKeys } from '../../lib/queryClient';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import Toast from '../../components/Toast';
-import { PageLoader } from '../../components/ui/Loading';
+import { ContentGridSkeleton } from '../../components/ui/ContentGridSkeleton';
 import '../../assets/css/LearningMaterialsPage.css';
 
+/* ─── helpers ─── */
+
+function getMaterialIcon(type: string) {
+  if (type === 'video') return <Video size={20} />;
+  if (type === 'document' || type === 'ebook') return <FileText size={20} />;
+  return <BookOpen size={20} />;
+}
+
+function DifficultyPill({ level }: { level: string }) {
+  const key = level in { beginner: 1, intermediate: 1, advanced: 1, expert: 1 } ? level : 'beginner';
+  return <span className={`difficulty-pill ${key}`}>{level}</span>;
+}
+
+function announcementPriorityClass(priority: string) {
+  if (priority === 'urgent' || priority === 'high' || priority === 'medium' || priority === 'low') {
+    return `priority-${priority}`;
+  }
+  return 'priority-low';
+}
+
+/* ─── Path card ─── */
+
+function PathCard({
+  path,
+  onEnroll,
+}: {
+  path: LearningPath;
+  onEnroll: (p: LearningPath) => void;
+}) {
+  const progress = pathProgressPercent(path);
+  const enrolled = path.user_enrolled ?? false;
+
+  return (
+    <div className="path-card p-4 rounded-lg shadow-md">
+      <div className="path-header">
+        <h3 className="path-title">
+          <Link to={path.slug ? learningPathDetailRoute(path.slug) : '/dashboard/learning-materials'}>
+            {path.title}
+          </Link>
+        </h3>
+        {path.difficulty && <DifficultyPill level={path.difficulty} />}
+      </div>
+
+      {path.description && <p className="path-desc">{path.description}</p>}
+
+      <div className="path-meta text-sm flex items-center gap-2">
+        {path.material_count != null && (
+          <span className="flex items-center gap-1">
+            <Layers size={13} /> {path.material_count} materials
+          </span>
+        )}
+        {path.estimated_duration != null && (
+          <span className="flex items-center gap-1">
+            <Clock size={13} /> {path.estimated_duration} min
+          </span>
+        )}
+        {path.enrolled_count != null && (
+          <span className="flex items-center gap-1">
+            <Users size={13} /> {path.enrolled_count.toLocaleString()}
+          </span>
+        )}
+      </div>
+
+      {enrolled && progress > 0 && (
+        <div className="path-progress-track">
+          <div className="path-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => onEnroll(path)}
+        className={`path-enroll-btn${enrolled ? ' secondary' : ''}`}
+      >
+        {enrolled ? 'Continue path' : 'Enroll'}
+        <ChevronRight size={14} />
+      </button>
+    </div>
+  );
+}
+
+/* ─── Material card ─── */
+
+function MaterialCard({
+  material,
+  onBookmark,
+  bookmarking,
+}: {
+  material: ContentMaterial;
+  onBookmark: (slug: string) => void;
+  bookmarking: boolean;
+}) {
+  const href = material.file ?? material.video_url ?? material.external_url ?? null;
+  const hasContent = !href && !!material.content;
+  const bookmarked = material.is_bookmarked ?? false;
+
+  return (
+    <div className="material-card p-4 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg hover:border-cyan-dark flex flex-col gap-2">
+      <div className="material-card-head flex items-center justify-between gap-2">
+        <div className="material-icon">{getMaterialIcon(material.material_type)}</div>
+        <div className="material-meta-badges">
+          <span className="material-type-badge">{material.material_type}</span>
+          {material.difficulty && <DifficultyPill level={material.difficulty} />}
+        </div>
+      </div>
+
+      <div className="material-info flex flex-col gap-2 py-4">
+        {hasContent ? (
+          <Link to={`/dashboard/learning-materials/${material.slug}`} className="material-title-link">
+            <h3 className="text-lg font-semibold">{material.title}</h3>
+          </Link>
+        ) : (
+          <h3 className="text-lg font-semibold">{material.title}</h3>
+        )}
+        {material.description && <p className="text-sm text-gray-600 py-4">{material.description}</p>}
+        <div className="material-meta text-sm flex items-center gap-2">
+          {material.estimated_read_time != null && (
+            <span className="material-time flex items-center gap-1">
+              <Clock size={12} className="inline-block" /> {material.estimated_read_time} min
+            </span>
+          )}
+          {material.average_rating != null && (
+            <span className="material-rating flex items-center gap-1">
+              <Star size={12} className="inline-block" /> {Number(material.average_rating).toFixed(1)}
+            </span>
+          )}
+          {material.category_name && (
+            <>
+              <span className="meta-dot inline-block w-1 h-1 rounded-full bg-gray-400" aria-hidden />
+              <span className="material-category text-sm text-gray-600">{material.category_name}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="material-actions flex items-center gap-2 mt-4">
+        <button
+          type="button"
+          disabled={bookmarking}
+          onClick={() => onBookmark(material.slug)}
+          aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark'}
+          className={`bookmark-btn${bookmarked ? ' active' : ''}`}
+        >
+          <Bookmark size={16} fill={bookmarked ? 'currentColor' : 'none'} />
+        </button>
+
+        {href ? (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="view-btn flex items-center gap-1">
+            <ExternalLink size={14} /> View
+          </a>
+        ) : hasContent ? (
+          <Link to={`/dashboard/learning-materials/${material.slug}`} className="view-btn">
+            Read <ChevronRight size={14} />
+          </Link>
+        ) : (
+          <button type="button" disabled className="view-btn disabled">
+            Preview unavailable
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Page ─── */
+
 const LearningMaterialsPage: React.FC = () => {
-  const [materials, setMaterials] = useState<ContentMaterial[]>([]);
-  const [categories, setCategories] = useState<ContentCategory[]>([]);
-  const [paths, setPaths] = useState<LearningPath[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [toast, setToast] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
+  const [bookmarkingSlug, setBookmarkingSlug] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
-  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<Set<string>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('');
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    const [materialsRes, categoriesRes, pathsRes, announcementsRes] = await Promise.allSettled([
-      getContentMaterials({ is_published: true }),
-      getCategories(),
-      getLearningPaths(),
-      getAnnouncements(),
-    ]);
+  const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
-    if (materialsRes.status === 'fulfilled') setMaterials(materialsRes.value);
-    if (categoriesRes.status === 'fulfilled') setCategories(categoriesRes.value);
-    if (pathsRes.status === 'fulfilled') setPaths(pathsRes.value);
-    if (announcementsRes.status === 'fulfilled') setAnnouncements(announcementsRes.value);
+  const materialFilters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      category: selectedCategory || undefined,
+      difficulty: selectedDifficulty || undefined,
+    }),
+    [debouncedSearch, selectedCategory, selectedDifficulty],
+  );
 
-    setLoading(false);
-  }, []);
+  const categoriesQuery = useQuery({
+    queryKey: queryKeys.content.categories,
+    queryFn: getCategories,
+    staleTime: 5 * 60_000,
+  });
 
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+  const pathsQuery = useQuery({
+    queryKey: queryKeys.content.paths,
+    queryFn: getLearningPaths,
+    staleTime: 60_000,
+  });
 
-  // Refetch materials when filters change
-  useEffect(() => {
-    const fetchFiltered = async () => {
-      try {
-        const data = await getContentMaterials({
-          is_published: true,
-          search: searchTerm || undefined,
-          category: selectedCategory || undefined,
-          difficulty: selectedDifficulty || undefined,
-        });
-        setMaterials(data);
-      } catch {
-        // silently ignore filter errors — stale data is fine
-      }
-    };
-    if (!loading) fetchFiltered();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, selectedCategory, selectedDifficulty]);
+  const announcementsQuery = useQuery({
+    queryKey: queryKeys.content.announcements,
+    queryFn: getAnnouncements,
+    staleTime: 60_000,
+    select: (data) => data.filter((a: Announcement) => !a.is_read),
+  });
 
-  const handleBookmark = async (slug: string) => {
-    try {
-      const res = await bookmarkContentMaterial(slug);
+  const materialsQuery = useQuery({
+    queryKey: queryKeys.content.materials(materialFilters),
+    queryFn: () => getContentMaterials(materialFilters),
+    placeholderData: (prev) => prev,
+  });
+
+  const bookmarkMutation = useMutation({
+    mutationFn: bookmarkContentMaterial,
+    onSuccess: (res, slug) => {
+      queryClient.setQueryData(
+        queryKeys.content.materials(materialFilters),
+        (old: typeof materialsQuery.data) =>
+          old?.map((m) => (m.slug === slug ? { ...m, is_bookmarked: res.bookmarked } : m)),
+      );
       setToast({
         type: 'success',
-        message: res.bookmarked ? 'Bookmarked!' : 'Bookmark removed',
+        message: res.bookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks',
       });
-    } catch {
-      setToast({ type: 'error', message: 'Failed to bookmark material' });
-    }
+    },
+    onError: () => setToast({ type: 'error', message: 'Failed to bookmark material' }),
+  });
+
+  const handleBookmark = (slug: string) => {
+    setBookmarkingSlug(slug);
+    bookmarkMutation.mutate(slug, { onSettled: () => setBookmarkingSlug(null) });
   };
 
-  const handleEnroll = async (slug: string) => {
+  const handleEnroll = async (path: LearningPath) => {
+    if (!path.slug) {
+      setToast({ type: 'error', message: 'This path is missing a link identifier.' });
+      return;
+    }
+    if (path.user_enrolled) {
+      navigate(learningPathDetailRoute(path.slug));
+      return;
+    }
     try {
-      const res = await enrollInLearningPath(slug);
-      setToast({
-        type: 'success',
-        message: res.enrolled ? 'Enrolled in learning path!' : 'Unenrolled from learning path',
-      });
-      const updated = await getLearningPaths();
-      setPaths(updated);
+      await enrollInLearningPath(path.slug);
+      setToast({ type: 'success', message: 'Enrolled in path' });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.content.paths });
+      navigate(learningPathDetailRoute(path.slug));
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        'Failed to enroll';
+      setToast({ type: 'error', message: msg });
+    }
+  };
+
+  const dismissAnnouncement = async (a: Announcement) => {
+    queryClient.setQueryData(
+      queryKeys.content.announcements,
+      (old: Announcement[] | undefined) => old?.filter((x) => x.id !== a.id),
+    );
+    try {
+      await markAnnouncementRead(a.id);
     } catch {
-      setToast({ type: 'error', message: 'Failed to enroll in learning path' });
+      /* local dismiss ok */
     }
   };
 
-  const getMaterialIcon = (type: string) => {
-    switch (type) {
-      case 'video': return <Video size={20} />;
-      case 'document':
-      case 'ebook': return <FileText size={20} />;
-      default: return <BookOpen size={20} />;
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim().length >= 2) {
+      navigate(`/dashboard/search?q=${encodeURIComponent(searchTerm.trim())}`);
     }
   };
 
-  const getPriorityClass = (priority: Announcement['priority']) => {
-    switch (priority) {
-      case 'urgent': return 'announcement-urgent';
-      case 'high': return 'announcement-high';
-      case 'medium': return 'announcement-medium';
-      default: return 'announcement-low';
-    }
-  };
+  const categories = categoriesQuery.data ?? [];
+  const paths = pathsQuery.data ?? [];
+  const announcements = announcementsQuery.data ?? [];
+  const materials = materialsQuery.data ?? [];
+  const initialLoading = materialsQuery.isLoading && !materialsQuery.data;
+  const isRefetching = materialsQuery.isFetching && !initialLoading;
 
-  const visibleAnnouncements = announcements.filter(a => !dismissedAnnouncements.has(a.id));
-
-  if (loading) {
+  if (initialLoading && categoriesQuery.isLoading) {
     return (
-      <div className="learning-materials-page loading">
-        <PageLoader message="Loading materials…" className="min-h-0 py-12" />
+      <div className="learning-materials-page">
+        <ContentGridSkeleton />
       </div>
     );
   }
 
   return (
     <div className="learning-materials-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
 
-      {/* Announcements banner */}
-      {visibleAnnouncements.length > 0 && (
-        <div className="announcements-section">
-          {visibleAnnouncements.map(a => (
-            <div key={a.id} className={`announcement-banner ${getPriorityClass(a.priority)}`}>
-              <div className="announcement-body">
-                <strong>{a.title}</strong>
+      {announcements.length > 0 && (
+        <section className="announcements-section">
+          {announcements.map((a) => (
+            <div
+              key={a.id}
+              className={`announcement-body ${announcementPriorityClass(a.priority)}`}
+            >
+              <div>
+                <span className="announcement-title">{a.title}</span>
                 <span>{a.content}</span>
               </div>
               <button
+                type="button"
+                onClick={() => dismissAnnouncement(a)}
+                aria-label="Dismiss"
                 className="announcement-dismiss"
-                onClick={() => setDismissedAnnouncements(prev => new Set([...prev, a.id]))}
               >
                 <X size={14} />
               </button>
             </div>
           ))}
-        </div>
+        </section>
       )}
 
-      <div className="page-header">
-        <h1 className="page-title">Learning Materials</h1>
-        <p className="page-subtitle">Access documents, videos, and resources to build your cybersecurity skills</p>
+      <div className="page-header page-header-row">
+        <div>
+          <h1 className="page-title">Learning Materials</h1>
+          <p className="page-subtitle">
+            Access documents, videos, and resources to build your cybersecurity skills.
+          </p>
+        </div>
+        <Link to="/dashboard/bookmarks" className="bookmarks-link">
+          <Bookmark size={16} /> Saved
+        </Link>
       </div>
 
-      {/* Learning Paths */}
       {paths.length > 0 && (
-        <section className="learning-paths-section">
+        <section className="learning-paths-section py-4">
           <h2 className="section-title">Learning Paths</h2>
           <div className="paths-grid">
-            {paths.map(path => (
-              <div key={path.id} className="path-card">
-                <div className="path-header">
-                  <h3 className="path-title">{path.title}</h3>
-                  <span className={`path-difficulty ${path.difficulty}`}>{path.difficulty}</span>
-                </div>
-                <p className="path-desc">{path.description}</p>
-                <div className="path-meta">
-                  {path.materials_count !== undefined && (
-                    <span><BookOpen size={13} /> {path.materials_count} materials</span>
-                  )}
-                  {path.estimated_duration !== undefined && (
-                    <span><Clock size={13} /> {path.estimated_duration}h</span>
-                  )}
-                  {path.enrolled_count !== undefined && (
-                    <span><span className="meta-dot">·</span> {path.enrolled_count} enrolled</span>
-                  )}
-                </div>
-                {path.progress !== undefined && path.progress > 0 && (
-                  <div className="path-progress-track">
-                    <div className="path-progress-fill" style={{ width: `${path.progress}%` }} />
-                  </div>
-                )}
-                <button
-                  className={`path-enroll-btn ${path.is_enrolled ? 'enrolled' : ''}`}
-                  onClick={() => handleEnroll(path.slug)}
-                >
-                  {path.is_enrolled ? 'Continue Path' : 'Enroll'} <ChevronRight size={14} />
-                </button>
-              </div>
+            {paths.map((path) => (
+              <PathCard key={path.id} path={path} onEnroll={handleEnroll} />
             ))}
           </div>
         </section>
       )}
 
-      {/* Search & Filters */}
-      <div className="materials-toolbar">
-        <div className="search-box">
+      <form className="materials-toolbar" onSubmit={handleSearchSubmit}>
+        <label className="search-box">
           <Search size={16} />
           <input
-            type="text"
+            type="search"
             placeholder="Search materials…"
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
           {searchTerm && (
-            <button className="clear-search" onClick={() => setSearchTerm('')}><X size={14} /></button>
+            <button
+              type="button"
+              className="clear-search"
+              onClick={() => setSearchTerm('')}
+              aria-label="Clear search"
+            >
+              <X size={14} />
+            </button>
           )}
-        </div>
+        </label>
+
         <select
           className="filter-select"
           value={selectedDifficulty}
-          onChange={e => setSelectedDifficulty(e.target.value)}
+          onChange={(e) => setSelectedDifficulty(e.target.value)}
         >
-          <option value="">All Levels</option>
+          <option value="">All levels</option>
           <option value="beginner">Beginner</option>
           <option value="intermediate">Intermediate</option>
           <option value="advanced">Advanced</option>
+          <option value="expert">Expert</option>
         </select>
-      </div>
+      </form>
 
-      {/* Category chips */}
       {categories.length > 0 && (
         <div className="category-chips">
           <button
-            className={`chip ${selectedCategory === '' ? 'active' : ''}`}
+            type="button"
+            className={selectedCategory === '' ? 'active' : ''}
             onClick={() => setSelectedCategory('')}
           >
             All
           </button>
-          {categories.filter(c => c.is_active).map(cat => (
-            <button
-              key={cat.id}
-              className={`chip ${selectedCategory === cat.slug ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(selectedCategory === cat.slug ? '' : cat.slug)}
-            >
-              {cat.name}
-            </button>
-          ))}
+          {categories
+            .filter((c) => c.is_active)
+            .map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                className={selectedCategory === cat.slug ? 'active' : ''}
+                onClick={() =>
+                  setSelectedCategory(selectedCategory === cat.slug ? '' : cat.slug)
+                }
+              >
+                {cat.name}
+              </button>
+            ))}
         </div>
       )}
 
-      {/* Materials */}
-      {materials.length === 0 ? (
+      {isRefetching && <p className="filtering-hint">Updating…</p>}
+
+      {initialLoading ? (
+        <ContentGridSkeleton />
+      ) : materials.length === 0 ? (
         <div className="empty-state">
           <BookOpen size={48} />
-          <p>No materials found. Try adjusting your filters.</p>
+          <p>No materials found — try adjusting your filters.</p>
         </div>
       ) : (
         <div className="materials-grid">
           {materials.map((material) => (
-            <div key={material.id} className="material-card">
-              <div className="material-icon">{getMaterialIcon(material.material_type)}</div>
-              <div className="material-info">
-                <h3>{material.title}</h3>
-                <p>{material.description}</p>
-                <div className="material-meta">
-                  <span className="material-type-badge">{material.material_type}</span>
-                  <span className={`difficulty-pill ${material.difficulty}`}>{material.difficulty}</span>
-                  {material.estimated_read_time && (
-                    <span className="material-time">
-                      <Clock size={12} /> {material.estimated_read_time} min
-                    </span>
-                  )}
-                  {material.category_name && (
-                    <span className="material-category">{material.category_name}</span>
-                  )}
-                </div>
-              </div>
-              <div className="material-actions">
-                <button
-                  className="bookmark-btn"
-                  title="Bookmark"
-                  onClick={() => handleBookmark(material.slug)}
-                >
-                  <Bookmark size={16} />
-                </button>
-                {material.file || material.video_url || material.external_url ? (
-                  <a
-                    href={material.file ?? material.video_url ?? material.external_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="view-btn"
-                  >
-                    <ExternalLink size={16} /> View
-                  </a>
-                ) : (
-                  <button className="view-btn disabled" disabled>Preview</button>
-                )}
-              </div>
-            </div>
+            <MaterialCard
+              key={material.id}
+              material={material}
+              onBookmark={handleBookmark}
+              bookmarking={bookmarkingSlug === material.slug}
+            />
           ))}
         </div>
       )}

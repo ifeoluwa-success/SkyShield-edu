@@ -52,6 +52,10 @@ class ScenarioListSerializer(serializers.ModelSerializer):
     
     @extend_schema_field(serializers.BooleanField())
     def get_user_completed(self, obj):
+        session_map = self.context.get('user_session_by_scenario') or {}
+        entry = session_map.get(obj.id)
+        if entry is not None:
+            return bool(entry.get('completed'))
         user = self.context.get('user')
         if user and user.is_authenticated:
             return SimulationSession.objects.filter(
@@ -61,6 +65,10 @@ class ScenarioListSerializer(serializers.ModelSerializer):
     
     @extend_schema_field(serializers.FloatField(allow_null=True))
     def get_user_score(self, obj):
+        session_map = self.context.get('user_session_by_scenario') or {}
+        entry = session_map.get(obj.id)
+        if entry is not None:
+            return entry.get('score')
         user = self.context.get('user')
         if user and user.is_authenticated:
             session = SimulationSession.objects.filter(
@@ -94,7 +102,7 @@ class ScenarioDetailSerializer(serializers.ModelSerializer):
             'initial_state', 'steps', 'steps_count', 'hints', 'hints_count',
             'learning_objectives', 'thumbnail', 'intro_video', 'supporting_docs',
             'estimated_time', 'points_possible', 'passing_score', 'max_attempts',
-            'version', 'is_active', 'is_featured', 'tags',
+            'version', 'is_active', 'is_featured', 'requires_team_participation', 'tags',
             'times_completed', 'average_score', 'average_time',
             'created_at', 'updated_at'
         ]
@@ -346,6 +354,9 @@ class IncidentRunListSerializer(serializers.ModelSerializer):
     participant_count = serializers.SerializerMethodField()
 
     def get_participant_count(self, obj):
+        annotated = getattr(obj, '_participant_count', None)
+        if annotated is not None:
+            return annotated
         return obj.mission_participants.count()
 
     class Meta:

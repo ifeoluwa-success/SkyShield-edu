@@ -1,0 +1,366 @@
+/* MaterialDetailPage.module.css */
+
+.page {
+    max-width: 780px;
+    padding: 2rem 1.5rem 5rem;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    color: var(--color-text-primary, #111);
+  }
+  
+  .loader {
+    min-height: 0;
+    padding: 5rem 0;
+  }
+  
+  /* ── Back link ── */
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    text-decoration: none;
+    margin-bottom: 2.5rem;
+    transition: color 0.15s;
+  }
+  .back:hover { color: var(--color-text-primary); }
+  
+  /* ── Header ── */
+  .header { margin-bottom: 0; }
+  
+  .chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.9rem;
+  }
+  
+  .chip {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 4px;
+    border: 0.5px solid var(--color-border-secondary);
+    color: var(--color-text-secondary);
+    background: var(--color-background-secondary);
+  }
+  
+  /* difficulty variants */
+  .beginner  { color: #0F6E56; background: #E1F5EE; border-color: rgba(15,110,86,0.2); }
+  .intermediate { color: #854F0B; background: #FFF3E0; border-color: rgba(133,79,11,0.2); }
+  .advanced  { color: #993C1D; background: #FAECE7; border-color: rgba(153,60,29,0.2); }
+  
+  .title {
+    font-size: 26px;
+    font-weight: 300;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.6rem;
+    color: var(--color-text-primary);
+  }
+  
+  .desc {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+    max-width: 620px;
+    margin-bottom: 1.25rem;
+  }
+  
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.1rem;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    margin-bottom: 1.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  /* ── Actions ── */
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .btnPrimary {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background: var(--color-text-primary);
+    color: var(--color-background-primary);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btnPrimary:hover { opacity: 0.82; }
+  .btnPrimary:disabled { opacity: 0.45; cursor: not-allowed; }
+  
+  .btnSecondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btnSecondary:hover { background: var(--color-background-secondary); }
+  .btnSecondary:disabled { opacity: 0.4; cursor: not-allowed; }
+  
+  .btnIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btnIcon:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .btnIconActive { color: var(--color-text-primary) !important; }
+  .btnIconLiked  { color: #D85A30 !important; }
+  
+  .completedBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: #0F6E56;
+    background: #E1F5EE;
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+  
+  /* ── Divider ── */
+  .divider {
+    border: none;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    margin: 1.75rem 0;
+  }
+  
+  /* ── Sections ── */
+  .section {
+    margin-top: 2.25rem;
+  }
+  
+  .sectionLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    margin-bottom: 0.9rem;
+  }
+  
+  /* ── Resources ── */
+  .resources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .resLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    padding: 7px 14px;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: 6px;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .resLink:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-border-secondary);
+    background: var(--color-background-secondary);
+  }
+  
+  /* ── Content body ── */
+  .contentBody {
+    font-size: 15px;
+    line-height: 1.8;
+    padding: 1.5rem;
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: 10px;
+    color: var(--color-text-primary);
+  }
+  
+  /* ── Rating ── */
+  .stars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 0.9rem;
+  }
+  
+  .starBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-tertiary);
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    transition: color 0.12s, transform 0.1s;
+  }
+  .starBtn:hover { color: #BA7517; transform: scale(1.1); }
+  .starOn { color: #BA7517; }
+  
+  /* ── Shared textarea ── */
+  .textarea {
+    width: 100%;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.15s;
+  }
+  .textarea:focus {
+    outline: none;
+    border-color: var(--color-border-primary);
+  }
+  .textarea::placeholder { color: var(--color-text-tertiary); }
+  
+  /* ── Comments ── */
+  .commentForm { margin-bottom: 1.5rem; }
+  
+  .commentFormFooter {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .commentList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .commentItem {
+    padding: 1rem 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .commentItem:last-child { border-bottom: none; }
+  
+  .commentHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+  }
+  
+  .commentAuthor {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  
+  .commentDate {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+  }
+  
+  .commentText {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+  
+  .deleteBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-tertiary);
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: color 0.12s, background 0.12s;
+  }
+  .deleteBtn:hover { color: #D85A30; background: #FAECE7; }
+  
+  .empty {
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    padding: 0.75rem 0;
+  }
+  
+  /* ── Related ── */
+  .relatedList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .relatedLink {
+    display: block;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    padding: 9px 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    transition: color 0.15s, padding-left 0.15s;
+  }
+  .relatedLink:hover {
+    color: var(--color-text-primary);
+    padding-left: 6px;
+  }
+  .relatedList li:last-child .relatedLink { border-bottom: none; }
+  
+  /* ── Error state ── */
+  .errorMsg {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin-top: 2rem;
+  }
+  
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .page { padding: 1.25rem 1rem 4rem; }
+    .title { font-size: 22px; }
+    .actions { gap: 6px; }
+    .meta { gap: 0.75rem; }
+  }

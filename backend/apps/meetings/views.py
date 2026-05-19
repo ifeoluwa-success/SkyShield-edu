@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from django.utils import timezone
-from django.db.models import Q, Count
+from django.db.models import Exists, OuterRef, Q, Count
 from django.shortcuts import get_object_or_404
 from django.core.cache import cache
 from .models import Meeting, MeetingParticipant, MeetingInvitation, MeetingRecording, MeetingChat
@@ -71,7 +71,18 @@ class MeetingViewSet(viewsets.ModelViewSet):
                 Q(meeting_code__icontains=search)
             )
 
-        return queryset.select_related('host').prefetch_related('participants')
+        queryset = queryset.select_related('host').prefetch_related('participants')
+        if self.action == 'list' and user.is_authenticated:
+            from .models import MeetingParticipant
+
+            participant_qs = MeetingParticipant.objects.filter(
+                meeting_id=OuterRef('pk'),
+                user=user,
+            )
+            queryset = queryset.annotate(
+                _user_is_participant=Exists(participant_qs),
+            )
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'create':

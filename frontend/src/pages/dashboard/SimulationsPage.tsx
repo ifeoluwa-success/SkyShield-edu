@@ -1,24 +1,66 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PlayCircle, Clock, Award, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { getScenarios, startSimulation, getCurrentSession } from '../../services/simulationService';
 import type { Scenario, SimulationSession } from '../../types/simulation';
 import Toast from '../../components/Toast';
-import { PageLoader } from '../../components/ui/Loading';
+import { ContentGridSkeleton } from '../../components/ui/ContentGridSkeleton';
+import { queryKeys } from '../../lib/queryClient';
 import '../../assets/css/Simulationdash.css';
 import { startMissionRun } from '../../services/incidentService';
 import { useAuth } from '../../hooks/useAuth';
 
+async function fetchSessionsForScenarios(
+  scenarios: Scenario[],
+): Promise<Map<string, SimulationSession>> {
+  const pairs = await Promise.all(
+    scenarios.map(async (scenario) => {
+      try {
+        const session = await getCurrentSession(scenario.id);
+        return session ? ([scenario.id, session] as const) : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return new Map(pairs.filter((p): p is [string, SimulationSession] => p !== null));
+}
+
 const DashboardSimulationsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filterDifficulty, setFilterDifficulty] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-  const [userSessions, setUserSessions] = useState<Map<string, SimulationSession>>(new Map());
   const [launchingScenarioId, setLaunchingScenarioId] = useState<string | null>(null);
+
+  const filters = useMemo(
+    () => ({ difficulty: filterDifficulty, category: filterCategory }),
+    [filterDifficulty, filterCategory],
+  );
+
+  const scenariosQuery = useQuery({
+    queryKey: queryKeys.simulations.scenarios(filters),
+    queryFn: () =>
+      getScenarios({
+        difficulty: filterDifficulty || undefined,
+        category: filterCategory || undefined,
+      }),
+    placeholderData: (prev) => prev,
+  });
+
+  const scenarios = scenariosQuery.data ?? [];
+  const scenarioIds = useMemo(() => scenarios.map((s) => s.id), [scenarios]);
+
+  const sessionsQuery = useQuery({
+    queryKey: queryKeys.simulations.sessionsMap(scenarioIds),
+    queryFn: () => fetchSessionsForScenarios(scenarios),
+    enabled: scenarios.length > 0,
+    staleTime: 30_000,
+  });
+
+  const userSessions = sessionsQuery.data ?? new Map<string, SimulationSession>();
 
   const operatorRole = useMemo(() => {
     const role = (user as unknown as { role?: string } | null)?.role ?? '';
@@ -27,41 +69,10 @@ const DashboardSimulationsPage: React.FC = () => {
     return 'lead_operator';
   }, [user]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const scenariosData = await getScenarios({
-          difficulty: filterDifficulty || undefined,
-          category: filterCategory || undefined,
-        });
-        setScenarios(scenariosData);
-
-        // Fetch user progress for each scenario
-        const sessionsMap = new Map<string, SimulationSession>();
-        for (const scenario of scenariosData) {
-          try {
-            const session = await getCurrentSession(scenario.id);
-            if (session) sessionsMap.set(scenario.id, session);
-          } catch {
-            // Ignore – no session for this scenario
-            console.debug(`No session found for scenario ${scenario.id}`);
-          }
-        }
-        setUserSessions(sessionsMap);
-      } catch {
-        setToast({ type: 'error', message: 'Failed to load simulations' });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [filterDifficulty, filterCategory]);
-
   const handleStartSimulation = async (scenarioId: string) => {
     try {
       const session = await startSimulation(scenarioId);
-      window.location.href = `/dashboard/simulation/${session.id}`;
+      navigate(`/dashboard/simulation/${session.id}`);
     } catch {
       setToast({ type: 'error', message: 'Failed to start simulation' });
     }
@@ -81,17 +92,20 @@ const DashboardSimulationsPage: React.FC = () => {
 
   const getDifficultyClass = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'easy';
-      case 'intermediate': return 'medium';
-      case 'advanced': return 'hard';
-      case 'expert': return 'expert';
-      default: return 'easy';
+      case 'beginner':
+        return 'easy';
+      case 'intermediate':
+        return 'medium';
+      case 'advanced':
+        return 'hard';
+      case 'expert':
+        return 'expert';
+      default:
+        return 'easy';
     }
   };
 
-  const getCategoryIconClass = (category: string) => {
-    return category.toLowerCase().replace(/\s/g, '-');
-  };
+  const getCategoryIconClass = (category: string) => category.toLowerCase().replace(/\s/g, '-');
 
   const getProgress = (scenarioId: string): number => {
     const session = userSessions.get(scenarioId);
@@ -108,13 +122,7 @@ const DashboardSimulationsPage: React.FC = () => {
     return 'new';
   };
 
-  if (loading) {
-    return (
-      <div className="dashboard-page loading">
-        <PageLoader message="Loading simulations…" />
-      </div>
-    );
-  }
+  const showSkeleton = scenariosQuery.isLoading && !scenariosQuery.data;
 
   return (
     <div className="dashboard-page">
@@ -125,9 +133,7 @@ const DashboardSimulationsPage: React.FC = () => {
           <h1 className="welcome-title">
             Training <span className="gradient-text">Simulations</span>
           </h1>
-          <p className="welcome-subtitle">
-            Select a simulation to start your cybersecurity training
-          </p>
+          <p className="welcome-subtitle">Select a simulation to start your cybersecurity training</p>
         </div>
         <div className="welcome-actions">
           <div className="filter-group">
@@ -159,76 +165,92 @@ const DashboardSimulationsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="simulations-grid">
-        {scenarios.length === 0 ? (
-          <div className="empty-state">No simulations available</div>
-        ) : (
-          scenarios.map((scenario) => {
-            const progress = getProgress(scenario.id);
-            const status = getStatus(scenario.id);
-            return (
-              <div key={scenario.id} className="simulation-card card-3d">
-                <div className="simulation-card-header">
-                  <div className={`simulation-icon ${getCategoryIconClass(scenario.category)}`}>
-                    <PlayCircle size={24} />
-                  </div>
-                  <div className="simulation-meta">
-                    <span className={`difficulty-badge ${getDifficultyClass(scenario.difficulty)}`}>
-                      {scenario.difficulty_display}
-                    </span>
-                    <span className="duration">
-                      <Clock size={14} />
-                      {scenario.estimated_time} min
-                    </span>
-                  </div>
-                </div>
+      {scenariosQuery.isFetching && !showSkeleton && (
+        <p className="filtering-hint">Refreshing scenarios…</p>
+      )}
 
-                <h3 className="simulation-title">{scenario.title}</h3>
-                <p className="simulation-category">{scenario.category_display}</p>
-
-                <div className="simulation-progress">
-                  <div className="progress-label">
-                    <span>Progress</span>
-                    <span className="progress-value">{progress}%</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div className="bar-fill" style={{ width: `${progress}%` }}></div>
-                  </div>
-                </div>
-
-                <div className="simulation-actions">
-                  {status === 'completed' ? (
-                    <button className="review-button">
-                      <Award size={18} />
-                      Review
-                    </button>
-                  ) : status === 'in-progress' ? (
-                    <Link to={`/dashboard/simulation/${userSessions.get(scenario.id)?.id}`} className="continue-button">
-                      <PlayCircle size={18} />
-                      Continue
-                    </Link>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      <button onClick={() => handleStartSimulation(scenario.id)} className="start-button">
-                        <PlayCircle size={18} />
-                        Start Simulation
-                      </button>
-                      <button
-                        onClick={() => handleLaunchMission(scenario.id)}
-                        className="start-button"
-                        disabled={launchingScenarioId === scenario.id}
-                      >
-                        <Sparkles size={18} />
-                        {launchingScenarioId === scenario.id ? 'Launching...' : 'Launch Immersive Mission'}
-                      </button>
+      {showSkeleton ? (
+        <ContentGridSkeleton count={4} />
+      ) : (
+        <div className="simulations-grid">
+          {scenarios.length === 0 ? (
+            <div className="empty-state">No simulations available</div>
+          ) : (
+            scenarios.map((scenario) => {
+              const progress = getProgress(scenario.id);
+              const status = getStatus(scenario.id);
+              return (
+                <div key={scenario.id} className="simulation-card card-3d">
+                  <div className="simulation-card-header">
+                    <div className={`simulation-icon ${getCategoryIconClass(scenario.category)}`}>
+                      <PlayCircle size={24} />
                     </div>
-                  )}
+                    <div className="simulation-meta">
+                      <span className={`difficulty-badge ${getDifficultyClass(scenario.difficulty)}`}>
+                        {scenario.difficulty_display}
+                      </span>
+                      <span className="duration">
+                        <Clock size={14} />
+                        {scenario.estimated_time} min
+                      </span>
+                    </div>
+                  </div>
+
+                  <h3 className="simulation-title">{scenario.title}</h3>
+                  <p className="simulation-category">{scenario.category_display}</p>
+
+                  <div className="simulation-progress">
+                    <div className="progress-label">
+                      <span>Progress</span>
+                      <span className="progress-value">{progress}%</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div className="bar-fill" style={{ width: `${progress}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="simulation-actions">
+                    {status === 'completed' ? (
+                      <button type="button" className="review-button">
+                        <Award size={18} />
+                        Review
+                      </button>
+                    ) : status === 'in-progress' ? (
+                      <Link
+                        to={`/dashboard/simulation/${userSessions.get(scenario.id)?.id}`}
+                        className="continue-button"
+                      >
+                        <PlayCircle size={18} />
+                        Continue
+                      </Link>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleStartSimulation(scenario.id)}
+                          className="start-button"
+                        >
+                          <PlayCircle size={18} />
+                          Start Simulation
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleLaunchMission(scenario.id)}
+                          className="start-button"
+                          disabled={launchingScenarioId === scenario.id}
+                        >
+                          <Sparkles size={18} />
+                          {launchingScenarioId === scenario.id ? 'Launching...' : 'Launch Immersive Mission'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 };

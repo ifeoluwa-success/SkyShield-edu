@@ -68,48 +68,34 @@ class DashboardStatsView(APIView):
         
         # Lazy load models to avoid circular imports
         SimulationSession = apps.get_model('simulations', 'SimulationSession')
-        Scenario = apps.get_model('simulations', 'Scenario')
         UserActivity = apps.get_model('users', 'UserActivity')
-        
-        # Overall stats
-        total_simulations = SimulationSession.objects.filter(
-            user=user, status='completed'
-        ).count()
         
         completed_simulations = SimulationSession.objects.filter(
             user=user, status='completed'
         )
-        
-        avg_score = completed_simulations.aggregate(Avg('score'))['score__avg'] or 0
-        total_time = completed_simulations.aggregate(Sum('time_spent'))['time_spent__sum'] or 0
-        
-        # Weekly stats
+        total_simulations = completed_simulations.count()
+
+        agg = completed_simulations.aggregate(
+            avg_score=Avg('score'),
+            total_time=Sum('time_spent'),
+        )
+        avg_score = agg['avg_score'] or 0
+        total_time = agg['total_time'] or 0
+
         weekly_sims = completed_simulations.filter(
             completed_at__date__gte=week_ago
         ).count()
-        
-        # Category distribution
-        category_stats = []
-        # Get categories from Scenario model
-        categories = getattr(Scenario, 'CATEGORIES', [])
-        
-        for category, _ in categories:
-            count = SimulationSession.objects.filter(
-                user=user,
-                scenario__category=category,
-                status='completed'
-            ).count()
-            if count > 0:
-                avg_cat_score = SimulationSession.objects.filter(
-                    user=user,
-                    scenario__category=category,
-                    status='completed'
-                ).aggregate(Avg('score'))['score__avg']
-                category_stats.append({
-                    'category': category,
-                    'count': count,
-                    'avg_score': round(avg_cat_score, 2) if avg_cat_score else 0
-                })
+
+        category_stats = [
+            {
+                'category': row['scenario__category'],
+                'count': row['count'],
+                'avg_score': round(row['avg_score'] or 0, 2),
+            }
+            for row in completed_simulations.values('scenario__category')
+            .annotate(count=Count('id'), avg_score=Avg('score'))
+            .filter(count__gt=0)
+        ]
         
         # Recent activity
         recent_activity = UserActivity.objects.filter(
@@ -134,7 +120,7 @@ class DashboardStatsView(APIView):
         
         data = {
             'total_simulations': total_simulations,
-            'completed_simulations': completed_simulations.count(),
+            'completed_simulations': total_simulations,
             'average_score': round(avg_score, 2),
             'total_time': total_time,
             'weekly_simulations': weekly_sims,

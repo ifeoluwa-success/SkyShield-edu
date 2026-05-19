@@ -1,0 +1,191 @@
+/* Mission player — immersive ops console layout (theme tokens) */
+
+.mission-player {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.mission-player__header {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.mission-player__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.mission-player__alerts {
+  flex-shrink: 0;
+}
+
+.mission-player__workspace {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+  padding: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .mission-player__workspace {
+    grid-template-columns: minmax(0, 1fr) min(320px, 30vw);
+    grid-template-rows: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+}
+
+.mission-player__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  min-width: 0;
+}
+
+.mission-player__tactical {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-deep);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.mission-player__tactical-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 200px;
+  max-height: min(42vh, 420px);
+  padding: 0.5rem;
+}
+
+@media (min-width: 1024px) {
+  .mission-player__tactical-viewport {
+    min-height: 240px;
+    max-height: min(38vh, 380px);
+  }
+}
+
+.mission-player__tactical--team {
+  box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--success) 35%, transparent);
+}
+
+.mission-player__decision-slot {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  padding: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .mission-player__decision-slot {
+    padding: 1rem 1.25rem;
+  }
+}
+
+.mission-player__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  min-width: 0;
+}
+
+.mission-player__sidebar-card {
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.mission-player__sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+}
+
+.mission-player__solo-banner {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--info) 25%, transparent);
+  background: var(--info-dim);
+}
+
+.mission-player__solo-banner p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.mission-player__solo-banner strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--info);
+}
+
+.mission-player__telemetry {
+  padding: 0.85rem 1rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.mission-player__telemetry-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.mission-player__telemetry-row + .mission-player__telemetry-row {
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
+}
+
+.mission-player__telemetry-label {
+  color: var(--text-muted);
+}
+
+.mission-player__telemetry-value {
+  font-family: ui-monospace, monospace;
+  color: var(--text-primary);
+}
+
+.mission-player__telemetry-value--live {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.mission-player__telemetry-value--warn {
+  color: var(--warning);
+  font-weight: 600;
+}

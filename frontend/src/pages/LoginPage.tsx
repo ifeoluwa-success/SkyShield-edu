@@ -10,6 +10,7 @@ import AuthGraphic from '../components/AuthGraphic';
 import { Spinner } from '../components/ui/Loading';
 import '@/assets/css/AuthShared.css';
 import '@/assets/css/LoginPage.css';
+import { redirectToSocialLogin } from '../utils/socialAuth';
 
 function extractErrorMessage(err: unknown): string {
   if (!err || typeof err !== 'object') return 'Login failed. Please try again.';
@@ -64,15 +65,7 @@ const LoginPage: React.FC = () => {
   const { login } = useAuth();
 
   const handleSocialLogin = (provider: 'google' | 'github') => {
-    const GOOGLE_ID = '286908192296-i36j9p9lql614ilg6bjtap02hprfgikh.apps.googleusercontent.com';
-    const GITHUB_ID = 'Ov23lixgmLpdpnwvA1Q5';
-    const CALLBACK_URL = `https://skyshieldedu.com/auth/callback/${provider}`;
-
-    if (provider === 'google') {
-      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_ID}&redirect_uri=${CALLBACK_URL}&response_type=code&scope=profile%20email`;
-    } else {
-      window.location.href = `https://github.com/login/oauth/authorize?client_id=${GITHUB_ID}&redirect_uri=${CALLBACK_URL}&scope=user:email`;
-    }
+    redirectToSocialLogin(provider);
   };
 
   const clearMessages = () => { setError(''); setInfoMessage(''); setSuccessMessage(''); };
