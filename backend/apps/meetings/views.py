@@ -256,15 +256,21 @@ class MeetingViewSet(viewsets.ModelViewSet):
         serializer = MeetingJoinSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        meeting_code = serializer.validated_data.get('meeting_code')
+        meeting_code = (serializer.validated_data.get('meeting_code') or '').strip()
         password = serializer.validated_data.get('password', '')
         video_enabled = serializer.validated_data.get('video_enabled', False)
         audio_enabled = serializer.validated_data.get('audio_enabled', False)
         client_info = serializer.validated_data.get('client_info', {})
 
-        # Find meeting
+        if not meeting_code:
+            return Response(
+                {'error': 'Meeting code is required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Find meeting (case-insensitive — share links must resolve to the same room)
         try:
-            meeting = Meeting.objects.get(meeting_code=meeting_code)
+            meeting = Meeting.objects.get(meeting_code__iexact=meeting_code)
         except Meeting.DoesNotExist:
             return Response(
                 {'error': 'Meeting not found'},
@@ -313,34 +319,28 @@ class MeetingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Generate WebSocket connection info
-        ws_url = f"/ws/meeting/{meeting.room_name}/"
+        # Ensure room_name always matches meeting_code (legacy rows may be out of sync)
+        expected_room = f'room_{meeting.meeting_code}'
+        if meeting.room_name != expected_room:
+            meeting.room_name = expected_room
+            meeting.save(update_fields=['room_name'])
+
+        # Auto-start scheduled meetings when the host joins
+        if meeting.host == request.user and meeting.status == 'scheduled':
+            meeting.start_meeting()
+
+        ws_url = f'/ws/meeting/{meeting.room_name}/'
 
         return Response({
             'message': 'Ready to join',
-            'meeting': {
-                'id': str(meeting.id),
-                'title': meeting.title,
-                'code': meeting.meeting_code,
-                'room': meeting.room_name,
-                'status': meeting.status,
-                'host_name': meeting.host.get_full_name() or meeting.host.username,
-                'participant_count': meeting.participant_count,
-                'max_participants': meeting.max_participants,
-                'allow_chat': meeting.allow_chat,
-                'allow_screen_share': meeting.allow_screen_share,
-                'allow_recording': meeting.allow_recording,
-            },
-            'participant': {
-                'id': str(participant.id),
-                'role': participant.role,
-                'video_enabled': video_enabled,
-                'audio_enabled': audio_enabled,
-            },
+            'meeting': MeetingDetailSerializer(
+                meeting, context={'request': request},
+            ).data,
+            'participant': MeetingParticipantSerializer(participant).data,
             'signaling': {
                 'websocket_url': ws_url,
                 'ice_servers': self.get_ice_servers(),
-            }
+            },
         })
 
     @extend_schema(

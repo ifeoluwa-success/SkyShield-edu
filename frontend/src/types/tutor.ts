@@ -250,6 +250,8 @@ export interface JoinMeetingResponse {
     role: string;
     video_enabled: boolean;
     audio_enabled: boolean;
+    /** Auth user id — use for host/self checks (not participant row id). */
+    user_id?: string;
   };
   signaling: {
     websocket_url: string;

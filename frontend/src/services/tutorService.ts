@@ -249,11 +249,33 @@ export const deleteMeeting = async (id: string): Promise<void> => {
 };
 
 export const joinMeeting = async (meetingCode: string, password?: string): Promise<JoinMeetingResponse> => {
-  const response = await api.post<JoinMeetingResponse>('/meetings/meetings/join/', {
-    meeting_code: meetingCode,
+  const response = await api.post<JoinMeetingResponse & {
+    meeting?: Meeting & { code?: string; room?: string };
+    participant?: JoinMeetingResponse['participant'] & { user?: string };
+  }>('/meetings/meetings/join/', {
+    meeting_code: meetingCode.trim(),
     password,
   });
-  return response.data;
+  const raw = response.data;
+  const m = raw.meeting;
+  const p = raw.participant;
+
+  return {
+    ...raw,
+    meeting: {
+      ...m,
+      meeting_code: m.meeting_code ?? m.code ?? meetingCode.trim(),
+      room_name: m.room_name ?? m.room ?? '',
+      host: m.host ?? p?.user ?? '',
+    },
+    participant: {
+      id: p.id,
+      role: p.role,
+      video_enabled: p.video_enabled ?? false,
+      audio_enabled: p.audio_enabled ?? false,
+      user_id: p.user ?? (p as { user_id?: string }).user_id,
+    },
+  };
 };
 
 export const startMeeting = async (id: string): Promise<Meeting> => {

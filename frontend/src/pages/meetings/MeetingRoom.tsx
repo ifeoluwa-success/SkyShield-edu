@@ -10,10 +10,18 @@ import Toast from '../../components/Toast';
 import '../../assets/css/MeetingRoom.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+interface RoomParticipant {
+  id?: string;
+  user_id?: string;
+  username?: string;
+  full_name?: string;
+}
+
 interface SignalingMessage {
   type: string;
   user_id?: string;
   user_name?: string;
+  participants?: RoomParticipant[];
   from?: string;
   from_user?: string;
   target?: string;
@@ -296,10 +304,12 @@ const MeetingRoom: React.FC = () => {
         setMeeting(data.meeting);
         signalingRef.current = data.signaling;
         participantRef.current = data.participant;
-        const hostFlag = data.meeting.host === data.participant.id;
+        const hostFlag =
+          data.participant.role === 'host' ||
+          (!!user?.id && data.meeting.host === user.id);
         setIsHost(hostFlag);
 
-        const isTrainee = data.participant.role === 'trainee';
+        const isTrainee = user?.role === 'trainee';
 
         if (isTrainee && user?.id) {
           trackMeetingAttendance(user.id, data.meeting.id).catch(() => {});
@@ -319,7 +329,7 @@ const MeetingRoom: React.FC = () => {
       }
     };
     void init();
-  }, [code, requestLocalMedia, user?.id]);
+  }, [code, requestLocalMedia, user?.id, user?.role]);
 
   // When trainee is admitted, request media
   useEffect(() => {
@@ -382,11 +392,46 @@ const MeetingRoom: React.FC = () => {
     [safeSend],
   );
 
+  const connectToParticipant = useCallback(
+    (remoteUserId: string, displayName?: string) => {
+      if (!remoteUserId || remoteUserId === user?.id) return;
+      if (!localStreamRef.current || inWaitingRoom) return;
+
+      setParticipants(prev => {
+        if (prev.has(remoteUserId)) return prev;
+        const next = new Map(prev);
+        next.set(remoteUserId, {
+          userId: remoteUserId,
+          name: displayName ?? remoteUserId.slice(0, 8),
+          videoEnabled: true,
+          audioEnabled: true,
+        });
+        return next;
+      });
+
+      if (!peersRef.current.has(remoteUserId)) {
+        buildPeer(remoteUserId, true, localStreamRef.current);
+      }
+    },
+    [buildPeer, inWaitingRoom, user?.id],
+  );
+
   const handleMessage = useCallback(
     (data: SignalingMessage) => {
       const senderId = data.from_user ?? data.from;
 
       switch (data.type) {
+        case 'room_info':
+        case 'participant_list': {
+          const list = data.participants ?? [];
+          for (const p of list) {
+            const remoteUserId = p.id ?? p.user_id;
+            const name = p.full_name ?? p.username;
+            connectToParticipant(remoteUserId ?? '', name);
+          }
+          break;
+        }
+
         case 'waiting_room_update':
           if (data.waiting_participants) {
             setWaitingParticipants(data.waiting_participants);
@@ -399,21 +444,11 @@ const MeetingRoom: React.FC = () => {
           break;
 
         case 'user_joined': {
-          if (!data.user_id || data.user_id === participantRef.current?.id) break;
-          setParticipants(prev => {
-            if (prev.has(data.user_id!)) return prev;
-            const next = new Map(prev);
-            next.set(data.user_id!, {
-              userId: data.user_id!,
-              name: data.user_name ?? data.user_id!.slice(0, 8),
-              videoEnabled: true,
-              audioEnabled: true,
-            });
-            return next;
-          });
-          if (localStreamRef.current && !inWaitingRoom) {
-            buildPeer(data.user_id, true, localStreamRef.current);
-          }
+          if (!data.user_id || data.user_id === user?.id) break;
+          connectToParticipant(
+            data.user_id,
+            data.full_name ?? data.user_name ?? data.username,
+          );
           break;
         }
 
@@ -507,7 +542,7 @@ const MeetingRoom: React.FC = () => {
           break;
       }
     },
-    [buildPeer, inWaitingRoom, safeSend],
+    [buildPeer, connectToParticipant, inWaitingRoom, safeSend, user?.id],
   );
 
   // WebSocket Connection
@@ -530,11 +565,9 @@ const MeetingRoom: React.FC = () => {
     ws.onopen = () => {
       console.log('✅ WebSocket connected');
       setWsReady(true);
-      safeSend({
-        type: 'join',
-        meetingCode: meeting.meeting_code,
-        participantId: participantRef.current?.id,
-      });
+      // Room is determined by the WebSocket URL (/ws/meeting/<room_name>/).
+      // Request current participants so we connect to users already in the room.
+      safeSend({ type: 'get_participants' });
       setJoined(true);
     };
 
