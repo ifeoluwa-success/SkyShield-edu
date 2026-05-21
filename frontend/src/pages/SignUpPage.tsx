@@ -5,7 +5,6 @@ import { Lock, Mail, User, Shield, Briefcase, Check, ArrowLeft } from 'lucide-re
 import AuthGraphic from '../components/AuthGraphic';
 import '@/assets/css/AuthShared.css';
 import '@/assets/css/SignUpPage.css';
-import { redirectToSocialLogin } from '../utils/socialAuth';
 
 interface FormData {
   email: string;
@@ -40,10 +39,6 @@ const SignUpPage: React.FC = () => {
   });
   const [errors, setErrors] = useState<Errors>({});
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleSocialLogin = (provider: 'google' | 'github') => {
-    redirectToSocialLogin(provider);
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -199,25 +194,6 @@ const SignUpPage: React.FC = () => {
               <span>{isLoading ? 'Creating Account…' : 'Create Account'}</span>
             </button>
           </form>
-
-          <div className="signup-divider"><span>or sign up with</span></div>
-
-          <div className="social-signup">
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => handleSocialLogin('google')}
-            >
-              Google
-            </button>
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => handleSocialLogin('github')}
-            >
-              GitHub
-            </button>
-          </div>
 
           <p className="auth-switch-link">
             Already have an account?{' '}

@@ -8,6 +8,8 @@ router.register(r'materials', views.LearningMaterialViewSet, basename='material'
 router.register(r'paths', views.LearningPathViewSet, basename='path')
 router.register(r'glossary', views.GlossaryViewSet, basename='glossary')
 router.register(r'faqs', views.FAQViewSet, basename='faq')
+# Register manage before announcements — otherwise <pk> captures "manage" and POST returns 405
+router.register(r'announcements/manage', views.AnnouncementManageViewSet, basename='announcement-manage')
 router.register(r'announcements', views.AnnouncementViewSet, basename='announcement')
 router.register(r'bookmarks', views.MaterialBookmarkViewSet, basename='bookmark')
 

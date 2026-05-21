@@ -1,7 +1,9 @@
-import React, { useCallback, useMemo, useState, type ReactNode } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AuthContext } from './AuthContext';
 import type { User } from '../types/auth';
 import { login as apiLogin, logout as apiLogout } from '../services/authService';
+import { normalizeRole } from '../lib/authRouting';
+import { AUTH_SESSION_EXPIRED } from '../lib/authSession';
 
 interface Props {
   children: ReactNode;
@@ -15,12 +17,30 @@ const readAccessToken = (): string | null => {
   }
 };
 
+function parseStoredUser(raw: string): User | null {
+  try {
+    const parsed = JSON.parse(raw) as User;
+    const role = normalizeRole(parsed?.role);
+    if (!role) return null;
+    return { ...parsed, role };
+  } catch {
+    return null;
+  }
+}
+
 const getInitialUser = (): User | null => {
   try {
     const storedUser = localStorage.getItem('user');
     const token = readAccessToken();
     if (storedUser && token) {
-      return JSON.parse(storedUser);
+      const user = parseStoredUser(storedUser);
+      if (!user) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        return null;
+      }
+      return user;
     }
   } catch {
     localStorage.removeItem('user');
@@ -31,17 +51,35 @@ const getInitialUser = (): User | null => {
 export const AuthProvider: React.FC<Props> = ({ children }) => {
   const [user, setUser] = useState<User | null>(getInitialUser);
 
+  useEffect(() => {
+    const onSessionExpired = () => setUser(null);
+    window.addEventListener(AUTH_SESSION_EXPIRED, onSessionExpired);
+    return () => window.removeEventListener(AUTH_SESSION_EXPIRED, onSessionExpired);
+  }, []);
+
   const login = useCallback(async (identifier: string, password: string): Promise<User> => {
     const data = await apiLogin({ identifier, password });
-    setUser(data.user);
-    return data.user;
+    const role = normalizeRole(data.user?.role);
+    if (!role) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      throw new Error('Your account has an invalid role. Contact support.');
+    }
+    const user = { ...data.user, role };
+    localStorage.setItem('user', JSON.stringify(user));
+    setUser(user);
+    return user;
   }, []);
 
   const applySession = useCallback((sessionUser: User, access: string, refresh: string) => {
+    const role = normalizeRole(sessionUser?.role);
+    if (!role) return;
+    const user = { ...sessionUser, role };
     localStorage.setItem('access_token', access);
     localStorage.setItem('refresh_token', refresh);
-    localStorage.setItem('user', JSON.stringify(sessionUser));
-    setUser(sessionUser);
+    localStorage.setItem('user', JSON.stringify(user));
+    setUser(user);
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {
@@ -69,7 +107,7 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
       applySession,
       logout,
       updateUser,
-      isAuthenticated: !!user,
+      isAuthenticated: !!user && !!readAccessToken(),
       isAdmin: user?.role === 'admin',
       isSupervisor: user?.role === 'supervisor',
       isInstructor: user?.role === 'instructor',

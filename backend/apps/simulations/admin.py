@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from .models import (
     Scenario,
+    ScenarioAssignment,
     SimulationSession,
     UserDecision,
     ScenarioFeedback,
@@ -26,7 +27,7 @@ class ScenarioAdmin(admin.ModelAdmin):
         'times_completed', 'average_score', 'is_active_badge',
         'is_featured_badge', 'created_at'
     ]
-    list_filter = ['category', 'threat_type', 'difficulty', 'is_active', 'is_featured']
+    list_filter = ['category', 'threat_type', 'difficulty', 'publish_status', 'is_active', 'is_featured']
     search_fields = ['title', 'description', 'tags']
     readonly_fields = ['id', 'times_completed', 'average_score', 'average_time', 
                       'created_at', 'updated_at', 'scenario_stats', 'steps_preview']
@@ -50,7 +51,7 @@ class ScenarioAdmin(admin.ModelAdmin):
         }),
         ('Settings', {
             'fields': ('estimated_time', 'points_possible', 'passing_score', 
-                      'max_attempts', 'is_active', 'is_featured')
+                      'max_attempts', 'publish_status', 'is_active', 'is_featured')
         }),
         ('Statistics', {
             'fields': ('times_completed', 'average_score', 'average_time', 'scenario_stats'),
@@ -447,3 +448,15 @@ class CourseCertificateAdmin(admin.ModelAdmin):
     list_display = ['certificate_number', 'enrollment', 'final_score', 'issued_at']
     search_fields = ['certificate_number', 'enrollment__trainee__email']
     readonly_fields = ['id', 'issued_at']
+
+
+@admin.register(ScenarioAssignment)
+class ScenarioAssignmentAdmin(admin.ModelAdmin):
+    list_display = [
+        'scenario', 'trainee', 'status', 'max_attempts', 'cooldown_hours',
+        'assigned_by', 'created_at',
+    ]
+    list_filter = ['status', 'scenario__category']
+    search_fields = ['trainee__email', 'scenario__title', 'assigned_by__email']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    raw_id_fields = ['scenario', 'trainee', 'assigned_by']

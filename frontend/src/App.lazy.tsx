@@ -20,7 +20,6 @@ export const SignUpPage = lazy(() => import('./pages/SignUpPage'));
 export const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 export const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 export const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
-export const SocialAuthCallback = lazy(() => import('./pages/SocialAuthCallback'));
 
 // Trainee dashboard
 export const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
@@ -62,7 +61,14 @@ export const TutorCourseEnrollmentsPage = lazy(() => import('./pages/tutor/Tutor
 export const TutorExerciseSubmissionsPage = lazy(() => import('./pages/tutor/TutorExerciseSubmissionsPage'));
 export const TutorGradingPage = lazy(() => import('./pages/tutor/TutorGradingPage'));
 export const TutorStudentDetailPage = lazy(() => import('./pages/tutor/TutorStudentDetailPage'));
+export const TutorScenariosPage = lazy(() => import('./pages/tutor/TutorScenariosPage'));
 export const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+export const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
+export const AdminCoursesPage = lazy(() => import('./pages/admin/AdminCoursesPage'));
+export const AdminSchedulePage = lazy(() => import('./pages/admin/AdminSchedulePage'));
+export const AdminTutorsPage = lazy(() => import('./pages/admin/AdminTutorsPage'));
+export const AdminLogsPage = lazy(() => import('./pages/admin/AdminLogsPage'));
+export const AdminAnnouncementsPage = lazy(() => import('./pages/admin/AdminAnnouncementsPage'));
 
 // Meetings (WebRTC + polyfills)
 export const MeetingRoom = lazy(() => import('./pages/meetings/MeetingRoom'));

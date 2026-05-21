@@ -1,16 +1,17 @@
 // src/pages/LoginPage.tsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { canAccessPath, getHomePathForRole, normalizeRole } from '../lib/authRouting';
+import type { UserRole } from '../types/auth';
 import {
   Lock, User, Shield, AlertCircle,
-  CheckCircle, Info, Chrome, Github, Eye, EyeOff, ArrowLeft
+  CheckCircle, Info, Eye, EyeOff, ArrowLeft
 } from 'lucide-react';
 import AuthGraphic from '../components/AuthGraphic';
 import { Spinner } from '../components/ui/Loading';
 import '@/assets/css/AuthShared.css';
 import '@/assets/css/LoginPage.css';
-import { redirectToSocialLogin } from '../utils/socialAuth';
 
 function extractErrorMessage(err: unknown): string {
   if (!err || typeof err !== 'object') return 'Login failed. Please try again.';
@@ -50,8 +51,6 @@ function extractErrorMessage(err: unknown): string {
   return 'Login failed. Please try again.';
 }
 
-const TUTOR_ROLES = ['supervisor', 'admin', 'instructor'];
-
 const LoginPage: React.FC = () => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword]     = useState('');
@@ -62,13 +61,23 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading]   = useState(false);
 
   const navigate = useNavigate();
-  const { login } = useAuth();
-
-  const handleSocialLogin = (provider: 'google' | 'github') => {
-    redirectToSocialLogin(provider);
-  };
+  const location = useLocation();
+  const { login, isAuthenticated, user } = useAuth();
 
   const clearMessages = () => { setError(''); setInfoMessage(''); setSuccessMessage(''); };
+
+  // Already signed in — leave login page (prevents login ↔ dashboard loops with stale sessions)
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const role = normalizeRole(user.role);
+    if (!role) return;
+    const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+    if (from && canAccessPath(role, from)) {
+      navigate(from, { replace: true });
+      return;
+    }
+    navigate(getHomePathForRole(role), { replace: true });
+  }, [isAuthenticated, user, location.state, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,9 +86,14 @@ const LoginPage: React.FC = () => {
     if (!password.trim())   { setError('Password is required'); return; }
     setIsLoading(true);
     try {
-      const user = await login(identifier, password);
-      if (TUTOR_ROLES.includes(user.role)) navigate('/tutor/dashboard');
-      else navigate('/dashboard');
+      const loggedIn = await login(identifier, password);
+      const role = normalizeRole(loggedIn.role) as UserRole;
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+      if (from && canAccessPath(role, from)) {
+        navigate(from, { replace: true });
+      } else {
+        navigate(getHomePathForRole(role), { replace: true });
+      }
     } catch (err: unknown) {
       setError(extractErrorMessage(err));
     } finally {
@@ -204,27 +218,6 @@ const LoginPage: React.FC = () => {
                 : <><Shield size={18} /><span>Sign In</span></>}
             </button>
           </form>
-
-          <div className="login-divider"><span>or continue with</span></div>
-
-          <div className="social-login">
-            <button
-              type="button"
-              className="social-button"
-              disabled={isLoading}
-              onClick={() => handleSocialLogin('google')}
-            >
-              <Chrome size={17} /><span>Google</span>
-            </button>
-            <button
-              type="button"
-              className="social-button"
-              disabled={isLoading}
-              onClick={() => handleSocialLogin('github')}
-            >
-              <Github size={17} /><span>GitHub</span>
-            </button>
-          </div>
 
           <p className="auth-switch-link">
             Don't have an account?{' '}

@@ -8,11 +8,14 @@ from .course_views import (
     CourseViewSet,
 )
 from .incident_views import GenieViewSet, IncidentRunViewSet
+from .scenario_staff_views import ScenarioAssignmentViewSet, ScenarioStaffViewSet
 
 router = DefaultRouter()
 
 # --- Scenario catalog & play sessions ---
 router.register(r'scenarios', views.ScenarioViewSet, basename='scenario')
+router.register(r'staff/scenarios', ScenarioStaffViewSet, basename='staff-scenario')
+router.register(r'scenario-assignments', ScenarioAssignmentViewSet, basename='scenario-assignment')
 router.register(r'sessions', views.SimulationSessionViewSet, basename='session')
 router.register(r'achievements', views.AchievementViewSet, basename='achievement')
 

@@ -443,6 +443,8 @@
 }
 } /* end @layer components */
 
+@import './assets/css/IconLayout.css';
+
 /* ─── Certificate print (single card) ─────────────────────────────────────────── */
 @media print {
   .dashboard-sidebar,

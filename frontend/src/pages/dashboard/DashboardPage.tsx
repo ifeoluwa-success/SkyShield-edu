@@ -26,14 +26,16 @@ import {
 import type {
   AnalyticsDashboard,
   UserPerformance,
-  CategoryStat,
   LearningPathItem,
 } from '../../services/analyticsService';
 import type { User } from '../../types/auth';
 import type { SimulationSession } from '../../types/simulation';
 import Toast from '../../components/Toast';
+import DashboardAreaChart from '../../components/charts/DashboardAreaChart';
+import type { ChartPoint } from '../../components/charts/AdminCharts';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/DashboardPage.css';
+import '../../assets/css/DashboardCharts.css';
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 
@@ -97,6 +99,44 @@ function levelToProgress(level: string): number {
   return map[level] ?? 25;
 }
 
+function formatCategoryLabel(category: string): string {
+  return category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function buildCategoryAreaData(
+  sessions: SimulationSession[],
+  category: string,
+): ChartPoint[] {
+  const filtered = sessions
+    .filter(
+      s =>
+        s.status === 'completed' &&
+        s.scenario.category === category &&
+        s.score != null,
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.completed_at ?? a.last_activity).getTime() -
+        new Date(b.completed_at ?? b.last_activity).getTime(),
+    );
+
+  if (filtered.length === 0) return [];
+
+  const points: ChartPoint[] = filtered.map((s, i) => {
+    const d = new Date(s.completed_at ?? s.last_activity);
+    const name =
+      filtered.length <= 3
+        ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        : `Run ${i + 1}`;
+    return { name, value: Math.round(s.score ?? 0) };
+  });
+
+  if (points.length === 1) {
+    return [{ name: 'Start', value: 0 }, points[0]];
+  }
+  return points;
+}
+
 function formatMinutes(seconds: number): string {
   const m = Math.floor(seconds / 60);
   if (m < 60) return `${m}m`;
@@ -126,32 +166,6 @@ function toRecentSimulation(session: SimulationSession): RecentSimulation {
   };
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-const CategoryBar: React.FC<{ stat: CategoryStat; maxCount: number; colorIndex: number }> = ({
-  stat,
-  maxCount,
-  colorIndex,
-}) => {
-  const color = CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length];
-  const pct = maxCount > 0 ? Math.round((stat.count / maxCount) * 100) : 0;
-  const label = stat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-
-  return (
-    <div className="dashboard-bar-row">
-      <div className="dashboard-bar-header">
-        <strong>{label}</strong>
-        <span style={{ color }}>
-          {stat.count} completed · {stat.avg_score}%
-        </span>
-      </div>
-      <div className="dashboard-bar-track">
-        <div className="dashboard-bar-fill" style={{ width: `${pct}%`, background: color }} />
-      </div>
-    </div>
-  );
-};
-
 // ─── DashboardPage ─────────────────────────────────────────────────────────────
 
 const DashboardPage: React.FC = () => {
@@ -161,6 +175,7 @@ const DashboardPage: React.FC = () => {
   const [analyticsDash, setAnalyticsDash]         = useState<AnalyticsDashboard | null>(null);
   const [performance, setPerformance]             = useState<UserPerformance | null>(null);
   const [recentSims, setRecentSims]               = useState<RecentSimulation[]>([]);
+  const [allSessions, setAllSessions]             = useState<SimulationSession[]>([]);
   const [learningPath, setLearningPath]           = useState<LearningPathItem[]>([]);
   const [pendingCount, setPendingCount]           = useState(0);
   const [toast, setToast]                         = useState<{
@@ -201,6 +216,7 @@ const DashboardPage: React.FC = () => {
 
         if (sessionsResult.status === 'fulfilled') {
           const sessions = sessionsResult.value;
+          setAllSessions(sessions);
           const pending = sessions.filter(s => s.status === 'in_progress').length;
           setPendingCount(pending);
 
@@ -233,8 +249,10 @@ const DashboardPage: React.FC = () => {
   const certLevel      = difficultyToLevel(performance?.recommended_difficulty ?? 'beginner');
   const weakAreas      = analyticsDash?.weak_areas ?? performance?.weak_areas ?? [];
   const strongAreas    = analyticsDash?.strong_areas ?? performance?.strong_areas ?? [];
-  const categoryStats  = analyticsDash?.category_stats ?? [];
-  const maxCategoryCount = Math.max(...categoryStats.map(c => c.count), 1);
+  const categoryStats = analyticsDash?.category_stats ?? [];
+  const topCategories = [...categoryStats]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 2);
 
   const statsCards = [
     {
@@ -558,7 +576,7 @@ const DashboardPage: React.FC = () => {
           </div>
 
           <div className="threats-list p-5">
-            {categoryStats.length === 0 ? (
+            {topCategories.length === 0 ? (
               <div className="empty-state threats-empty">
                 <BarChart3 size={32} />
                 <p>No category data yet.</p>
@@ -567,14 +585,25 @@ const DashboardPage: React.FC = () => {
                 </span>
               </div>
             ) : (
-              categoryStats.map((stat, index) => (
-                <CategoryBar
-                  key={stat.category}
-                  stat={stat}
-                  maxCount={maxCategoryCount}
-                  colorIndex={index}
-                />
-              ))
+              <div
+                className={`category-charts-grid ${topCategories.length === 1 ? 'single' : ''}`}
+              >
+                {topCategories.map((stat, index) => {
+                  const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
+                  const label = formatCategoryLabel(stat.category);
+                  return (
+                    <DashboardAreaChart
+                      key={stat.category}
+                      gradientId={`cat-area-${stat.category}`}
+                      title={label}
+                      subtitle={`${stat.count} completed · avg ${Math.round(stat.avg_score)}%`}
+                      data={buildCategoryAreaData(allSessions, stat.category)}
+                      color={color}
+                      height={210}
+                    />
+                  );
+                })}
+              </div>
             )}
           </div>
 

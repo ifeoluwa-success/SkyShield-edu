@@ -1,0 +1,393 @@
+/**
+ * App-wide layout: icons beside labels (never stacked), consistent gaps.
+ * Import via index.css — applies to trainee, tutor, and admin surfaces.
+ */
+
+/* ─── Sidebars ─────────────────────────────────────────────────────────────── */
+.dashboard-sidebar .nav-menu,
+.tutor-sidebar .nav-menu {
+  gap: 0.35rem;
+}
+
+.dashboard-sidebar .nav-item,
+.tutor-sidebar .nav-item,
+.nav-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-item svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+.nav-item > span:not(.nav-badge) {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.tutor-sidebar .specialization-badge {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin: 0 0.75rem 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+}
+
+.tutor-sidebar .specialization-badge .badge-label,
+.tutor-sidebar .specialization-badge .badge-value {
+  display: inline;
+}
+
+.sidebar-logo,
+.sidebar-user {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ─── Section headers & titles ─────────────────────────────────────────────── */
+.section-header,
+.card-header,
+.dashboard-panel-header,
+.page-header .header-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section-title,
+.dashboard-section-title,
+.search-group-title,
+.card-header h2,
+.card-header h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.section-header .section-title,
+.section-header .dashboard-section-title {
+  margin-bottom: 0.25rem;
+}
+
+.section-title svg,
+.dashboard-section-title svg {
+  flex-shrink: 0;
+}
+
+/* ─── Stat & action cards ──────────────────────────────────────────────────── */
+.stat-header,
+.action-card,
+.dashboard-action-card,
+.dashboard-action-card,
+.role-dashboard .action-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.stat-header {
+  justify-content: space-between;
+}
+
+.stat-icon,
+.action-icon,
+.dashboard-action-icon,
+.analytics-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.action-content,
+.dashboard-action-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ─── Meta rows (time, category, duration, etc.) ───────────────────────────── */
+.simulation-meta,
+.session-meta,
+.upload-meta,
+.path-meta,
+.lp-meta,
+.detail-meta-row,
+.material-meta,
+.material-meta-badges,
+.dashboard-list-meta,
+.mr-meeting-meta,
+.meta-row,
+.card-meta-row,
+.submissions-meta,
+.module-item-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+}
+
+.simulation-meta > span,
+.simulation-meta > *,
+.session-meta > span,
+.session-meta > *,
+.upload-meta > span,
+.upload-meta > *,
+.path-meta > span:not(.meta-dot),
+.lp-meta > span,
+.lp-meta > *,
+.detail-meta-row > span,
+.material-meta > span,
+.material-meta > *,
+.time,
+.duration,
+.lp-time,
+.meta-item,
+.meta,
+.card-meta,
+.search-result-meta,
+.device-meta,
+.notification-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1.25;
+}
+
+.simulation-meta > svg,
+.session-meta > svg,
+.upload-meta > svg,
+.simulation-meta svg,
+.session-meta svg,
+.upload-meta svg,
+.path-meta svg,
+.lp-meta svg,
+.lp-time svg,
+.detail-meta-row svg,
+.material-meta svg,
+.time svg,
+.duration svg,
+.meta-item svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+/* ─── Buttons & links with icons ───────────────────────────────────────────── */
+.btn,
+.filter-button,
+.resume-button,
+.submit-btn,
+.cancel-btn,
+.mark-all-btn,
+.view-all-btn,
+.quick-link,
+.insights-badge,
+.weekly-stat,
+.time-summary,
+.date-picker__trigger,
+.notification-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+button:has(> svg:first-child):not(.icon-only):not(.icon-button):not(.nav-item),
+a:has(> svg:first-child):not(.icon-only):not(.icon-button):not(.nav-item) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Sidebar links must stay full-width rows (override generic inline-flex on <a>) */
+.dashboard-sidebar .sidebar-nav,
+.tutor-sidebar .sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: stretch;
+}
+
+.dashboard-sidebar .sidebar-nav .nav-item,
+.tutor-sidebar .sidebar-nav .nav-item,
+.dashboard-sidebar .nav-menu .nav-item,
+.tutor-sidebar .nav-menu .nav-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Span/div that wraps icon + text (common Lucide pattern) */
+span:has(> svg:first-child) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  vertical-align: middle;
+}
+
+/* ─── List & panel rows ─────────────────────────────────────────────────────── */
+.simulation-item,
+.dashboard-list-item,
+.lp-card,
+.upload-item,
+.session-item,
+.insight-card,
+.notification-item,
+.material-card,
+.exercise-card,
+.student-row,
+.submission-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+}
+
+.session-info h4,
+.upload-info h4,
+.simulation-header,
+.insight-header,
+.lp-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.insight-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── Analytics stat cards ───────────────────────────────────────────────────── */
+.analytics-stat-card {
+  gap: 0.5rem;
+}
+
+.analytics-stat-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.analytics-stat-head .analytics-stat-label {
+  margin: 0;
+}
+
+.analytics-stat-icon {
+  margin-bottom: 0;
+}
+
+/* ─── Admin / tutor shells ─────────────────────────────────────────────────── */
+.admin-portal-page .stat-header,
+.tutor-students-page .stat-header,
+.tutor-dashboard-page .stat-header,
+.role-dashboard .stat-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-portal-page .filter-button,
+.tutor-students-page .filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ─── Tables & cells with icons ──────────────────────────────────────────────── */
+td:has(> svg:first-child),
+th:has(> svg:first-child) {
+  display: table-cell;
+}
+
+td .inline-flex,
+.cell-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ─── Empty states: keep stacked layout but icon + title row when paired ───── */
+.empty-state--row {
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  gap: 1rem;
+}
+
+/* ─── Spacing rhythm (panels & grids) ────────────────────────────────────────── */
+.role-dashboard.dashboard-page,
+.tutor-dashboard-page.role-dashboard {
+  gap: 2.5rem;
+}
+
+.dashboard-content-grid,
+.dashboard-panels-grid {
+  gap: 1.5rem;
+}
+
+.stats-grid,
+.dashboard-stats-grid,
+.actions-grid {
+  gap: 1.25rem;
+}
+
+.learning-path-grid,
+.category-charts-grid {
+  gap: 1.15rem;
+}
+
+.simulations-list,
+.dashboard-list,
+.uploads-list,
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.recent-simulations,
+.threat-landscape,
+.learning-path-panel,
+.performance-insights,
+.content-card,
+.dashboard-panel {
+  padding: 1.35rem 1.5rem 1.5rem;
+}
+
+.admin-portal-page.role-dashboard,
+.tutor-students-page.role-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+@media (max-width: 768px) {
+  .simulation-item,
+  .dashboard-list-item,
+  .lp-card {
+    flex-wrap: wrap;
+  }
+}

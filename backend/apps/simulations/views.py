@@ -10,8 +10,9 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiTypes
 from .models import (
     Scenario, SimulationSession, UserDecision, ScenarioFeedback,
-    ScenarioAchievement, ScenarioComment, ScenarioBookmark
+    ScenarioAchievement, ScenarioComment, ScenarioBookmark, ScenarioAssignment,
 )
+from .permissions import STAFF_SCENARIO_ROLES, user_role
 from .serializers import (
     ScenarioListSerializer, ScenarioDetailSerializer, SimulationSessionSerializer,
     UserDecisionSerializer, ScenarioFeedbackSerializer, ScenarioAchievementSerializer,
@@ -67,6 +68,13 @@ class ScenarioViewSet(viewsets.ReadOnlyModelViewSet):
             return Scenario.objects.none()
 
         queryset = super().get_queryset()
+
+        role = user_role(user)
+        if role not in STAFF_SCENARIO_ROLES:
+            queryset = queryset.filter(
+                is_active=True,
+                publish_status='active',
+            )
 
         # Apply filters
         category = self.request.query_params.get('category')
@@ -311,17 +319,50 @@ class SimulationSessionViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(existing)
                 return Response(serializer.data)
 
-            # Check attempt limit
+            # Check attempt limit (assignment override + cooldown)
+            assignment = ScenarioAssignment.objects.filter(
+                trainee=request.user,
+                scenario=scenario,
+                status__in=['assigned', 'in_progress', 'completed'],
+            ).order_by('-updated_at').first()
+
+            max_attempts = (
+                assignment.effective_max_attempts()
+                if assignment
+                else scenario.max_attempts
+            )
             attempts = SimulationSession.objects.filter(
                 user=request.user,
-                scenario=scenario
+                scenario=scenario,
             ).count()
 
-            if attempts >= scenario.max_attempts:
-                return Response(
-                    {'error': f'Maximum attempts ({scenario.max_attempts}) reached. Please try other scenarios.'},
-                    status=status.HTTP_400_BAD_REQUEST
+            if attempts >= max_attempts:
+                msg = (
+                    f'Maximum attempts ({max_attempts}) reached.'
+                    + (' Contact your supervisor for more attempts.' if assignment and assignment.notify_on_exhausted else '')
                 )
+                return Response({'error': msg, 'attempts_used': attempts, 'max_attempts': max_attempts},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            if assignment and assignment.cooldown_hours and attempts > 0:
+                last = SimulationSession.objects.filter(
+                    user=request.user, scenario=scenario,
+                ).order_by('-started_at').first()
+                if last and last.status in ('failed', 'abandoned'):
+                    elapsed = timezone.now() - last.started_at
+                    need = assignment.cooldown_hours * 3600
+                    if elapsed.total_seconds() < need:
+                        return Response(
+                            {
+                                'error': 'Cooldown active before next attempt.',
+                                'retry_after_hours': assignment.cooldown_hours,
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+            if assignment and assignment.status == 'assigned':
+                assignment.status = 'in_progress'
+                assignment.save(update_fields=['status', 'updated_at'])
 
             # Create new session
             session = SimulationSession.objects.create(
@@ -454,6 +495,12 @@ class SimulationSessionViewSet(viewsets.ModelViewSet):
                 session.completed_at = timezone.now()
                 session.calculate_score()
                 session.save()
+
+                ScenarioAssignment.objects.filter(
+                    trainee=request.user,
+                    scenario=session.scenario,
+                    status='in_progress',
+                ).update(status='completed')
 
                 # Update user stats
                 user = request.user

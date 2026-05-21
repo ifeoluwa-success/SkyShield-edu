@@ -129,21 +129,24 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, onToggle })
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.id}
-              to={item.path}
-              end={item.path === '/dashboard'}
-              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-              onClick={() => {
-                if (window.innerWidth < 1024) onToggle();
-              }}
-            >
-              <item.icon size={20} />
-              <span>{item.label}</span>
-              {item.id === 'exercises' && <span className="nav-badge">New</span>}
-            </NavLink>
-          ))}
+          <ul className="nav-menu">
+            {menuItems.map((item) => (
+              <li key={item.id}>
+                <NavLink
+                  to={item.path}
+                  end={item.path === '/dashboard'}
+                  className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    if (window.innerWidth < 1024) onToggle();
+                  }}
+                >
+                  <item.icon size={20} />
+                  <span>{item.label}</span>
+                  {item.id === 'exercises' && <span className="nav-badge">New</span>}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
         </nav>
 
         <div className="sidebar-footer">

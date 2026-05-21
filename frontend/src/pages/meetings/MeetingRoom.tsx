@@ -21,6 +21,8 @@ interface SignalingMessage {
   type: string;
   user_id?: string;
   user_name?: string;
+  full_name?: string;
+  username?: string;
   participants?: RoomParticipant[];
   from?: string;
   from_user?: string;

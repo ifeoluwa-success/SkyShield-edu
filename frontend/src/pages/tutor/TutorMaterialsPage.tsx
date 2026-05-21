@@ -1,5 +1,6 @@
 // src/pages/tutor/TutorMaterialsPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Upload, Video, BookOpen, FileText, Link as LinkIcon, X, Eye,
   Edit, Trash2, Search, FolderOpen
@@ -9,8 +10,16 @@ import type { TeachingMaterial } from '../../types/tutor';
 import Toast from '../../components/Toast';
 import { PageLoader, Spinner } from '../../components/ui/Loading';
 import '../../assets/css/TutorMaterialsPage.css';
+import '../../assets/css/RoleDashboard.css';
+
+function normalizeTags(tags: TeachingMaterial['tags']): string {
+  if (Array.isArray(tags)) return tags.join(', ');
+  if (typeof tags === 'string') return tags;
+  return '';
+}
 
 const TutorMaterialsPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'all' | 'video' | 'ebook' | 'exercise'>('all');
   const [materials, setMaterials] = useState<TeachingMaterial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +50,7 @@ const TutorMaterialsPage: React.FC = () => {
       if (filterDifficulty) params.difficulty = filterDifficulty;
 
       const data = await getMaterials(params);
-      setMaterials(data);
+      setMaterials(Array.isArray(data) ? data : []);
     } catch {
       setToast({ type: 'error', message: 'Failed to load materials' });
     } finally {
@@ -72,6 +81,13 @@ const TutorMaterialsPage: React.FC = () => {
     setUploadType('video');
   };
 
+  useEffect(() => {
+    if (searchParams.get('upload') === 'true') {
+      resetForm();
+      setShowUploadModal(true);
+    }
+  }, [searchParams]);
+
   const openEditModal = (material: TeachingMaterial) => {
     setEditingMaterial(material);
     setUploadType(material.material_type as 'video' | 'ebook' | 'link' | 'exercise');
@@ -79,7 +95,7 @@ const TutorMaterialsPage: React.FC = () => {
       title: material.title,
       description: material.description ?? '',
       difficulty: material.difficulty as 'beginner' | 'intermediate' | 'advanced',
-      tags: (material.tags ?? []).join(', '),
+      tags: normalizeTags(material.tags),
       file: null,
       video_url: material.video_url ?? '',
       is_published: material.is_published,
@@ -194,7 +210,7 @@ const TutorMaterialsPage: React.FC = () => {
   };
 
   return (
-    <div className="tutor-materials-page">
+    <div className="role-dashboard tutor-materials-page">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <div className="page-header">
@@ -293,7 +309,9 @@ const TutorMaterialsPage: React.FC = () => {
                   </span>
                 </div>
                 <p className="material-description">
-                  {material.description ? material.description.slice(0, 100) : ''}...
+                  {material.description
+                    ? `${material.description.slice(0, 100)}${material.description.length > 100 ? '…' : ''}`
+                    : 'No description'}
                 </p>
               </div>
 

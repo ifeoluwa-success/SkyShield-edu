@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { getHomePathForRole } from '../lib/authRouting';
 import '@/assets/css/hero.css';
 
 import studentImage from '@/assets/images/student-image2.png';
 
 export default function Hero() {
-  const { isAuthenticated, isAdmin, isInstructor, isSupervisor } = useAuth();
-  const dashboardPath = isAdmin || isInstructor || isSupervisor ? "/tutor/dashboard" : "/dashboard";
+  const { isAuthenticated, user } = useAuth();
+  const dashboardPath = user?.role ? getHomePathForRole(user.role) : '/dashboard';
 
   return (
     <section

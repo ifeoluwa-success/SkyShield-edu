@@ -415,6 +415,45 @@ Searched for regex `class AdaptiveLearningService|def update_user_profile|Adapti
 - Description: Retrieve, update, or delete a scenario comment.
 - Delete permission: comment owner or admin/supervisor only.
 
+### Staff scenario management (supervisor / admin)
+
+Trainees only see scenarios with `publish_status=active` on the public catalog. Staff APIs live under `/api/simulations/staff/scenarios/`.
+
+#### `/api/simulations/staff/scenarios/`
+- Methods: `GET`, `POST`
+- Auth: supervisor, admin, instructor (read); supervisor, admin (write)
+- Query params: `publish_status` (`draft`|`active`|`archived`), `search`
+- POST body: scenario fields including `publish_status`, `max_attempts`, `steps`, etc.
+
+#### `/api/simulations/staff/scenarios/{pk}/`
+- Methods: `GET`, `PATCH`, `PUT`, `DELETE`
+- DELETE: soft-archives when session history exists
+
+#### `/api/simulations/staff/scenarios/{pk}/duplicate/`
+- Method: `POST`
+- Optional body: `{ "title": "..." }`
+- Creates a draft copy
+
+#### `/api/simulations/staff/scenarios/{pk}/assign/`
+- Method: `POST`
+- Body: `{ "trainee_ids": [uuid...], "max_attempts": 3, "cooldown_hours": 0, "due_at": null, "notes": "" }`
+
+#### `/api/simulations/staff/scenarios/{pk}/assignments/`
+- Method: `GET`
+- Lists `ScenarioAssignment` rows for the scenario
+
+#### `/api/simulations/staff/scenarios/{pk}/performance/`
+- Method: `GET`
+- Aggregated session stats and assignment counts
+
+#### `/api/simulations/staff/scenarios/my-assignments/`
+- Method: `GET`
+- Trainee only: active assignments for current user
+
+#### `/api/simulations/scenario-assignments/{pk}/revoke/`
+- Method: `POST`
+- Sets assignment `status=revoked`
+
 ### Session endpoints
 
 #### `/api/simulations/sessions/`
@@ -862,6 +901,32 @@ These endpoints manage published **courses** (`Course`), ordered **modules** (`C
   - `global`
   - `peers`
   - `percentile`
+
+### Platform analytics (admin / supervisor / instructor)
+
+Requires authenticated staff with platform analytics permission.
+
+#### `/api/analytics/platform/overview/`
+- Method: `GET`
+- Users by role, simulation totals, certificate counts
+
+#### `/api/analytics/platform/users/`
+- Method: `GET`
+- Query: `period` (days, default 30)
+- Registration trend, login trend (if `UserActivity` exists), department breakdown
+
+#### `/api/analytics/platform/performance-trends/`
+- Method: `GET`
+- Query: `months` (default 6)
+- Monthly avg score, active learners, avg sessions per user
+
+#### `/api/analytics/platform/certifications/`
+- Method: `GET`
+- Total issued, by course difficulty level (Beginner–Expert), issuance trend, leaderboard
+
+#### `/api/analytics/platform/retries/`
+- Method: `GET`
+- Retry and failed-session aggregates
 
 ### Analytics formulas
 - Percentile:
@@ -1423,14 +1488,81 @@ These endpoints manage published **courses** (`Course`), ordered **modules** (`C
 
 ### Role-based access constraints
 - Authenticated access is required for nearly all API routes.
-- Some endpoints use `permissions.IsAdminUser`.
+- Legacy core log viewsets (`/api/core/audit-logs/`) use DRF `IsAdminUser` (`is_staff`). Admin portal routes use app `role=admin` or staff (see §14).
 - Meeting host checks are enforced in meeting actions.
 - Trainee-specific logic exists in tutor and meeting flows.
 - No dedicated role assignment API route exists.
 
 ---
 
-## 14. NOTES / GAPS IDENTIFIED
+## 14. ADMIN PORTAL APIs (FRONTEND)
+
+Base path: `/api/core/admin/`  
+Auth: JWT + **`role=admin`** OR Django `is_staff` / `is_superuser`  
+Pagination: `?page=1&page_size=50` (max 200) on list endpoints
+
+### Announcements (staff)
+- `GET/POST /api/content/announcements/manage/` — list/create (admin, supervisor, instructor)
+- `PATCH /api/content/announcements/manage/<uuid>/` — update
+- `GET /api/content/announcements/` — trainee/staff read active announcements
+- `GET /api/content/announcements/unread/` — unread count
+
+### `GET /api/core/admin/users/`
+- All users (excludes soft-deleted)
+- Query: `search`, `status`, `is_active`, `department`
+
+### `PATCH /api/core/admin/users/<uuid>/status/`
+- Change account status (admin only)
+- Body: `{ "status": "active" | "inactive" | "suspended" | "pending" }`
+- Also sets `is_active` false when status is `inactive` or `suspended`
+
+### `GET /api/core/admin/supervisors/`
+- Users with `role=supervisor` (+ same query params)
+
+### `GET /api/core/admin/instructors/`
+- Users with `role=instructor`
+
+### `GET /api/core/admin/admins/`
+- Users with `role=admin`
+
+### `GET /api/core/admin/tutors/`
+- All `TutorProfile` records (staff who teach)
+- Query: `search`, `role` (filter by linked user role)
+
+### `GET /api/core/admin/courses/`
+- All courses (published and draft) with `module_count`, `enrollment_count`
+- Query: `search`, `is_published`
+
+### `GET /api/core/admin/schedule/sessions/`
+- Paginated tutor `TeachingSession` rows
+- Query: `from`, `to`, `upcoming`, `search`, `page`, `page_size`
+
+### `GET /api/core/admin/schedule/meetings/`
+- Paginated `Meeting` rows
+- Query: `from`, `to`, `upcoming`, `search`, `page`, `page_size`
+
+### `GET /api/core/admin/logs/audit/`
+### `GET /api/core/admin/logs/errors/`
+### `GET /api/core/admin/logs/api/`
+- Paginated logs per type
+- Query: `search`, `page`, `page_size`
+
+### `GET /api/core/admin/metrics/charts/`
+- Chart-ready metrics for frontend (area, bar, pie)
+- Query: `days` (default 30), `months` (default 12)
+- Response: `summary` KPIs + `charts` object (`user_growth`, `users_by_role`, `simulation_performance_trend`, `certificates_by_level`, `errors_by_day`, etc.)
+
+### `GET /api/core/admin/stats/`
+- Legacy aggregate stats (existing dashboard)
+
+Frontend:
+- Service: `frontend/src/services/adminPortalService.ts`
+- React Query cache: `frontend/src/hooks/useAdminPortal.ts` (`staleTime` 2–5 min; invalidate on user status change)
+- Charts: `frontend/src/components/charts/AdminCharts.tsx` (Recharts area, bar, pie)
+
+---
+
+## 15. NOTES / GAPS IDENTIFIED
 
 - **Replay system**: no dedicated replay/reconstruction endpoints found.
 - **Command center**: no separate command-center API; supervisor control is implemented through meetings and analytics.

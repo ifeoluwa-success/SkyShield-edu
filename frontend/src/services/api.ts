@@ -1,5 +1,6 @@
 // src/services/api.ts
 import axios, { AxiosError } from 'axios';
+import { clearStoredSession } from '../lib/authSession';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'https://skyshield-backend.onrender.com/api';
 
@@ -12,7 +13,7 @@ const api = axios.create({
 // ── Request interceptor: attach access token ──────────────────────────────────
 api.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('access_token')?.trim();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -49,9 +50,7 @@ api.interceptors.response.use(
     const isAuthEndpoint =
       url.includes('/users/login/') ||
       url.includes('/users/token/refresh/') ||
-      url.includes('/users/register/') ||
-      url.includes('/users/google/') ||
-      url.includes('/users/github/');
+      url.includes('/users/register/');
 
     if (isAuthEndpoint) {
       return Promise.reject(error);
@@ -77,10 +76,7 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refresh_token');
 
       if (!refreshToken) {
-        // No refresh token — clear storage and let the caller deal with it
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        clearStoredSession();
         processQueue(error, null);
         isRefreshing = false;
         return Promise.reject(error);
@@ -104,9 +100,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed — session is truly expired, clean up quietly
         processQueue(refreshError, null);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        clearStoredSession();
         // Redirect to login only if not already there
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login';

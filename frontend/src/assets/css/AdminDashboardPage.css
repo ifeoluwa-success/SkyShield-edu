@@ -1,1 +1,80 @@
 @import './RoleDashboard.css';
+@import './AnalyticsComponents.css';
+
+.admin-dashboard-page.role-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.admin-dashboard-page .page-header {
+  margin-bottom: 0;
+}
+
+.admin-dashboard-page .quick-links {
+  margin-bottom: 0;
+}
+
+.admin-dashboard-page .dashboard-section {
+  margin-bottom: 0;
+}
+
+.admin-dashboard-page .dashboard-section + .dashboard-section {
+  margin-top: 0;
+}
+
+.admin-dashboard-page .analytics-section-grid {
+  gap: 1.25rem;
+}
+
+.admin-dashboard-page .admin-filter-select {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.admin-dashboard-page .section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.admin-dashboard-page .section-header-row .dashboard-section-title {
+  margin-bottom: 0;
+}
+
+.admin-dashboard-page .admin-charts-row {
+  margin-top: 1rem;
+}
+
+.admin-dashboard-page .quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-dashboard-page .quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  background: var(--bg-secondary);
+}
+
+.admin-dashboard-page .quick-link:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}

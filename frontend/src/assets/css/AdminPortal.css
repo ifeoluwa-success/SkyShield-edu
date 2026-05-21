@@ -1,0 +1,267 @@
+/* Admin portal list pages — aligns with TutorStudents + RoleDashboard */
+@import './TutorStudents.css';
+
+.admin-portal-page .role-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.admin-portal-page .role-tab {
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-secondary, #fff);
+  color: var(--text-secondary, #374151);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.admin-portal-page .role-tab.active {
+  background: var(--primary-color, #2563eb);
+  border-color: var(--primary-color, #2563eb);
+  color: #fff;
+}
+
+.admin-portal-page .log-tabs {
+  margin-bottom: 1rem;
+}
+
+.admin-portal-page .status-pill {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  text-transform: capitalize;
+}
+
+.admin-portal-page .status-pill.active,
+.admin-portal-page .status-pill.published {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.admin-portal-page .status-pill.inactive,
+.admin-portal-page .status-pill.draft {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.admin-portal-page .status-pill.suspended,
+.admin-portal-page .status-pill.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-portal-page .pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.admin-portal-page .pagination-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-portal-page .schedule-section {
+  margin-bottom: 2rem;
+}
+
+.admin-portal-page .schedule-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.admin-portal-page .log-preview {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.admin-portal-page .quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-portal-page .quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  background: var(--bg-secondary);
+}
+
+.admin-portal-page .quick-link:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.admin-portal-page .admin-status-select {
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #d1d5db);
+  background: var(--bg-secondary, #fff);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  min-width: 110px;
+}
+
+.admin-portal-page .admin-status-select:disabled {
+  opacity: 0.6;
+}
+
+.filter-button .spin {
+  animation: admin-spin 0.8s linear infinite;
+}
+
+@keyframes admin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-portal-page .admin-filter-select,
+.admin-dashboard-page .admin-filter-select {
+  background: var(--bg-tertiary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.announcement-form-card {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  background: var(--bg-secondary, #fff);
+}
+
+.announcement-form-card h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.announcement-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 1rem;
+}
+
+.announcement-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.announcement-form-grid label.full-width {
+  grid-column: 1 / -1;
+}
+
+.announcement-form-grid input,
+.announcement-form-grid select,
+.announcement-form-grid textarea {
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #d1d5db);
+  font-size: 0.875rem;
+}
+
+.role-targets legend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.role-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.role-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  justify-content: flex-end;
+}
+
+.filter-button.primary {
+  background: var(--cyan, #fbbf24);
+  color: #020c1b;
+  border-color: transparent;
+}
+
+.admin-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+.priority-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.priority-urgent { background: #fecaca; color: #991b1b; }
+.priority-high { background: #fed7aa; color: #9a3412; }
+.priority-medium { background: #fef08a; color: #854d0e; }
+.priority-low { background: #e5e7eb; color: #374151; }
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--cyan, #2563eb);
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-right: 0.5rem;
+}
+
+.cell-muted {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 720px) {
+  .announcement-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -488,11 +488,23 @@ class DashboardStatsView(APIView):
             created_at__gte=timezone.now() - timezone.timedelta(days=1)
         ).count()
         
+        by_role = dict(
+            User.objects.values('role').annotate(c=Count('id')).values_list('role', 'c')
+        )
+        from apps.simulations.models import CourseCertificate
+        certs = CourseCertificate.objects.count()
+
         data = {
             'users': {
                 'total': total_users,
                 'active': active_users,
-                'completion_rate': round((active_users / total_users * 100) if total_users > 0 else 0, 2)
+                'completion_rate': round((active_users / total_users * 100) if total_users > 0 else 0, 2),
+                'by_role': {
+                    'trainee': by_role.get('trainee', 0),
+                    'supervisor': by_role.get('supervisor', 0),
+                    'instructor': by_role.get('instructor', 0),
+                    'admin': by_role.get('admin', 0),
+                },
             },
             'simulations': {
                 'total': total_simulations,
@@ -500,6 +512,7 @@ class DashboardStatsView(APIView):
                 'completion_rate': round((completed_simulations / total_simulations * 100) if total_simulations > 0 else 0, 2)
             },
             'scenarios': total_scenarios,
+            'certificates_issued': certs,
             'activity': {
                 'errors_24h': recent_errors,
                 'uploads_24h': recent_uploads

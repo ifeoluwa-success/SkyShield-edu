@@ -1,6 +1,5 @@
 // src/services/authService.ts
 import api from './api';
-import { getSocialCallbackUrl } from '../utils/socialAuth';
 import type {
   LoginRequest,
   LoginResponse,
@@ -19,23 +18,6 @@ import type {
   ProfileUpdateRequest,
   User,
 } from '../types/auth';
-
-export const completeSocialLogin = async (
-  provider: 'google' | 'github',
-  code: string,
-): Promise<LoginResponse> => {
-  const response = await api.post<LoginResponse>(`/users/${provider}/`, {
-    code,
-    redirect_uri: getSocialCallbackUrl(provider),
-  });
-  const data = response.data;
-  if (data.access) {
-    localStorage.setItem('access_token', data.access);
-    localStorage.setItem('refresh_token', data.refresh);
-    localStorage.setItem('user', JSON.stringify(data.user));
-  }
-  return data;
-};
 
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   const response = await api.post<LoginResponse>('/users/login/', credentials);
@@ -205,11 +187,11 @@ export const getNotifications = async (): Promise<BackendNotification[]> => {
 };
 
 export const markNotificationRead = async (id: string): Promise<void> => {
-  await api.patch(`/users/notifications/${id}/`, { is_read: true });
+  await api.post(`/users/notifications/${id}/mark_read/`);
 };
 
 export const markAllNotificationsRead = async (): Promise<void> => {
-  await api.post('/users/notifications/mark-all-read/');
+  await api.post('/users/notifications/mark_all_read/');
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

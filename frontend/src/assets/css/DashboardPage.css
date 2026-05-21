@@ -2,11 +2,14 @@
 
 /* Trainee dashboard — maps legacy class names to shared admin-style shell */
 .dashboard-page,
-.role-dashboard {
-  padding: 1.5rem;
+.role-dashboard.dashboard-page {
+  padding: 1.75rem 1.5rem 2.5rem;
   max-width: 1200px;
   margin: 0 auto;
   animation: fade-in 0.3s ease both;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
 }
 
 .dashboard-page.loading,
@@ -19,7 +22,7 @@
 
 .dashboard-page .welcome-header,
 .dashboard-page .page-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .dashboard-page .welcome-header,
@@ -72,7 +75,7 @@
 
 .dashboard-page .quick-actions,
 .dashboard-page .dashboard-section {
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 
 .dashboard-page .section-title,
@@ -83,14 +86,14 @@
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 }
 
 .dashboard-page .actions-grid,
 .dashboard-page .dashboard-actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .dashboard-page .action-card,
@@ -119,7 +122,8 @@
 .dashboard-page .dashboard-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
+  margin-bottom: 0;
 }
 
 .dashboard-page .stat-card,
@@ -129,7 +133,7 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  padding: 1.25rem 1.5rem;
+  padding: 1.35rem 1.5rem;
   transition: border-color 0.2s, transform 0.2s;
 }
 
@@ -187,8 +191,8 @@
 .dashboard-page .dashboard-panels-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 0;
 }
 
 .dashboard-page .view-all,
@@ -308,9 +312,251 @@
   gap: 0.4rem;
 }
 
+/* ─── Layout polish: icons beside labels, consistent spacing ───────────────── */
+.dashboard-page .quick-actions .section-header,
+.dashboard-page .section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-page .quick-actions .section-header {
+  margin-bottom: 1rem;
+}
+
+.dashboard-page .section-header .section-title {
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-page .section-title svg,
+.dashboard-page .insights-badge svg,
+.dashboard-page .time-summary svg,
+.dashboard-page .resume-button svg {
+  flex-shrink: 0;
+}
+
+.dashboard-page .insights-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--cyan-dim);
+  color: var(--cyan);
+  white-space: nowrap;
+}
+
+.dashboard-page .weekly-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.dashboard-page .simulations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-page .simulation-item {
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+}
+
+.dashboard-page .simulation-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-page .simulation-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.dashboard-page .simulation-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.dashboard-page .simulation-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.dashboard-page .simulation-meta .category,
+.dashboard-page .simulation-meta .time,
+.dashboard-page .simulation-meta .date,
+.dashboard-page .lp-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1.2;
+}
+
+.dashboard-page .simulation-meta svg,
+.dashboard-page .lp-time svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+.dashboard-page .simulation-right {
+  flex-shrink: 0;
+}
+
+.dashboard-page .threat-landscape .threats-list {
+  padding-top: 0.25rem;
+}
+
+.dashboard-page .category-charts-grid {
+  gap: 1.15rem;
+}
+
+.dashboard-page .learning-path-grid {
+  gap: 1rem;
+}
+
+.dashboard-page .lp-card {
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+}
+
+.dashboard-page .lp-rank {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--cyan);
+  padding-top: 0.15rem;
+}
+
+.dashboard-page .lp-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-page .lp-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+  line-height: 1.35;
+}
+
+.dashboard-page .lp-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.dashboard-page .lp-reason {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.dashboard-page .insight-card {
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+}
+
+.dashboard-page .insight-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-page .insight-header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.dashboard-page .stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dashboard-page .action-card {
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+}
+
+.dashboard-page .action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dashboard-page .dashboard-content-grid {
+  gap: 1.5rem;
+  margin-bottom: 0;
+}
+
+.dashboard-page .learning-path-panel,
+.dashboard-page .performance-insights {
+  margin-bottom: 0;
+}
+
+.dashboard-page .recent-simulations,
+.dashboard-page .threat-landscape,
+.dashboard-page .learning-path-panel,
+.dashboard-page .performance-insights {
+  padding: 1.35rem 1.5rem 1.5rem;
+}
+
+.dashboard-page .stat-content {
+  margin-top: 0.15rem;
+}
+
+.dashboard-page .stat-header {
+  margin-bottom: 0.85rem;
+}
+
+.dashboard-page .time-summary {
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+}
+
 @media (max-width: 768px) {
   .dashboard-page .dashboard-content-grid,
   .dashboard-page .dashboard-panels-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-page .simulation-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-page .simulation-right {
+    display: flex;
+    justify-content: flex-end;
   }
 }

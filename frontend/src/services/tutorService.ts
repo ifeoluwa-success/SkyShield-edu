@@ -76,13 +76,22 @@ export const getTutorDashboardStats = async (): Promise<TutorDashboardStats> => 
 // TEACHING MATERIALS
 // =============================================================================
 
+function unwrapList<T>(data: T[] | { results?: T[] } | null | undefined): T[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object' && Array.isArray(data.results)) return data.results;
+  return [];
+}
+
 export const getMaterials = async (params?: {
   material_type?: string;
   difficulty?: string;
   search?: string;
 }): Promise<TeachingMaterial[]> => {
-  const response = await api.get<{ results: TeachingMaterial[] }>('/tutor/materials/', { params });
-  return response.data.results;
+  const response = await api.get<TeachingMaterial[] | { results: TeachingMaterial[] }>(
+    '/tutor/materials/',
+    { params },
+  );
+  return unwrapList(response.data);
 };
 
 export const uploadMaterial = async (formData: FormData): Promise<TeachingMaterial> => {
@@ -150,8 +159,11 @@ export const getExerciseAttempts = async (
   exerciseId: string,
   params?: { student_id?: string; passed?: string }
 ): Promise<ExerciseAttemptDetail[]> => {
-  const response = await api.get<ExerciseAttemptDetail[]>(`/tutor/exercises/${exerciseId}/attempts/`, { params });
-  return response.data;
+  const response = await api.get<ExerciseAttemptDetail[] | { results: ExerciseAttemptDetail[] }>(
+    `/tutor/exercises/${exerciseId}/attempts/`,
+    { params },
+  );
+  return unwrapList(response.data);
 };
 
 export const updateExerciseAttempt = async (

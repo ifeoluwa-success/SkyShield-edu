@@ -62,6 +62,17 @@ class Scenario(models.Model):
     passing_score = models.IntegerField(default=70)
     max_attempts = models.IntegerField(default=3)
     version = models.CharField(max_length=10, default='1.0')
+    PUBLISH_STATUS_CHOICES = (
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('archived', 'Archived'),
+    )
+    publish_status = models.CharField(
+        max_length=20,
+        choices=PUBLISH_STATUS_CHOICES,
+        default='active',
+        db_index=True,
+    )
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
     requires_team_participation = models.BooleanField(
@@ -102,6 +113,68 @@ class Scenario(models.Model):
         self.average_score = (self.average_score * (self.times_completed - 1) + score) / self.times_completed
         self.average_time = (self.average_time * (self.times_completed - 1) + time_spent) / self.times_completed
         self.save()
+
+
+class ScenarioAssignment(models.Model):
+    """Supervisor-assigned scenario for a trainee with optional attempt overrides."""
+
+    STATUS_CHOICES = (
+        ('assigned', 'Assigned'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('expired', 'Expired'),
+        ('revoked', 'Revoked'),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    scenario = models.ForeignKey(
+        Scenario,
+        on_delete=models.CASCADE,
+        related_name='assignments',
+    )
+    trainee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='scenario_assignments',
+    )
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='scenarios_assigned',
+    )
+    max_attempts = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text='Overrides scenario.max_attempts when set.',
+    )
+    cooldown_hours = models.PositiveIntegerField(
+        default=0,
+        help_text='Minimum hours between attempts after a failed run.',
+    )
+    due_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='assigned')
+    notes = models.TextField(blank=True)
+    notify_on_exhausted = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'scenario_assignments'
+        indexes = [
+            models.Index(fields=['trainee', 'status']),
+            models.Index(fields=['scenario', 'status']),
+            models.Index(fields=['assigned_by', '-created_at']),
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.trainee_id} ← {self.scenario.title}'
+
+    def effective_max_attempts(self) -> int:
+        if self.max_attempts is not None:
+            return self.max_attempts
+        return self.scenario.max_attempts
 
 
 class SimulationSession(models.Model):

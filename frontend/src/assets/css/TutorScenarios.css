@@ -1,0 +1,177 @@
+.tutor-scenarios-page .scenarios-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  align-items: center;
+}
+
+.tutor-scenarios-page .search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg-secondary, #fff);
+}
+
+.tutor-scenarios-page .search-box input {
+  border: none;
+  outline: none;
+  flex: 1;
+  background: transparent;
+}
+
+.tutor-scenarios-page .scenarios-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  background: var(--bg-secondary, #fff);
+}
+
+.tutor-scenarios-page .scenarios-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tutor-scenarios-page .scenarios-table th,
+.tutor-scenarios-page .scenarios-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color, #f3f4f6);
+}
+
+.tutor-scenarios-page .scenarios-table th {
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tutor-scenarios-page .meta {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.tutor-scenarios-page .perf-hint {
+  display: block;
+  font-size: 0.72rem;
+  color: #059669;
+  margin-top: 0.25rem;
+}
+
+.tutor-scenarios-page .status-pill {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.tutor-scenarios-page .status-draft { background: #fef3c7; color: #92400e; }
+.tutor-scenarios-page .status-active { background: #d1fae5; color: #065f46; }
+.tutor-scenarios-page .status-archived { background: #f3f4f6; color: #4b5563; }
+
+.tutor-scenarios-page .actions-cell {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.tutor-scenarios-page .actions-cell button {
+  padding: 0.35rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text-secondary, #374151);
+}
+
+.tutor-scenarios-page .actions-cell button:hover {
+  background: var(--bg-hover, #f3f4f6);
+}
+
+.tutor-scenarios-page .empty-cell {
+  text-align: center;
+  color: var(--text-muted, #6b7280);
+  padding: 2rem !important;
+}
+
+.tutor-scenarios-page .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.tutor-scenarios-page .modal-card {
+  background: var(--bg-secondary, #fff);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.tutor-scenarios-page .modal-card label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.tutor-scenarios-page .modal-card input,
+.tutor-scenarios-page .modal-card textarea,
+.tutor-scenarios-page .modal-card select {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 8px;
+}
+
+.tutor-scenarios-page .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.tutor-scenarios-page .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.tutor-scenarios-page .trainee-checklist {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.tutor-scenarios-page .check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  font-weight: normal;
+}
+
+.tutor-scenarios-page .assign-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+  margin: 0.5rem 0;
+}

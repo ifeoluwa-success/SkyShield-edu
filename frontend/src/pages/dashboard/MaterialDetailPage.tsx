@@ -16,6 +16,7 @@ import ContentBody from '../../components/content/ContentBody';
 import Toast from '../../components/Toast';
 import { PageLoader } from '../../components/ui/Loading';
 import { useAuth } from '../../hooks/useAuth';
+import { useContentLibraryBase } from '../../hooks/usePortalBasePath';
 import {
   bookmarkContentMaterial,
   createMaterialComment,
@@ -38,6 +39,7 @@ function isAbortError(err: unknown): boolean {
 const MaterialDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
+  const libraryBase = useContentLibraryBase();
   const [material, setMaterial] = useState<ContentMaterial | null>(null);
   const [comments, setComments] = useState<ContentComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,7 +170,7 @@ const MaterialDetailPage: React.FC = () => {
   if (error || !material) {
     return (
       <div className="learning-materials-page">
-        <Link to="/dashboard/learning-materials" className="back-link">
+        <Link to={libraryBase} className="back-link">
           <ArrowLeft size={16} /> Back to library
         </Link>
         <div className="empty-state">
@@ -187,7 +189,7 @@ const MaterialDetailPage: React.FC = () => {
     <div className="learning-materials-page material-detail-page">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <Link to="/dashboard/learning-materials" className="back-link">
+      <Link to={libraryBase} className="back-link">
         <ArrowLeft size={16} /> Operational library
       </Link>
 
@@ -317,7 +319,7 @@ const MaterialDetailPage: React.FC = () => {
           <ul className="related-list">
             {material.related_materials.map((r) => (
               <li key={r.id}>
-                <Link to={`/dashboard/learning-materials/${r.slug}`}>{r.title}</Link>
+                <Link to={`${libraryBase}/${r.slug}`}>{r.title}</Link>
               </li>
             ))}
           </ul>

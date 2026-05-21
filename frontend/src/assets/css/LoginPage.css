@@ -119,50 +119,6 @@
 
 .spinner { animation: spin 0.8s linear infinite; }
 
-/* Divider */
-.login-divider {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 1.25rem 0;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.login-divider::before,
-.login-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border-color);
-}
-
-/* Social login */
-.social-login { display: flex; gap: 0.5rem; }
-
-.social-button {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.65rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--ease);
-  font-family: inherit;
-}
-
-.social-button:hover { border-color: var(--border-active); color: var(--text-primary); background: var(--bg-hover); }
-.social-button:disabled { opacity: 0.5; cursor: not-allowed; }
-
 /* Responsive */
 @media (max-width: 768px) {
   .login-page { flex-direction: column; height: auto; overflow: visible; }

@@ -14,6 +14,7 @@ from .models import (
     MaterialComment, MaterialRating, MaterialLike, MaterialView,
     MaterialDownload, MaterialProgress, PathEnrollment, AnnouncementRead,
 )
+from .permissions import IsContentStaff
 from .serializers import (
     ContentCategorySerializer, LearningMaterialListSerializer,
     LearningMaterialDetailSerializer, LearningPathListSerializer,
@@ -720,12 +721,19 @@ class AnnouncementViewSet(viewsets.ReadOnlyModelViewSet):
             return Announcement.objects.none()
 
         now = timezone.now()
-        return Announcement.objects.filter(
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        qs = Announcement.objects.filter(
             is_active=True,
-            publish_from__lte=now
+            publish_from__lte=now,
         ).filter(
             Q(publish_until__isnull=True) | Q(publish_until__gte=now)
-        ).order_by('-priority', '-publish_from')
+        )
+        if role:
+            qs = qs.filter(
+                Q(target_roles=[]) | Q(target_roles__contains=[role])
+            )
+        return qs.order_by('-priority', '-publish_from')
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -758,6 +766,24 @@ class AnnouncementViewSet(viewsets.ReadOnlyModelViewSet):
         
         unread_count = queryset.exclude(id__in=read_ids).count()
         return Response({'unread_count': unread_count})
+
+
+class AnnouncementManageViewSet(viewsets.ModelViewSet):
+    """
+    Staff CRUD for platform announcements (admin, supervisor, instructor).
+    """
+    permission_classes = [permissions.IsAuthenticated, IsContentStaff]
+    serializer_class = AnnouncementSerializer
+    queryset = Announcement.objects.all().order_by('-created_at')
+    http_method_names = ['get', 'post', 'patch', 'head', 'options']
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['user'] = self.request.user
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
 
 class MaterialBookmarkViewSet(viewsets.ReadOnlyModelViewSet):

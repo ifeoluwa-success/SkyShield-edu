@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { getHomePathForRole } from '../lib/authRouting';
 import '@/assets/css/AboutPage.css';
 
 import aboutHero    from '@/assets/images/about-hero.jpg';
@@ -60,8 +61,8 @@ const awards = [
 ];
 
 export default function AboutPage() {
-  const { isAuthenticated, isAdmin, isInstructor, isSupervisor } = useAuth();
-  const dashboardPath = isAdmin || isInstructor || isSupervisor ? "/tutor/dashboard" : "/dashboard";
+  const { isAuthenticated, user } = useAuth();
+  const dashboardPath = user?.role ? getHomePathForRole(user.role) : '/dashboard';
 
   return (
     <div className="ab-page">

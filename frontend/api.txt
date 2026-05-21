@@ -415,6 +415,45 @@ Searched for regex `class AdaptiveLearningService|def update_user_profile|Adapti
 - Description: Retrieve, update, or delete a scenario comment.
 - Delete permission: comment owner or admin/supervisor only.
 
+### Staff scenario management (supervisor / admin)
+
+Trainees only see scenarios with `publish_status=active` on the public catalog. Staff APIs live under `/api/simulations/staff/scenarios/`.
+
+#### `/api/simulations/staff/scenarios/`
+- Methods: `GET`, `POST`
+- Auth: supervisor, admin, instructor (read); supervisor, admin (write)
+- Query params: `publish_status` (`draft`|`active`|`archived`), `search`
+- POST body: scenario fields including `publish_status`, `max_attempts`, `steps`, etc.
+
+#### `/api/simulations/staff/scenarios/{pk}/`
+- Methods: `GET`, `PATCH`, `PUT`, `DELETE`
+- DELETE: soft-archives when session history exists
+
+#### `/api/simulations/staff/scenarios/{pk}/duplicate/`
+- Method: `POST`
+- Optional body: `{ "title": "..." }`
+- Creates a draft copy
+
+#### `/api/simulations/staff/scenarios/{pk}/assign/`
+- Method: `POST`
+- Body: `{ "trainee_ids": [uuid...], "max_attempts": 3, "cooldown_hours": 0, "due_at": null, "notes": "" }`
+
+#### `/api/simulations/staff/scenarios/{pk}/assignments/`
+- Method: `GET`
+- Lists `ScenarioAssignment` rows for the scenario
+
+#### `/api/simulations/staff/scenarios/{pk}/performance/`
+- Method: `GET`
+- Aggregated session stats and assignment counts
+
+#### `/api/simulations/staff/scenarios/my-assignments/`
+- Method: `GET`
+- Trainee only: active assignments for current user
+
+#### `/api/simulations/scenario-assignments/{pk}/revoke/`
+- Method: `POST`
+- Sets assignment `status=revoked`
+
 ### Session endpoints
 
 #### `/api/simulations/sessions/`
@@ -862,6 +901,32 @@ These endpoints manage published **courses** (`Course`), ordered **modules** (`C
   - `global`
   - `peers`
   - `percentile`
+
+### Platform analytics (admin / supervisor / instructor)
+
+Requires authenticated staff with platform analytics permission.
+
+#### `/api/analytics/platform/overview/`
+- Method: `GET`
+- Users by role, simulation totals, certificate counts
+
+#### `/api/analytics/platform/users/`
+- Method: `GET`
+- Query: `period` (days, default 30)
+- Registration trend, login trend (if `UserActivity` exists), department breakdown
+
+#### `/api/analytics/platform/performance-trends/`
+- Method: `GET`
+- Query: `months` (default 6)
+- Monthly avg score, active learners, avg sessions per user
+
+#### `/api/analytics/platform/certifications/`
+- Method: `GET`
+- Total issued, by course difficulty level (Beginner–Expert), issuance trend, leaderboard
+
+#### `/api/analytics/platform/retries/`
+- Method: `GET`
+- Retry and failed-session aggregates
 
 ### Analytics formulas
 - Percentile:

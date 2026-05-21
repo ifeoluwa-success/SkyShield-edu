@@ -11,9 +11,11 @@ import {
 import Toast from '../../components/Toast';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/TutorDashboardPage.css';
+import { usePortalBasePath } from '../../hooks/usePortalBasePath';
 
 const TutorDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const basePath = usePortalBasePath();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<TutorDashboardStats | null>(null);
@@ -54,10 +56,10 @@ const TutorDashboardPage: React.FC = () => {
   ];
 
   const quickActions = [
-    { title: 'Upload New Video', icon: Video, color: 'blue', path: '/tutor/materials', description: 'Click to get started' },
-    { title: 'Create Exercise', icon: FileText, color: 'purple', path: '/tutor/exercises', description: 'Click to get started' },
-    { title: 'Schedule Session', icon: Calendar, color: 'green', path: '/tutor/schedule', description: 'Click to get started' },
-    { title: 'View Analytics', icon: BarChart3, color: 'yellow', path: '/tutor/analytics', description: 'Click to get started' },
+    { title: 'Upload New Video', icon: Video, color: 'blue', path: `${basePath}/materials`, description: 'Click to get started' },
+    { title: 'Create Exercise', icon: FileText, color: 'purple', path: `${basePath}/exercises`, description: 'Click to get started' },
+    { title: 'Schedule Session', icon: Calendar, color: 'green', path: `${basePath}/schedule`, description: 'Click to get started' },
+    { title: 'View Analytics', icon: BarChart3, color: 'yellow', path: `${basePath}/analytics`, description: 'Click to get started' },
   ];
 
   const recentUploads = stats?.recent_uploads.map(upload => ({
@@ -106,15 +108,15 @@ const TutorDashboardPage: React.FC = () => {
   })) || [];
 
   const handleUploadClick = () => {
-    navigate('/tutor/materials?upload=true');
+    navigate(`${basePath}/materials?upload=true`);
   };
 
   const handleScheduleClick = () => {
-    navigate('/tutor/schedule');
+    navigate(`${basePath}/schedule`);
   };
 
   const handleViewStudent = (studentId: string) => {
-    navigate(`/tutor/students/${studentId}`);
+    navigate(`${basePath}/students/${studentId}`);
   };
 
   return (
@@ -182,7 +184,7 @@ const TutorDashboardPage: React.FC = () => {
         <div className="content-card">
           <div className="card-header">
             <h3>Recent Uploads</h3>
-            <button className="view-all" onClick={() => navigate('/tutor/materials')}>View All</button>
+            <button className="view-all" onClick={() => navigate(`${basePath}/materials`)}>View All</button>
           </div>
           <div className="uploads-list">
             {recentUploads.length === 0 ? (

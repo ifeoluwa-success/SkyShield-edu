@@ -31,6 +31,7 @@ import {
 } from '../../services/contentService';
 import { queryKeys } from '../../lib/queryClient';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { useContentLibraryBase } from '../../hooks/usePortalBasePath';
 import Toast from '../../components/Toast';
 import { ContentGridSkeleton } from '../../components/ui/ContentGridSkeleton';
 import '../../assets/css/LearningMaterialsPage.css';
@@ -64,14 +65,20 @@ function PathCard({
   path: LearningPath;
   onEnroll: (p: LearningPath) => void;
 }) {
+  const libraryBase = useContentLibraryBase();
   const progress = pathProgressPercent(path);
   const enrolled = path.user_enrolled ?? false;
+  const pathHref = path.slug
+    ? libraryBase.startsWith('/dashboard')
+      ? learningPathDetailRoute(path.slug)
+      : libraryBase
+    : libraryBase;
 
   return (
     <div className="path-card p-4 rounded-lg shadow-md">
       <div className="path-header">
         <h3 className="path-title">
-          <Link to={path.slug ? learningPathDetailRoute(path.slug) : '/dashboard/learning-materials'}>
+          <Link to={pathHref}>
             {path.title}
           </Link>
         </h3>
@@ -127,6 +134,8 @@ function MaterialCard({
   onBookmark: (slug: string) => void;
   bookmarking: boolean;
 }) {
+  const libraryBase = useContentLibraryBase();
+  const detailPath = `${libraryBase}/${material.slug}`;
   const href = material.file ?? material.video_url ?? material.external_url ?? null;
   const hasContent = !href && !!material.content;
   const bookmarked = material.is_bookmarked ?? false;
@@ -143,7 +152,7 @@ function MaterialCard({
 
       <div className="material-info flex flex-col gap-2 py-4">
         {hasContent ? (
-          <Link to={`/dashboard/learning-materials/${material.slug}`} className="material-title-link">
+          <Link to={detailPath} className="material-title-link">
             <h3 className="text-lg font-semibold">{material.title}</h3>
           </Link>
         ) : (
@@ -186,7 +195,7 @@ function MaterialCard({
             <ExternalLink size={14} /> View
           </a>
         ) : hasContent ? (
-          <Link to={`/dashboard/learning-materials/${material.slug}`} className="view-btn">
+          <Link to={detailPath} className="view-btn">
             Read <ChevronRight size={14} />
           </Link>
         ) : (
@@ -204,6 +213,8 @@ function MaterialCard({
 const LearningMaterialsPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const libraryBase = useContentLibraryBase();
+  const isTraineeLibrary = libraryBase.startsWith('/dashboard');
   const [toast, setToast] = useState<{
     type: 'success' | 'error' | 'info';
     message: string;
@@ -363,9 +374,11 @@ const LearningMaterialsPage: React.FC = () => {
             Access documents, videos, and resources to build your cybersecurity skills.
           </p>
         </div>
-        <Link to="/dashboard/bookmarks" className="bookmarks-link">
-          <Bookmark size={16} /> Saved
-        </Link>
+        {isTraineeLibrary ? (
+          <Link to="/dashboard/bookmarks" className="bookmarks-link">
+            <Bookmark size={16} /> Saved
+          </Link>
+        ) : null}
       </div>
 
       {paths.length > 0 && (

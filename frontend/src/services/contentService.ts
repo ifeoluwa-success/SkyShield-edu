@@ -121,10 +121,25 @@ export interface Announcement {
   title: string;
   content: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
+  target_roles?: string[];
+  is_active?: boolean;
   is_read?: boolean;
-  created_at: string;
+  publish_from?: string;
   publish_until?: string | null;
+  created_at: string;
+  updated_at?: string;
+  created_by_name?: string;
 }
+
+export type AnnouncementPayload = {
+  title: string;
+  content: string;
+  priority: Announcement['priority'];
+  target_roles?: string[];
+  publish_from?: string;
+  publish_until?: string | null;
+  is_active?: boolean;
+};
 
 export interface MeetingInvitation {
   id: string;
@@ -236,21 +251,28 @@ export function resolveContentMediaUrl(url?: string | null): string | undefined 
   return url;
 }
 
-export function searchItemToRoute(item: SearchResultItem): string {
+export function searchItemToRoute(
+  item: SearchResultItem,
+  libraryBase = '/dashboard/learning-materials',
+): string {
+  const base = libraryBase.replace(/\/$/, '');
+  const traineeLibrary = libraryBase.startsWith('/dashboard');
+
   switch (item.type) {
     case 'material': {
       const slug = slugFromSearchUrl(item.url, 'materials');
-      return slug ? `/dashboard/learning-materials/${slug}` : '/dashboard/learning-materials';
+      return slug ? `${base}/${slug}` : base;
     }
     case 'path': {
       const slug = slugFromSearchUrl(item.url, 'paths');
-      return slug ? learningPathDetailRoute(slug) : '/dashboard/learning-materials';
+      if (!slug) return base;
+      return traineeLibrary ? learningPathDetailRoute(slug) : base;
     }
     case 'glossary':
     case 'faq':
-      return '/dashboard/help';
+      return traineeLibrary ? '/dashboard/help' : '/help';
     default:
-      return '/dashboard/learning-materials';
+      return base;
   }
 }
 
@@ -479,6 +501,26 @@ export const getUnreadAnnouncementsCount = async (): Promise<number> => {
 
 export const markAnnouncementRead = async (id: string): Promise<Announcement> => {
   const res = await api.get<Announcement>(`/content/announcements/${id}/`);
+  return res.data;
+};
+
+export const listManageAnnouncements = async (): Promise<Announcement[]> => {
+  const res = await api.get<Announcement[] | { results: Announcement[] }>(
+    '/content/announcements/manage/',
+  );
+  return unwrap(res.data);
+};
+
+export const createAnnouncement = async (payload: AnnouncementPayload): Promise<Announcement> => {
+  const res = await api.post<Announcement>('/content/announcements/manage/', payload);
+  return res.data;
+};
+
+export const updateAnnouncement = async (
+  id: string,
+  payload: Partial<AnnouncementPayload>,
+): Promise<Announcement> => {
+  const res = await api.patch<Announcement>(`/content/announcements/manage/${id}/`, payload);
   return res.data;
 };
 

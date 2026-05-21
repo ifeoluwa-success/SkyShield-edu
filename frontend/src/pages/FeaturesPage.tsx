@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { getHomePathForRole } from '../lib/authRouting';
 import '@/assets/css/features.css';
 
 import featuresHero    from '@/assets/images/features-hero.jpg';
@@ -97,8 +98,8 @@ const integrations = [
 ];
 
 export default function FeaturesPage() {
-  const { isAuthenticated, isAdmin, isInstructor, isSupervisor } = useAuth();
-  const dashboardPath = isAdmin || isInstructor || isSupervisor ? "/tutor/dashboard" : "/dashboard";
+  const { isAuthenticated, user } = useAuth();
+  const dashboardPath = user?.role ? getHomePathForRole(user.role) : '/dashboard';
 
   return (
     <div className="feat-page">

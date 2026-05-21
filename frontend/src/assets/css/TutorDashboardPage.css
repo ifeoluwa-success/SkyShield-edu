@@ -17,9 +17,16 @@
   min-height: 60vh;
 }
 
+.tutor-dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+
 .tutor-dashboard-page .welcome-header,
 .tutor-dashboard-page .page-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .tutor-dashboard-page .welcome-header,
@@ -88,7 +95,7 @@
 
 .tutor-dashboard-page .quick-actions-section,
 .tutor-dashboard-page .dashboard-section {
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 
 .tutor-dashboard-page .section-title,
@@ -138,8 +145,8 @@
 .tutor-dashboard-page .dashboard-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 1.25rem;
+  margin-bottom: 0;
 }
 
 .tutor-dashboard-page .stat-card,
@@ -183,8 +190,8 @@
 .tutor-dashboard-page .dashboard-panels-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 0;
 }
 
 .tutor-dashboard-page .content-card.full-width,

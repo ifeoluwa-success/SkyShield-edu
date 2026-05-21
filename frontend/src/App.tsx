@@ -75,22 +75,6 @@ function App() {
           <Route path="/forgot-password" element={<Layout><Pages.ForgotPasswordPage /></Layout>} />
           <Route path="/reset-password" element={<Layout><Pages.ResetPasswordPage /></Layout>} />
           <Route path="/verify-email" element={<Layout><Pages.VerifyEmailPage /></Layout>} />
-          <Route
-            path="/auth/callback/google"
-            element={
-              <Lazy>
-                <Pages.SocialAuthCallback />
-              </Lazy>
-            }
-          />
-          <Route
-            path="/auth/callback/github"
-            element={
-              <Lazy>
-                <Pages.SocialAuthCallback />
-              </Lazy>
-            }
-          />
 
           <Route
             path="/dashboard/mission/:runId"
@@ -153,6 +137,8 @@ function App() {
             <Route index element={<Pages.TutorDashboardPage />} />
             <Route path="dashboard" element={<Pages.TutorDashboardPage />} />
             <Route path="materials" element={<Pages.TutorMaterialsPage />} />
+            <Route path="library" element={<Pages.LearningMaterialsPage />} />
+            <Route path="library/:slug" element={<Pages.MaterialDetailPage />} />
             <Route path="exercises" element={<Pages.TutorExercisesPage />} />
             <Route path="grading" element={<Pages.TutorGradingPage />} />
             <Route path="exercises/:exerciseId/submissions" element={<Pages.TutorExerciseSubmissionsPage />} />
@@ -165,6 +151,8 @@ function App() {
             <Route path="settings" element={<Pages.TutorSettingsPage />} />
             <Route path="courses" element={<Pages.TutorCourseBuilderPage />} />
             <Route path="courses/:courseId/enrollments" element={<Pages.TutorCourseEnrollmentsPage />} />
+            <Route path="scenarios" element={<Pages.TutorScenariosPage />} />
+            <Route path="announcements" element={<Pages.AdminAnnouncementsPage />} />
           </Route>
 
           <Route
@@ -175,9 +163,11 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Pages.TutorDashboardPage />} />
+            <Route index element={<Pages.AdminDashboardPage />} />
             <Route path="dashboard" element={<Pages.TutorDashboardPage />} />
             <Route path="materials" element={<Pages.TutorMaterialsPage />} />
+            <Route path="library" element={<Pages.LearningMaterialsPage />} />
+            <Route path="library/:slug" element={<Pages.MaterialDetailPage />} />
             <Route path="exercises" element={<Pages.TutorExercisesPage />} />
             <Route path="grading" element={<Pages.TutorGradingPage />} />
             <Route path="exercises/:exerciseId/submissions" element={<Pages.TutorExerciseSubmissionsPage />} />
@@ -190,7 +180,18 @@ function App() {
             <Route path="settings" element={<Pages.TutorSettingsPage />} />
             <Route path="courses" element={<Pages.TutorCourseBuilderPage />} />
             <Route path="courses/:courseId/enrollments" element={<Pages.TutorCourseEnrollmentsPage />} />
+            <Route path="scenarios" element={<Pages.TutorScenariosPage />} />
             <Route path="stats" element={<Pages.AdminDashboardPage />} />
+            <Route path="metrics" element={<Pages.AdminDashboardPage />} />
+            <Route path="users" element={<Pages.AdminUsersPage />} />
+            <Route path="supervisors" element={<Pages.AdminUsersPage />} />
+            <Route path="instructors" element={<Pages.AdminUsersPage />} />
+            <Route path="admins" element={<Pages.AdminUsersPage />} />
+            <Route path="courses-list" element={<Pages.AdminCoursesPage />} />
+            <Route path="schedule-all" element={<Pages.AdminSchedulePage />} />
+            <Route path="tutors" element={<Pages.AdminTutorsPage />} />
+            <Route path="logs" element={<Pages.AdminLogsPage />} />
+            <Route path="announcements" element={<Pages.AdminAnnouncementsPage />} />
           </Route>
 
           <Route

@@ -1,0 +1,219 @@
+/* Shared analytics UI — used with role-dashboard */
+
+.analytics-stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.analytics-stat-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.analytics-stat-icon {
+  color: var(--cyan);
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.analytics-stat-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.analytics-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.analytics-stat-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.analytics-stat-bar-track {
+  margin-top: 0.35rem;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.analytics-stat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--cyan-dark));
+  border-radius: 4px;
+}
+
+.analytics-stat-card.variant-success .analytics-stat-value { color: #22c55e; }
+.analytics-stat-card.variant-warning .analytics-stat-value { color: #f59e0b; }
+.analytics-stat-card.variant-danger .analytics-stat-value { color: #ef4444; }
+
+.analytics-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.analytics-bar-row {
+  display: grid;
+  grid-template-columns: minmax(80px, 28%) 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.analytics-bar-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-bar-track {
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.analytics-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.35s ease;
+}
+
+.analytics-bar-fill.fill-cyan {
+  background: linear-gradient(90deg, var(--cyan), var(--cyan-dark));
+}
+
+.analytics-bar-fill.fill-violet {
+  background: linear-gradient(90deg, #8b5cf6, #6d28d9);
+}
+
+.analytics-bar-fill.fill-green {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.analytics-bar-value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.analytics-chart-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.analytics-trends-table {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+}
+
+.analytics-trends-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.analytics-trends-table th,
+.analytics-trends-table td {
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-muted);
+  font-size: 0.875rem;
+}
+
+.analytics-trends-table th {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+}
+
+.analytics-section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.analytics-two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.35rem;
+}
+
+.analytics-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.15rem;
+}
+
+.analytics-panel h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.85rem;
+}
+
+.analytics-leaderboard {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.analytics-leaderboard li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-muted);
+  font-size: 0.85rem;
+}
+
+.analytics-leaderboard li:last-child {
+  border-bottom: none;
+}
+
+.analytics-leaderboard .rank {
+  font-weight: 700;
+  color: var(--cyan);
+  margin-right: 0.5rem;
+  min-width: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .analytics-bar-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .analytics-bar-value {
+    text-align: left;
+  }
+}

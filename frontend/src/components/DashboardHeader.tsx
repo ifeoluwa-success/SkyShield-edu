@@ -24,22 +24,43 @@ import {
 } from '../services/contentService';
 import { applyThemeToDocument, readStoredTheme, type AppTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
+import { useContentLibraryBase, usePortalBasePath } from '../hooks/usePortalBasePath';
 
 interface DashboardHeaderProps {
   onMobileToggle: () => void;
 }
 
-const QUICK_LINKS = [
-  { to: '/', label: 'Home', end: true as const },
-  { to: '/dashboard', label: 'Dashboard', end: true as const },
-  { to: '/dashboard/simulations', label: 'Simulations', end: false as const },
-  { to: '/dashboard/courses', label: 'Courses', end: false as const },
-];
-
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const portalBase = usePortalBasePath();
+  const libraryBase = useContentLibraryBase();
+  const isTrainee = user?.role === 'trainee';
+
+  const quickLinks = isTrainee
+    ? [
+        { to: '/', label: 'Home', end: true as const },
+        { to: '/dashboard', label: 'Dashboard', end: true as const },
+        { to: '/dashboard/simulations', label: 'Simulations', end: false as const },
+        { to: '/dashboard/courses', label: 'Courses', end: false as const },
+      ]
+    : user?.role === 'admin'
+      ? [
+          { to: '/', label: 'Home', end: true as const },
+          { to: '/admin/metrics', label: 'Metrics', end: false as const },
+          { to: '/admin/users', label: 'Users', end: false as const },
+          { to: '/admin/courses-list', label: 'Courses', end: false as const },
+          { to: `${portalBase}/dashboard`, label: 'Teaching', end: false as const },
+          { to: libraryBase, label: 'Content Library', end: false as const },
+        ]
+      : [
+          { to: '/', label: 'Home', end: true as const },
+          { to: `${portalBase}/dashboard`, label: 'Dashboard', end: true as const },
+          { to: `${portalBase}/courses`, label: 'Course Builder', end: false as const },
+          { to: `${portalBase}/materials`, label: 'Teaching Materials', end: false as const },
+          { to: libraryBase, label: 'Content Library', end: false as const },
+        ];
 
   const [theme, setTheme] = useState<AppTheme>(() => readStoredTheme());
 
@@ -62,9 +83,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
     : 'Guest';
 
   const avatarUrl = user?.profile_picture ?? null;
-  const isTrainee = user?.role === 'trainee';
-  const profilePath = isTrainee ? '/dashboard/profile' : '/tutor/profile';
-  const settingsPath = isTrainee ? '/dashboard/settings' : '/tutor/settings';
+  const profilePath = isTrainee ? '/dashboard/profile' : `${portalBase}/profile`;
+  const settingsPath = isTrainee ? '/dashboard/settings' : `${portalBase}/settings`;
 
   useLayoutEffect(() => {
     applyThemeToDocument(theme);
@@ -182,7 +202,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
                 className="hidden xl:flex items-center justify-center gap-0 flex-1 min-w-0 px-2"
                 aria-label="Quick links"
               >
-                {QUICK_LINKS.map(({ to, label, end }) => (
+                {quickLinks.map(({ to, label, end }) => (
                   <NavLink
                     key={to}
                     to={to}
@@ -284,7 +304,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
                             type="button"
                             key={`material-${m.id}`}
                             onClick={() => {
-                              navigate(searchItemToRoute(m));
+                              navigate(searchItemToRoute(m, libraryBase));
                               clearSearch();
                             }}
                             className={cn(
@@ -321,7 +341,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMobileToggle }) => 
                             type="button"
                             key={`path-${p.id}`}
                             onClick={() => {
-                              navigate(searchItemToRoute(p));
+                              navigate(searchItemToRoute(p, libraryBase));
                               clearSearch();
                             }}
                             className={cn(

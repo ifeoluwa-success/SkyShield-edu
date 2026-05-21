@@ -577,3 +577,31 @@ INFO 2026-05-19 02:04:54,155 views 18288 15604 User logged in: amina.adebayo.ins
 WARNING 2026-05-19 02:05:09,358 ws_support 18288 2500 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c6da8950-fb8c-4136-a4e9-41e0059792c0 peer=127.0.0.1 detail=GET /api/tutor/dashboard/ exc=CancelledError()
 INFO 2026-05-19 02:08:37,468 views 18288 19896 User logged out: amina.adebayo.ins4@instructors.skyshield.africa
 INFO 2026-05-19 02:08:43,479 views 18288 21820 User logged in: babatunde.mwangi.sup2@ncaa-training.gov.ng (role=supervisor)
+INFO 2026-05-21 08:48:07,288 views 13444 11136 User logged in: babatunde.mwangi.sup2@ncaa-training.gov.ng (role=supervisor)
+INFO 2026-05-21 09:12:54,082 views 13444 23048 User logged in: babatunde.mwangi.sup2@ncaa-training.gov.ng (role=supervisor)
+WARNING 2026-05-21 09:13:53,920 ws_support 13444 13600 mission.client_disconnect channel=http run_id=- participant_id=- user_id=- peer=127.0.0.1 detail=GET /api/tutor/dashboard/ exc=CancelledError()
+WARNING 2026-05-21 09:13:53,941 ws_support 13444 4528 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c33c0b01-e03f-4392-8249-a74122f821fc peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-21 09:13:54,850 ws_support 13444 14664 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c33c0b01-e03f-4392-8249-a74122f821fc peer=127.0.0.1 detail=GET /api/tutor/dashboard/ exc=CancelledError()
+WARNING 2026-05-21 09:13:55,092 ws_support 13444 3628 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c33c0b01-e03f-4392-8249-a74122f821fc peer=127.0.0.1 detail=GET /api/tutor/exercises/with-attempts/ exc=CancelledError()
+WARNING 2026-05-21 09:13:55,248 ws_support 13444 16176 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c33c0b01-e03f-4392-8249-a74122f821fc peer=127.0.0.1 detail=GET /api/tutor/profile/ exc=CancelledError()
+WARNING 2026-05-21 09:13:55,624 ws_support 13444 1928 mission.client_disconnect channel=http run_id=- participant_id=- user_id=c33c0b01-e03f-4392-8249-a74122f821fc peer=127.0.0.1 detail=GET /api/tutor/materials/ exc=CancelledError()
+INFO 2026-05-21 09:51:00,901 views 13444 9628 User logged out: babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-21 10:04:54,059 views 13444 2252 User logged in: babatunde.mwangi.sup2@ncaa-training.gov.ng (role=supervisor)
+INFO 2026-05-21 10:04:58,219 views 13444 18500 User logged out: babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-21 10:05:39,405 views 13444 23972 User logged in: babatunde.mwangi.sup2@ncaa-training.gov.ng (role=supervisor)
+INFO 2026-05-21 10:05:43,586 views 13444 24084 User logged out: babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-21 10:06:00,840 views 13444 24364 User logged in: emeka.okonkwo.adm1@skyshield.africa (role=admin)
+WARNING 2026-05-21 10:27:08,703 ws_support 22652 24404 mission.client_disconnect channel=http run_id=- participant_id=- user_id=b1da0b3b-e90c-4b8f-a9b1-75d42f72cd8c peer=127.0.0.1 detail=GET /api/simulations/scenarios/ exc=CancelledError()
+WARNING 2026-05-21 10:43:37,376 ws_support 22652 4528 mission.client_disconnect channel=http run_id=- participant_id=- user_id=b1da0b3b-e90c-4b8f-a9b1-75d42f72cd8c peer=127.0.0.1 detail=GET /api/simulations/scenarios/ exc=CancelledError()
+WARNING 2026-05-21 10:45:56,259 ws_support 22652 5632 mission.client_disconnect channel=http run_id=- participant_id=- user_id=b1da0b3b-e90c-4b8f-a9b1-75d42f72cd8c peer=127.0.0.1 detail=GET /api/tutor/dashboard/ exc=CancelledError()
+WARNING 2026-05-21 10:45:56,315 ws_support 22652 12444 mission.client_disconnect channel=http run_id=- participant_id=- user_id=b1da0b3b-e90c-4b8f-a9b1-75d42f72cd8c peer=127.0.0.1 detail=GET /api/meetings/upcoming/ exc=CancelledError()
+INFO 2026-05-21 10:55:00,650 views 22692 21164 User logged out: emeka.okonkwo.adm1@skyshield.africa
+INFO 2026-05-21 11:24:59,235 views 16712 23300 User logged in: emeka.okonkwo.adm1@skyshield.africa (role=admin)
+INFO 2026-05-21 11:30:47,828 views 16712 16652 User logged out: emeka.okonkwo.adm1@skyshield.africa
+INFO 2026-05-21 11:31:09,947 views 16712 23620 User logged in: emeka.okonkwo.adm1@skyshield.africa (role=admin)
+INFO 2026-05-21 12:32:11,928 views 14616 25096 User logged out: emeka.okonkwo.adm1@skyshield.africa
+INFO 2026-05-21 12:32:36,894 views 14616 12360 User logged in: babatunde.mwangi.sup2@ncaa-training.gov.ng (role=supervisor)
+INFO 2026-05-21 12:32:47,223 views 14616 25440 User logged out: babatunde.mwangi.sup2@ncaa-training.gov.ng
+INFO 2026-05-21 12:33:04,453 views 14616 25572 User logged in: olaniyanp11@gmail.com (role=trainee)
+INFO 2026-05-21 13:10:36,018 views 14616 24512 User logged out: olaniyanp11@gmail.com
+INFO 2026-05-21 13:25:38,754 views 14616 24292 User logged in: olaniyanp11@gmail.com (role=trainee)

@@ -1,10 +1,18 @@
 /* Shared dashboard shell — admin-style layout for all roles */
 
 .role-dashboard {
-  padding: 1.5rem;
+  padding: 1.75rem 1.5rem 2.5rem;
   max-width: 1200px;
   margin: 0 auto;
   animation: fade-in 0.3s ease both;
+}
+
+/* Stacked dashboard sections (trainee + tutor home) */
+.role-dashboard.dashboard-page,
+.tutor-dashboard-page.role-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
 }
 
 .role-dashboard.loading,
@@ -97,7 +105,13 @@
 
 /* Sections */
 .dashboard-section {
-  margin-bottom: 2rem;
+  margin-bottom: 0;
+}
+
+.role-dashboard.dashboard-page .dashboard-section,
+.tutor-dashboard-page .dashboard-section,
+.tutor-dashboard-page .quick-actions-section {
+  margin-bottom: 0;
 }
 
 .dashboard-section-title {
@@ -107,7 +121,7 @@
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .dashboard-section-title svg {
@@ -119,7 +133,7 @@
 .dashboard-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .dashboard-stat-card {
@@ -185,7 +199,7 @@
 .dashboard-actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .dashboard-action-card {
@@ -252,7 +266,7 @@
 .dashboard-panels-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .dashboard-panel {
@@ -598,6 +612,48 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 1rem;
+  margin-bottom: 1.15rem;
+}
+
+.role-dashboard .section-header .section-title,
+.role-dashboard .section-header .dashboard-section-title {
+  margin-bottom: 0.25rem;
+}
+
+.role-dashboard .simulation-meta,
+.role-dashboard .dashboard-list-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.role-dashboard .simulation-meta .time,
+.role-dashboard .simulation-meta .category,
+.role-dashboard .simulation-meta .date,
+.role-dashboard .lp-time,
+.role-dashboard .dashboard-list-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.role-dashboard .simulation-meta svg,
+.role-dashboard .lp-time svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+.role-dashboard .insight-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.role-dashboard .insights-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }

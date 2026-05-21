@@ -9,6 +9,7 @@
 //   GET /analytics/comparison/   -> ComparisonView
 
 import api from './api';
+import { unwrapList } from '../lib/apiUtils';
 
 // ─── Response types (mirror Django serializers exactly) ───────────────────────
 
@@ -118,21 +119,114 @@ export const getPerformanceTrends = async (params?: {
   period?: 'daily' | 'weekly' | 'monthly';
   days?: number;
 }): Promise<PerformanceTrend[]> => {
-  const response = await api.get<PerformanceTrend[]>('/analytics/trends/', { params });
-  return response.data;
+  const response = await api.get<PerformanceTrend[] | { results: PerformanceTrend[] }>(
+    '/analytics/trends/',
+    { params },
+  );
+  return unwrapList(response.data);
 };
 
 export const getSkillAssessments = async (): Promise<SkillAssessment[]> => {
-  const response = await api.get<SkillAssessment[]>('/analytics/skills/');
-  return response.data;
+  const response = await api.get<SkillAssessment[] | { results: SkillAssessment[] }>(
+    '/analytics/skills/',
+  );
+  return unwrapList(response.data);
 };
 
 export const getLearningPath = async (): Promise<LearningPathItem[]> => {
-  const response = await api.get<LearningPathItem[]>('/analytics/learning-path/');
-  return response.data;
+  const response = await api.get<LearningPathItem[] | { results: LearningPathItem[] }>(
+    '/analytics/learning-path/',
+  );
+  return unwrapList(response.data);
 };
 
 export const getComparisonStats = async (): Promise<ComparisonStats> => {
   const response = await api.get<ComparisonStats>('/analytics/comparison/');
+  return response.data;
+};
+
+// ─── Platform analytics (admin / supervisor / instructor) ───────────────────
+
+export interface PlatformOverview {
+  generated_at: string;
+  users: {
+    total: number;
+    active: number;
+    inactive: number;
+    by_role: { trainee: number; supervisor: number; instructor: number; admin: number };
+    new_last_7_days: number;
+    new_last_30_days: number;
+  };
+  simulations: {
+    total_sessions: number;
+    completed: number;
+    failed: number;
+    abandoned: number;
+    avg_score: number;
+    active_learners_30d: number;
+  };
+  certificates: { total_issued: number; last_30_days: number };
+}
+
+export interface PlatformUserAnalytics {
+  period_days: number;
+  registration_trend: { date: string; count: number }[];
+  login_trend: { date: string; count: number }[];
+  by_department: { department: string; count: number }[];
+}
+
+export interface PlatformPerformanceTrendRow {
+  period: string | null;
+  avg_score: number;
+  completions: number;
+  active_learners: number;
+  avg_sessions_per_user: number;
+}
+
+export interface PlatformCertificationAnalytics {
+  total_issued: number;
+  by_course_difficulty: { difficulty: number; level: string; count: number }[];
+  issuance_trend: { period: string | null; count: number }[];
+  leaderboard: { email: string; certificates: number }[];
+}
+
+export interface PlatformRetryAnalytics {
+  total_sessions: number;
+  scenarios_with_retries: number;
+  failed_sessions: number;
+  avg_attempt_number: number;
+}
+
+export const getPlatformOverview = async (): Promise<PlatformOverview> => {
+  const response = await api.get<PlatformOverview>('/analytics/platform/overview/');
+  return response.data;
+};
+
+export const getPlatformUserAnalytics = async (period?: number): Promise<PlatformUserAnalytics> => {
+  const response = await api.get<PlatformUserAnalytics>('/analytics/platform/users/', {
+    params: period ? { period } : undefined,
+  });
+  return response.data;
+};
+
+export const getPlatformPerformanceTrends = async (
+  months?: number,
+): Promise<{ trends: PlatformPerformanceTrendRow[] }> => {
+  const response = await api.get<{ trends: PlatformPerformanceTrendRow[] }>(
+    '/analytics/platform/performance-trends/',
+    { params: months ? { months } : undefined },
+  );
+  return response.data;
+};
+
+export const getPlatformCertificationAnalytics = async (): Promise<PlatformCertificationAnalytics> => {
+  const response = await api.get<PlatformCertificationAnalytics>(
+    '/analytics/platform/certifications/',
+  );
+  return response.data;
+};
+
+export const getPlatformRetryAnalytics = async (): Promise<PlatformRetryAnalytics> => {
+  const response = await api.get<PlatformRetryAnalytics>('/analytics/platform/retries/');
   return response.data;
 };

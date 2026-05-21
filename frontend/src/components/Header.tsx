@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { applyThemeToDocument, readStoredTheme } from "../lib/theme";
+import { getHomePathForRole } from "../lib/authRouting";
 import "@/assets/css/header.css";
 
 type NavLink = { href: string; label: string };
@@ -54,7 +55,8 @@ const MoonIcon = () => (
 export default function Header() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const { isAuthenticated, isAdmin, isInstructor, isSupervisor } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const dashboardPath = user?.role ? getHomePathForRole(user.role) : '/dashboard';
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => readStoredTheme());
 
@@ -112,7 +114,7 @@ export default function Header() {
         {/* Desktop actions */}
         <div className="actions">
           {isAuthenticated ? (
-            <Link to={isAdmin || isInstructor || isSupervisor ? "/tutor/dashboard" : "/dashboard"} className="btn btn--primary">
+            <Link to={dashboardPath} className="btn btn--primary">
               Dashboard
             </Link>
           ) : (
@@ -152,7 +154,7 @@ export default function Header() {
           <div className="mobile-actions">
             {isAuthenticated ? (
               <Link
-                to={isAdmin || isInstructor || isSupervisor ? "/tutor/dashboard" : "/dashboard"}
+                to={dashboardPath}
                 className="btn btn--primary"
                 onClick={() => setOpen(false)}
               >
