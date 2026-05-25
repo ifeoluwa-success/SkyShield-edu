@@ -22,7 +22,8 @@ from apps.content.models import (
     PathEnrollment,
 )
 
-from .constants import SEED_TAG, THREAT_TOPICS
+from .constants import THREAT_TOPICS
+from .realistic import ANNOUNCEMENT_TITLES, MATERIAL_SUFFIXES, PATH_TRACKS
 
 
 def seed_content(ctx) -> None:
@@ -38,7 +39,12 @@ def seed_content(ctx) -> None:
     for name, slug, icon in cat_specs:
         cat, _ = ContentCategory.objects.get_or_create(
             slug=slug,
-            defaults={'name': name, 'description': f'{SEED_TAG} {name}', 'icon': icon, 'order': len(ctx.categories)},
+            defaults={
+                'name': name,
+                'description': f'Curated learning content for {name.lower()} in aviation cybersecurity programmes.',
+                'icon': icon,
+                'order': len(ctx.categories),
+            },
         )
         ctx.categories.append(cat)
 
@@ -50,7 +56,8 @@ def seed_content(ctx) -> None:
     for i in range(ctx.scale['materials']):
         topic = THREAT_TOPICS[i % len(THREAT_TOPICS)]
         cat = ctx.rng.choice(ctx.categories)
-        title = f'{SEED_TAG} {topic[0]} — Study Guide'
+        suffix = ctx.rng.choice(MATERIAL_SUFFIXES)
+        title = f'{topic[0]} — {suffix}'
         slug = slugify(title)[:260]
         base = slug
         n = 1
@@ -66,7 +73,7 @@ def seed_content(ctx) -> None:
             category=cat,
             material_type=ctx.rng.choice(['article', 'video', 'document', 'presentation', 'quiz']),
             difficulty=ctx.rng.choice(['beginner', 'intermediate', 'advanced', 'expert']),
-            tags=[topic[1], topic[2], 'nigeria', 'seed'],
+            tags=[topic[1], topic[2], 'nigeria', 'aviation-cyber'],
             video_url='https://www.youtube.com/watch?v=dQw4w9WgXcQ' if ctx.rng.random() < 0.3 else '',
             external_url='https://www.icao.int/Security' if ctx.rng.random() < 0.25 else '',
             estimated_read_time=ctx.rng.randint(8, 45),
@@ -80,7 +87,8 @@ def seed_content(ctx) -> None:
         ctx.materials.append(mat)
 
     for p in range(ctx.scale['paths']):
-        title = f'{SEED_TAG} Path: {ctx.rng.choice(["AVSEC Operator", "ATC Cyber", "Incident Commander"])} Track {p + 1}'
+        track = ctx.rng.choice(PATH_TRACKS)
+        title = f'{track} — Professional Track {p + 1}'
         slug = slugify(title)[:260]
         path = LearningPath.objects.create(
             title=title,
@@ -149,7 +157,7 @@ def seed_content(ctx) -> None:
         )
 
     FAQ.objects.get_or_create(
-        question=f'{SEED_TAG} How do I reset my simulation attempt?',
+        question='How do I reset my simulation attempt?',
         defaults={
             'answer': 'Contact your supervisor or use the remaining attempts shown on the scenario card.',
             'category': ctx.categories[0] if ctx.categories else None,
@@ -157,7 +165,7 @@ def seed_content(ctx) -> None:
     )
 
     ann = Announcement.objects.create(
-        title=f'{SEED_TAG} Q2 Training Intake Open',
+        title=ctx.rng.choice(ANNOUNCEMENT_TITLES),
         content='Enrollment for GPS spoofing response paths is open until month end.',
         priority='high',
         is_active=True,

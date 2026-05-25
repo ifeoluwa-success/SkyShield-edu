@@ -17,7 +17,7 @@ from apps.tutor.models import (
 )
 
 from .builders import exercise_questions
-from .constants import SEED_TAG
+from .realistic import MEETING_TITLES, MATERIAL_SUFFIXES, professional_bio
 
 
 def seed_tutor(ctx) -> None:
@@ -27,7 +27,7 @@ def seed_tutor(ctx) -> None:
         profile, _ = TutorProfile.objects.get_or_create(
             user=instructor,
             defaults={
-                'bio': f'{SEED_TAG} Instructor specialising in AVSEC and ATM cyber defence.',
+                'bio': professional_bio('instructor', 'SkyShield Africa Academy'),
                 'experience_years': ctx.rng.randint(5, 18),
                 'specialization': ['AVSEC', 'Incident Response', 'ATC Operations'],
                 'qualifications': ['MSc Transport Management', 'ICAO AVSEC Certification'],
@@ -38,7 +38,10 @@ def seed_tutor(ctx) -> None:
     for supervisor in ctx.supervisors[: min(5, len(ctx.supervisors))]:
         profile, created = TutorProfile.objects.get_or_create(
             user=supervisor,
-            defaults={'bio': f'{SEED_TAG} Supervisory instructor.', 'experience_years': ctx.rng.randint(8, 22)},
+            defaults={
+                'bio': professional_bio('supervisor', 'NCAA Aviation Security Unit'),
+                'experience_years': ctx.rng.randint(8, 22),
+            },
         )
         if created:
             ctx.tutor_profiles.append(profile)
@@ -48,7 +51,7 @@ def seed_tutor(ctx) -> None:
         for m in range(ctx.rng.randint(2, 6)):
             mat = TeachingMaterial.objects.create(
                 tutor=profile,
-                title=f'{SEED_TAG} {ctx.rng.choice(["Briefing", "Workshop", "SOP"])} — {profile.user.last_name}',
+                title=f'{ctx.rng.choice(MATERIAL_SUFFIXES)} — {profile.user.last_name}',
                 description='Instructor-authored resource for live sessions.',
                 material_type=ctx.rng.choice(['video', 'document', 'presentation', 'quiz']),
                 difficulty=ctx.rng.choice(['beginner', 'intermediate', 'advanced']),
@@ -61,9 +64,9 @@ def seed_tutor(ctx) -> None:
 
         for s in range(ctx.rng.randint(1, 4)):
             start = timezone.now() + timedelta(days=ctx.rng.randint(-30, 30), hours=ctx.rng.randint(8, 16))
-            TeachingSession.objects.create(
+            session = TeachingSession.objects.create(
                 tutor=profile,
-                title=f'{SEED_TAG} Live briefing — {profile.user.first_name}',
+                title=f'{ctx.rng.choice(MEETING_TITLES)} — {profile.user.first_name}',
                 description='Synchronised training with Q&A.',
                 session_type=ctx.rng.choice(['live', 'workshop', 'qanda']),
                 platform=ctx.rng.choice(['google_meet', 'zoom', 'internal']),
@@ -72,11 +75,12 @@ def seed_tutor(ctx) -> None:
                 max_attendees=ctx.rng.randint(15, 50),
                 is_cancelled=ctx.rng.random() < 0.05,
             )
+            ctx.teaching_sessions.append(session)
 
         qs, ans, expl = exercise_questions(ctx.rng)
         ex = Exercise.objects.create(
             tutor=profile,
-            title=f'{SEED_TAG} Checkpoint quiz — {profile.user.last_name}',
+            title=f'Checkpoint Assessment — {profile.user.last_name}',
             description='Multiple-choice assessment after module readings.',
             exercise_type='multiple_choice',
             questions=qs,
@@ -116,13 +120,13 @@ def seed_tutor(ctx) -> None:
     for profile in ctx.tutor_profiles[:3]:
         Report.objects.create(
             tutor=profile,
-            title=f'{SEED_TAG} Quarterly trainee performance',
+            title='Quarterly Trainee Performance Review',
             type='student_performance',
             status='published',
             metadata={'trainees_reviewed': ctx.rng.randint(10, 40), 'avg_score': ctx.rng.uniform(65, 88)},
         )
 
-    for session in TeachingSession.objects.filter(title__startswith=SEED_TAG)[:20]:
+    for session in ctx.teaching_sessions[:20]:
         for trainee in ctx.rng.sample(ctx.trainees, k=ctx.rng.randint(3, 10)):
             SessionAttendance.objects.get_or_create(
                 session=session,

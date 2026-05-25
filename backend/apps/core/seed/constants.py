@@ -1,7 +1,6 @@
 """Scale presets and regional fixtures for database seeding."""
 from __future__ import annotations
 
-SEED_TAG = '[SEED]'
 DEFAULT_PASSWORD = 'SkyShieldSeed2026!'
 
 # Demo accounts always recreated (documented in command output)

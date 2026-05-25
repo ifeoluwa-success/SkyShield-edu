@@ -12,7 +12,6 @@ from apps.analytics.models import (
     UserPerformance,
 )
 
-from .constants import SEED_TAG
 
 
 def seed_analytics(ctx) -> None:
@@ -57,7 +56,7 @@ def seed_analytics(ctx) -> None:
             )
 
     MLModelMetrics.objects.get_or_create(
-        model_name=f'{SEED_TAG} threat_classifier',
+        model_name='threat_classifier_production',
         version='1.2.0',
         defaults={
             'accuracy': 0.91,

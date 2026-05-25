@@ -35,6 +35,7 @@ class SeedContext:
 
     tutor_profiles: list = field(default_factory=list)
     meetings: list = field(default_factory=list)
+    teaching_sessions: list = field(default_factory=list)
 
     def staff_pool(self):
         return self.admins + self.supervisors + self.instructors

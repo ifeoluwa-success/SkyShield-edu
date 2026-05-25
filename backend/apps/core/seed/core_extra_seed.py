@@ -1,14 +1,13 @@
 """Seed core audit logs, API logs, notifications, fake billing settings."""
 from __future__ import annotations
 
-import uuid
 from datetime import timedelta
 
 from django.utils import timezone
 
 from apps.core.models import APILog, AuditLog, ErrorLog, Notification, NotificationRecipient, SystemSetting
 
-from .constants import SEED_TAG
+from .realistic import NOTIFICATION_TITLES, reference_code, txn_reference, uuid_str
 
 
 def seed_core_extra(ctx) -> None:
@@ -20,7 +19,7 @@ def seed_core_extra(ctx) -> None:
         defaults={
             'value': [
                 {
-                    'id': str(uuid.uuid4()),
+                    'id': uuid_str(),
                     'org': ctx.rng.choice(['NCAA', 'FAAN', 'SkyShield Academy']),
                     'plan': ctx.rng.choice(['enterprise', 'team', 'trainee_pro']),
                     'status': ctx.rng.choice(['active', 'active', 'past_due', 'cancelled']),
@@ -31,7 +30,7 @@ def seed_core_extra(ctx) -> None:
                 }
                 for _ in range(12)
             ],
-            'description': f'{SEED_TAG} Synthetic subscription ledger for UI/testing',
+            'description': 'Organisation subscription ledger (development dataset)',
             'is_public': False,
             'data_type': 'json',
         },
@@ -41,7 +40,7 @@ def seed_core_extra(ctx) -> None:
         defaults={
             'value': [
                 {
-                    'id': f'TXN-{uuid.uuid4().hex[:10].upper()}',
+                    'id': txn_reference(),
                     'method': ctx.rng.choice(['card', 'bank_transfer', 'purchase_order']),
                     'status': ctx.rng.choice(['succeeded', 'succeeded', 'pending', 'failed']),
                     'amount': ctx.rng.randint(50000, 800000),
@@ -50,7 +49,7 @@ def seed_core_extra(ctx) -> None:
                 }
                 for _ in range(40)
             ],
-            'description': f'{SEED_TAG} Fake payment history (not real money)',
+            'description': 'Payment transaction history (development dataset)',
             'is_public': False,
             'data_type': 'json',
         },
@@ -64,8 +63,8 @@ def seed_core_extra(ctx) -> None:
             action=ctx.rng.choice(['CREATE', 'UPDATE', 'VIEW', 'LOGIN', 'LOGOUT']),
             app_name=ctx.rng.choice(['users', 'simulations', 'content', 'meetings']),
             model_name=ctx.rng.choice(['User', 'Scenario', 'LearningMaterial', 'Meeting']),
-            object_id=str(uuid.uuid4()),
-            object_repr=f'{SEED_TAG} object',
+            object_id=uuid_str(),
+            object_repr=reference_code('OBJ'),
             ip_address='102.89.1.1',
             timestamp=timezone.now() - timedelta(days=ctx.rng.randint(0, 60)),
         ))
@@ -114,8 +113,8 @@ def seed_core_extra(ctx) -> None:
 
     notifications = [
         Notification(
-            title=f'{SEED_TAG} {ctx.rng.choice(["Maintenance", "New course", "Policy update"])}',
-            message='Platform notification for seeded environment.',
+            title=ctx.rng.choice(NOTIFICATION_TITLES),
+            message='Review the latest platform update in your dashboard.',
             notification_type=ctx.rng.choice(['info', 'warning', 'success']),
             is_global=ctx.rng.random() < 0.3,
             created_by=ctx.rng.choice(ctx.admins),

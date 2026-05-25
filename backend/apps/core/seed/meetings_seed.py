@@ -13,7 +13,7 @@ from apps.meetings.models import (
     MeetingRecording,
 )
 
-from .constants import SEED_TAG
+from .realistic import MEETING_TITLES
 from .utils import mute_meeting_signals
 
 
@@ -29,7 +29,7 @@ def seed_meetings(ctx) -> None:
         MeetingParticipant.objects.bulk_create(participant_batch, batch_size=500)
 
     for meeting in ctx.meetings:
-        meeting.participant_count = len(meeting._seed_participant_count)
+        meeting.participant_count = getattr(meeting, '_seed_participant_count', 0)
         meeting.save(update_fields=['participant_count'])
 
     ctx.write(f'  Meetings: {len(ctx.meetings)}.')
@@ -48,7 +48,7 @@ def _seed_meeting_rows(ctx, hosts, participant_batch: list) -> None:
         start = timezone.now() + timedelta(days=ctx.rng.randint(-45, 30), hours=ctx.rng.randint(7, 18))
         status = ctx.rng.choice(['scheduled', 'scheduled', 'live', 'ended', 'ended', 'cancelled'])
         meeting = Meeting(
-            title=f'{SEED_TAG} {ctx.rng.choice(["AVSEC Briefing", "Scenario Debrief", "ATC Cyber Workshop"])}',
+            title=ctx.rng.choice(MEETING_TITLES),
             description='Synchronised training session for SkyShield cohort.',
             host=host,
             tutor_profile=tutor,

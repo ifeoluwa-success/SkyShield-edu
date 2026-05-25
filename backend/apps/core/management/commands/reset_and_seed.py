@@ -1,10 +1,14 @@
 """
-Reset all database rows (preserve schema) and load realistic test data.
+Reset all database rows (preserve schema) and load realistic development data.
+
+Identifiers use UUIDs and alphanumeric reference codes (no [SEED] markers).
+See apps/core/seed/realistic.py for generators.
 
 Usage:
   python manage.py reset_and_seed --yes
   python manage.py reset_and_seed --yes --scale medium
   python manage.py reset_and_seed --yes --scale large --password 'MyDevPass123!'
+  python manage.py seed_realistic --yes          # same pipeline, clearer name
   python manage.py reset_and_seed --seed-only --yes
   python manage.py reset_and_seed --clear-only --yes
 

@@ -27,7 +27,8 @@ from apps.simulations.models import (
 )
 
 from .builders import scenario_payload
-from .constants import SEED_TAG, THREAT_TOPICS
+from .constants import THREAT_TOPICS
+from .realistic import incident_payload
 
 
 def seed_simulations(ctx) -> None:
@@ -36,7 +37,7 @@ def seed_simulations(ctx) -> None:
     creator = ctx.rng.choice(ctx.supervisors)
     for i in range(ctx.scale['scenarios']):
         topic = THREAT_TOPICS[i % len(THREAT_TOPICS)]
-        title = f'{SEED_TAG} {topic[0]}'
+        title = topic[0]
         if Scenario.objects.filter(title=title).exists():
             continue
         payload = scenario_payload(ctx.rng, title, topic[1], topic[2])
@@ -48,7 +49,7 @@ def seed_simulations(ctx) -> None:
     for c in range(ctx.scale['courses']):
         topic = THREAT_TOPICS[c % len(THREAT_TOPICS)]
         course = Course.objects.create(
-            title=f'{SEED_TAG} {topic[0]} — Certification Track',
+            title=f'{topic[0]} — Certification Track',
             description=f'Structured programme covering {topic[0]} with readings and simulation checkpoints.',
             threat_focus=topic[0].split()[0],
             difficulty=ctx.rng.randint(1, 4),
@@ -184,7 +185,10 @@ def _seed_sessions(ctx) -> None:
         sessions.append(sess)
 
     SimulationSession.objects.bulk_create(sessions, batch_size=400, ignore_conflicts=True)
-    for sess in list(SimulationSession.objects.filter(scenario__title__startswith=SEED_TAG).select_related('scenario')[:200]):
+    scenario_ids = [s.id for s in ctx.scenarios]
+    for sess in list(
+        SimulationSession.objects.filter(scenario_id__in=scenario_ids).select_related('scenario')[:200]
+    ):
         if ctx.rng.random() < 0.6:
             SimulationAnalytics.objects.get_or_create(
                 session=sess,
@@ -244,7 +248,7 @@ def _seed_incident_runs(ctx) -> None:
                 run=run,
                 event_type=et,
                 actor=lead,
-                payload={'seed': True, 'type': et},
+                payload=incident_payload(ctx.rng, et),
             )
 
     for _ in range(min(40, len(ctx.trainees))):

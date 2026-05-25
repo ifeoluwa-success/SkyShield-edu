@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import secrets
-import uuid
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -26,8 +25,8 @@ from .constants import (
     LAST_NAMES,
     ORGANIZATIONS,
     PINNED_ACCOUNTS,
-    SEED_TAG,
 )
+from .realistic import activity_metadata, employee_id, professional_bio, session_token, uuid_str
 
 User = get_user_model()
 
@@ -49,7 +48,7 @@ def _build_user(ctx, *, email, username, role, first_name, last_name, status, pa
         department=extra.get('department', ctx.rng.choice(DEPARTMENTS)),
         phone_number=extra.get('phone_number', f'+234{ctx.rng.randint(700, 909)}{ctx.rng.randint(1000000, 9999999)}'),
         job_title=extra.get('job_title', role.title()),
-        employee_id=extra.get('employee_id', f'{org[:3].upper()}-{ctx.rng.randint(1000, 9999)}'),
+        employee_id=extra.get('employee_id', employee_id(org, ctx.rng)),
         clearance_level=ctx.rng.choice(['Basic', 'Confidential', 'Secret']) if role != 'trainee' else 'Basic',
         training_level=extra.get('training_level', ctx.rng.choice(['Beginner', 'Intermediate', 'Advanced'])),
         email_verified=status == 'active',
@@ -57,7 +56,7 @@ def _build_user(ctx, *, email, username, role, first_name, last_name, status, pa
         is_staff=role in ('admin', 'supervisor'),
         is_superuser=role == 'admin',
         address=f'{ctx.rng.randint(1, 120)} Airport Road, {city}, {state}, Nigeria',
-        bio=extra.get('bio', f'{SEED_TAG} {role} at {org}.'),
+        bio=extra.get('bio', professional_bio(role, org)),
         certifications=extra.get('certifications', ['AVSEC Awareness', 'ICAO Annex 17']),
         weak_areas=ctx.rng.sample(['phishing', 'ransomware', 'gps_spoofing'], k=ctx.rng.randint(0, 2)),
         strong_areas=ctx.rng.sample(['communication', 'navigation'], k=ctx.rng.randint(1, 2)),
@@ -139,7 +138,7 @@ def _seed_user_satellites(ctx) -> None:
         for _ in range(ctx.rng.randint(1, 2)):
             devices_batch.append(UserDevice(
                 user=user,
-                device_id=str(uuid.uuid4()),
+                device_id=uuid_str(),
                 device_name=ctx.rng.choice(['Samsung Galaxy A54', 'iPhone 14', 'Dell Latitude 5540']),
                 device_type=ctx.rng.choice(['mobile', 'desktop', 'tablet']),
                 is_trusted=ctx.rng.random() < 0.6,
@@ -147,7 +146,7 @@ def _seed_user_satellites(ctx) -> None:
         if user.status == 'active':
             sessions_batch.append(UserSession(
                 user=user,
-                session_id=secrets.token_hex(16),
+                session_id=session_token(),
                 ip_address=f'102.{ctx.rng.randint(0, 255)}.{ctx.rng.randint(0, 255)}.{ctx.rng.randint(1, 254)}',
                 user_agent='Mozilla/5.0',
                 device_info={'os': 'Windows', 'browser': 'Chrome'},
@@ -158,7 +157,7 @@ def _seed_user_satellites(ctx) -> None:
             activities_batch.append(UserActivity(
                 user=user,
                 activity_type=ctx.rng.choice(activity_types),
-                metadata={'seed': True},
+                metadata=activity_metadata(ctx.rng, ctx.rng.choice(activity_types)),
                 ip_address='127.0.0.1',
                 timestamp=timezone.now() - timedelta(days=ctx.rng.randint(0, 60)),
             ))
