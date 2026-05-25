@@ -1,9 +1,8 @@
-import { AxiosError } from 'axios';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
-import { enrollInCourse, getCourses, getMyProgress } from '../../services/courseService';
+import { enrollInCourse, getCourses, getMyEnrollments } from '../../services/courseService';
 import type { Course, CourseEnrollment } from '../../types/course';
 import '../../assets/css/Simulationdash.css';
 import '../../assets/css/CoursesPage.css';
@@ -58,12 +57,14 @@ function normalizeDifficulty(d: Course['difficulty'] | number): Course['difficul
   return 1;
 }
 
-function isNotEnrolledResponse(
-  data: CourseEnrollment | { enrolled: false },
-): data is { enrolled: false } {
-  return typeof data === 'object' && data !== null && 'enrolled' in data && data.enrolled === false;
+function enrollmentMapFromList(enrollments: CourseEnrollment[]): Map<string, CourseEnrollment> {
+  const map = new Map<string, CourseEnrollment>();
+  for (const en of enrollments) {
+    const courseId = en.course?.id;
+    if (courseId) map.set(courseId, en);
+  }
+  return map;
 }
-
 
 // ─── Component ───────────────────────────────────────────────────────────────
 const CoursesPage: React.FC = () => {
@@ -77,42 +78,35 @@ const CoursesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
-// Fetch real data
+
   useEffect(() => {
     let cancelled = false;
 
     const loadData = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const coursesData = await getCourses();
         const published = coursesData.filter(c => c.is_published);
 
-        const map = new Map<string, CourseEnrollment>();
-        await Promise.all(
-          published.map(async c => {
-            try {
-              const progress = await getMyProgress(c.id);
-              if (!isNotEnrolledResponse(progress)) {
-                map.set(c.id, progress);
-              }
-            } catch (err) {
-              const status = (err as AxiosError)?.response?.status;
-              if (status !== 404) throw err;
-            }
-          }),
-        );
-
         if (!cancelled) {
           setCourses(published);
-          setEnrollmentByCourseId(map);
+          setLoading(false);
+        }
+
+        try {
+          const enrollments = await getMyEnrollments();
+          if (!cancelled) {
+            setEnrollmentByCourseId(enrollmentMapFromList(enrollments));
+          }
+        } catch (enrollmentErr) {
+          console.warn('Failed to load course enrollments', enrollmentErr);
         }
       } catch (err) {
         console.error(err);
         if (!cancelled) {
           showToast({ type: 'error', message: 'Failed to load courses. Please try again.' });
+          setLoading(false);
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     };
 
@@ -162,7 +156,7 @@ const CoursesPage: React.FC = () => {
 
   return (
     <div className="dashboard-page">
-<div className="welcome-header">
+      <div className="welcome-header">
         <div className="welcome-content">
           <h1 className="welcome-title">
             Course <span className="gradient-text">Library</span>
