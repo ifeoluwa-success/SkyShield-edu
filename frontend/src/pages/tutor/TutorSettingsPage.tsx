@@ -8,12 +8,10 @@ import {
   type UserDevice, type UserSession,
 } from '../../services/authService';
 import { Bell, Shield, Smartphone, Monitor, LogOut, Trash2, CheckCircle } from 'lucide-react';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { Spinner } from '../../components/ui/Loading';
 import SuccessModal from '../../components/SuccessModal';
 import '../../assets/css/SettingsPage.css';
-
-type AlertType = 'success' | 'error' | 'info';
 
 function toDisplayText(value: unknown): string | null {
   if (value == null) return null;
@@ -35,7 +33,6 @@ function toDisplayText(value: unknown): string | null {
 const TutorSettingsPage: React.FC = () => {
   const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ type: AlertType; message: string } | null>(null);
   const [successModal, setSuccessModal] = useState<{ title: string; message: string } | null>(null);
   const [notifications, setNotifications] = useState(user?.email_notifications ?? true);
 
@@ -70,7 +67,7 @@ const TutorSettingsPage: React.FC = () => {
       setNotifications(!notifications);
       setSuccessModal({ title: 'Notifications Updated', message: `Email notifications are now ${!notifications ? 'enabled' : 'disabled'}.` });
     } catch {
-      setToast({ type: 'error', message: 'Failed to update preference.' });
+      showToast({ type: 'error', message: 'Failed to update preference.' });
     } finally {
       setLoading(false);
     }
@@ -82,9 +79,9 @@ const TutorSettingsPage: React.FC = () => {
       if (device.is_trusted) await untrustDevice(device.id);
       else await trustDevice(device.id);
       setDevices(prev => prev.map(d => (d.id === device.id ? { ...d, is_trusted: !d.is_trusted } : d)));
-      setToast({ type: 'success', message: device.is_trusted ? 'Device untrusted' : 'Device trusted' });
+      showToast({ type: 'success', message: device.is_trusted ? 'Device untrusted' : 'Device trusted' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to update device trust' });
+      showToast({ type: 'error', message: 'Failed to update device trust' });
     } finally { setTogglingDevice(null); }
   };
 
@@ -93,8 +90,8 @@ const TutorSettingsPage: React.FC = () => {
     try {
       await removeDevice(id);
       setDevices(prev => prev.filter(d => d.id !== id));
-      setToast({ type: 'success', message: 'Device removed' });
-    } catch { setToast({ type: 'error', message: 'Failed to remove device' }); }
+      showToast({ type: 'success', message: 'Device removed' });
+    } catch { showToast({ type: 'error', message: 'Failed to remove device' }); }
   };
 
   const handleTerminateSession = async (id: string) => {
@@ -102,15 +99,15 @@ const TutorSettingsPage: React.FC = () => {
     try {
       await terminateSession(id);
       setSessions(prev => prev.filter(s => s.id !== id));
-      setToast({ type: 'success', message: 'Session terminated' });
-    } catch { setToast({ type: 'error', message: 'Failed to terminate session' }); }
+      showToast({ type: 'success', message: 'Session terminated' });
+    } catch { showToast({ type: 'error', message: 'Failed to terminate session' }); }
     finally { setTerminatingSession(null); }
   };
 
   const handleTerminateAll = async () => {
     if (!window.confirm('Sign out of all other devices?')) return;
-    try { await terminateOtherSessions(); await fetchSessions(); setToast({ type: 'success', message: 'All other sessions terminated' }); }
-    catch { setToast({ type: 'error', message: 'Failed to terminate sessions' }); }
+    try { await terminateOtherSessions(); await fetchSessions(); showToast({ type: 'success', message: 'All other sessions terminated' }); }
+    catch { showToast({ type: 'error', message: 'Failed to terminate sessions' }); }
   };
 
   const fmtDate = (s: string) =>
@@ -118,7 +115,6 @@ const TutorSettingsPage: React.FC = () => {
 
   return (
     <div className="settings-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       {successModal && <SuccessModal isOpen onClose={() => setSuccessModal(null)} title={successModal.title} message={successModal.message} />}
 
       <div className="page-header">
@@ -143,7 +139,7 @@ const TutorSettingsPage: React.FC = () => {
           <div className="card-header"><Shield size={20} /><h2>Two-Factor Authentication</h2></div>
           <div className="card-content">
             <p>Add an extra layer of security to your account.</p>
-            <button onClick={() => setToast({ type: 'info', message: 'Two-factor authentication setup is coming soon.' })} className="btn-secondary">
+            <button onClick={() => showToast({ type: 'info', message: 'Two-factor authentication setup is coming soon.' })} className="btn-secondary">
               {user?.two_factor_enabled ? 'Manage 2FA' : 'Enable 2FA'}
             </button>
           </div>

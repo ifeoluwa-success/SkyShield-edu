@@ -8,7 +8,7 @@ import {
   Upload, Video, BookOpen, Calendar, Users, FileText, Clock,
   ExternalLink, BarChart3, Eye
 } from 'lucide-react';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/TutorDashboardPage.css';
 import { usePortalBasePath } from '../../hooks/usePortalBasePath';
@@ -20,8 +20,7 @@ const TutorDashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<TutorDashboardStats | null>(null);
   const [upcomingMeetings, setUpcomingMeetings] = useState<Meeting[]>([]);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-  const userName = user?.full_name || user?.email?.split('@')[0] || 'Tutor';
+const userName = user?.full_name || user?.email?.split('@')[0] || 'Tutor';
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -31,7 +30,7 @@ const TutorDashboardPage: React.FC = () => {
           getUpcomingMeetings(),
         ]);
         if (statsData.status === 'fulfilled') setStats(statsData.value);
-        else setToast({ type: 'error', message: 'Failed to load dashboard data' });
+        else showToast({ type: 'error', message: 'Failed to load dashboard data' });
         if (meetingsData.status === 'fulfilled') setUpcomingMeetings(meetingsData.value.slice(0, 3));
       } finally {
         setLoading(false);
@@ -121,8 +120,7 @@ const TutorDashboardPage: React.FC = () => {
 
   return (
     <div className="role-dashboard tutor-dashboard-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-      <div className="welcome-header">
+<div className="welcome-header">
         <div className="welcome-content">
           <h1 className="welcome-title">
             Welcome, <span className="gradient-text">{userName}</span>

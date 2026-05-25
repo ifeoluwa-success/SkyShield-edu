@@ -30,7 +30,7 @@ import type {
 } from '../../services/analyticsService';
 import type { User } from '../../types/auth';
 import type { SimulationSession } from '../../types/simulation';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import DashboardAreaChart from '../../components/charts/DashboardAreaChart';
 import type { ChartPoint } from '../../components/charts/AdminCharts';
 import { PageLoader } from '../../components/ui/Loading';
@@ -178,10 +178,6 @@ const DashboardPage: React.FC = () => {
   const [allSessions, setAllSessions]             = useState<SimulationSession[]>([]);
   const [learningPath, setLearningPath]           = useState<LearningPathItem[]>([]);
   const [pendingCount, setPendingCount]           = useState(0);
-  const [toast, setToast]                         = useState<{
-    type: 'success' | 'error' | 'info';
-    message: string;
-  } | null>(null);
 
   // ── Data fetch ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -232,7 +228,7 @@ const DashboardPage: React.FC = () => {
           setRecentSims(recent);
         }
       } catch {
-        setToast({ type: 'error', message: 'Failed to load some dashboard data.' });
+        showToast({ type: 'error', message: 'Failed to load some dashboard data.' });
       } finally {
         setLoading(false);
       }
@@ -375,11 +371,7 @@ const DashboardPage: React.FC = () => {
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="role-dashboard dashboard-page">
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
-
-      {/* ── Welcome ─────────────────────────────────────────────────────── */}
+{/* ── Welcome ─────────────────────────────────────────────────────── */}
       <div className="welcome-header">
         <div className="welcome-content">
           <div className="welcome-greeting">

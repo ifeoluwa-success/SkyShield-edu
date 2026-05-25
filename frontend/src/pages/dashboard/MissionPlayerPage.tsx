@@ -26,7 +26,7 @@ import { DecisionPanel } from '../../components/mission/DecisionPanel';
 import { EventFeed } from '../../components/mission/EventFeed';
 import { ParticipantBadges } from '../../components/mission/ParticipantBadges';
 import { ReviewScreen } from '../../components/mission/ReviewScreen';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { Spinner } from '../../components/ui/Loading';
 import '../../assets/css/MissionPlayerPage.css';
 
@@ -387,7 +387,6 @@ const MissionPlayerPage: React.FC = () => {
   const [isAcknowledgingBriefing, setIsAcknowledgingBriefing] = useState(false);
   const [briefingDismissed, setBriefingDismissed] = useState(false);
   const [isEscalated, setIsEscalated] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [preflightStatus, setPreflightStatus] = useState<PreflightStatus>('checking');
   const [bootstrappedState, setBootstrappedState] = useState<MissionState | null>(null);
@@ -414,7 +413,7 @@ const MissionPlayerPage: React.FC = () => {
 
   const onTimeout = useCallback(() => {
     setEscalationAlert('Timeout occurred');
-    setToast({ type: 'info', message: 'Phase timer elapsed.' });
+    showToast({ type: 'info', message: 'Phase timer elapsed.' });
   }, []);
 
   const fetchScoreAndReview = useCallback(async () => {
@@ -423,7 +422,7 @@ const MissionPlayerPage: React.FC = () => {
       const s = await getFinalScore(safeRunId);
       setFinalScore(s);
     } catch {
-      setToast({ type: 'error', message: 'Could not load final score yet. You can retry from the review screen.' });
+      showToast({ type: 'error', message: 'Could not load final score yet. You can retry from the review screen.' });
     }
     setShowReview(true);
   }, [safeRunId]);
@@ -710,9 +709,9 @@ const MissionPlayerPage: React.FC = () => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
     try {
       await navigator.clipboard.writeText(url);
-      setToast({ type: 'success', message: 'Mission link copied. Send it to your crew.' });
+      showToast({ type: 'success', message: 'Mission link copied. Send it to your crew.' });
     } catch {
-      setToast({ type: 'info', message: url || 'Could not copy automatically.' });
+      showToast({ type: 'info', message: url || 'Could not copy automatically.' });
     }
   }, []);
 
@@ -755,13 +754,13 @@ const MissionPlayerPage: React.FC = () => {
         setShowBriefing(false);
       }
       if (soloish && !r.all_ready) {
-        setToast({
+        showToast({
           type: 'info',
           message: 'Solo mode: briefing cleared for you. Other operators can still join via the mission link.',
         });
       }
     } catch (err) {
-      setToast({ type: 'error', message: formatApiError(err, 'Could not acknowledge briefing.') });
+      showToast({ type: 'error', message: formatApiError(err, 'Could not acknowledge briefing.') });
     } finally {
       setIsAcknowledgingBriefing(false);
     }
@@ -800,7 +799,7 @@ const MissionPlayerPage: React.FC = () => {
           setEvents([...eventListRef.current]);
         }
       } catch (err) {
-        setToast({ type: 'error', message: formatApiError(err, 'Action could not be submitted.') });
+        showToast({ type: 'error', message: formatApiError(err, 'Action could not be submitted.') });
       } finally {
         setIsSubmitting(false);
       }
@@ -818,7 +817,7 @@ const MissionPlayerPage: React.FC = () => {
       const r = await requestHint(safeRunId);
       applyHintResult(r);
     } catch (err) {
-      setToast({ type: 'error', message: formatApiError(err, 'Hint not available.') });
+      showToast({ type: 'error', message: formatApiError(err, 'Hint not available.') });
     }
   }, [safeRunId, actionsFrozen, channelLive, sendMessage, applyHintResult]);
 
@@ -829,7 +828,7 @@ const MissionPlayerPage: React.FC = () => {
       await abandonMission(safeRunId);
       navigate(returnToPath ?? '/dashboard/simulations');
     } catch (err) {
-      setToast({ type: 'error', message: formatApiError(err, 'Could not abandon mission.') });
+      showToast({ type: 'error', message: formatApiError(err, 'Could not abandon mission.') });
     }
   }, [safeRunId, navigate, returnToPath]);
 
@@ -924,8 +923,7 @@ const MissionPlayerPage: React.FC = () => {
 
   return (
     <div className="mission-player fixed inset-0 z-40">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-      {escalBanner}
+{escalBanner}
 
       <header className="mission-player__header">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">

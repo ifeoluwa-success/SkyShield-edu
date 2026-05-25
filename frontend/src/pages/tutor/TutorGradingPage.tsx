@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck, Users, FileText, ChevronRight } from 'lucide-react';
 import { getExercisesWithAttempts, type ExerciseWithAttempts } from '../../services/tutorService';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/TutorGradingPage.css';
 
@@ -10,15 +10,13 @@ const TutorGradingPage: React.FC = () => {
   const navigate = useNavigate();
   const [exercises, setExercises] = useState<ExerciseWithAttempts[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  useEffect(() => {
+useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getExercisesWithAttempts();
         setExercises(data.filter(ex => ex.attempts_count > 0));
       } catch {
-        setToast({ type: 'error', message: 'Failed to load submissions' });
+        showToast({ type: 'error', message: 'Failed to load submissions' });
       } finally {
         setLoading(false);
       }
@@ -40,9 +38,7 @@ const TutorGradingPage: React.FC = () => {
 
   return (
     <div className="grading-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <h1 className="page-title">
           <ClipboardCheck size={28} /> Pending Grading
         </h1>

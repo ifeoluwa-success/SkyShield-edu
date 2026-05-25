@@ -18,7 +18,7 @@ import '../../assets/css/RoleDashboard.css';
 import '../../assets/css/AnalyticsComponents.css';
 import { useAuth } from '../../hooks/useAuth';
 import type { TutorDashboardStats } from '../../types/tutor';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/TutorAnalytics.css';
 
@@ -34,9 +34,7 @@ const TutorAnalyticsPage: React.FC = () => {
   const [trends, setTrends] = useState<PlatformPerformanceTrendRow[]>([]);
   const [certs, setCerts] = useState<PlatformCertificationAnalytics | null>(null);
   const [retries, setRetries] = useState<PlatformRetryAnalytics | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  useEffect(() => {
+useEffect(() => {
     const platformCalls = showPlatform
       ? Promise.all([
           getPlatformOverview(),
@@ -64,7 +62,7 @@ const TutorAnalyticsPage: React.FC = () => {
           setRetries(retryData);
         }
       })
-      .catch(() => setToast({ type: 'error', message: 'Failed to load analytics data' }))
+      .catch(() => showToast({ type: 'error', message: 'Failed to load analytics data' }))
       .finally(() => setLoading(false));
   }, [showPlatform]);
 
@@ -93,9 +91,7 @@ const TutorAnalyticsPage: React.FC = () => {
 
   return (
     <div className="role-dashboard tutor-analytics-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <div className="header-content">
           <div>
             <h1 className="page-title">Analytics</h1>

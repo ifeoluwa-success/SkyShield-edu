@@ -4,8 +4,7 @@ import { applyIntervention } from '../../services/incidentService';
 import { useMissionSocket } from '../../hooks/useMissionSocket';
 import { ParticipantBadges } from './ParticipantBadges';
 import { EventFeed } from './EventFeed';
-import Toast from '../Toast';
-
+import { showToast } from '../../lib/toast';
 interface LiveMissionPanelProps {
   runId: string;
   token: string;
@@ -30,7 +29,6 @@ const formatMMSS = (seconds: number | null) => {
 };
 
 export const LiveMissionPanel: React.FC<LiveMissionPanelProps> = ({ runId, token, onClose }) => {
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [confirm, setConfirm] = useState<ConfirmState>({ kind: 'none' });
 
   const [injectLabel, setInjectLabel] = useState('Threat Inject');
@@ -70,25 +68,25 @@ export const LiveMissionPanel: React.FC<LiveMissionPanelProps> = ({ runId, token
       try {
         if (kind === 'pause') {
           await applyIntervention(runId, { type: 'PAUSE' });
-          setToast({ type: 'success', message: 'Mission paused' });
+          showToast({ type: 'success', message: 'Mission paused' });
         } else if (kind === 'reduce_timer') {
           await applyIntervention(runId, { type: 'REDUCE_TIMER' });
-          setToast({ type: 'success', message: 'Timer reduced' });
+          showToast({ type: 'success', message: 'Timer reduced' });
         } else if (kind === 'inject_threat') {
           await applyIntervention(runId, {
             type: 'INJECT_THREAT',
             data: { label: injectLabel, severity: injectSeverity },
           });
-          setToast({ type: 'success', message: 'Threat injected' });
+          showToast({ type: 'success', message: 'Threat injected' });
         } else if (kind === 'force_phase') {
           await applyIntervention(runId, {
             type: 'FORCE_PHASE',
             data: { target_phase: targetPhase },
           });
-          setToast({ type: 'success', message: `Forced phase → ${targetPhase}` });
+          showToast({ type: 'success', message: `Forced phase → ${targetPhase}` });
         }
       } catch {
-        setToast({ type: 'error', message: 'Intervention failed' });
+        showToast({ type: 'error', message: 'Intervention failed' });
       } finally {
         setConfirm({ kind: 'none' });
       }
@@ -121,9 +119,7 @@ export const LiveMissionPanel: React.FC<LiveMissionPanelProps> = ({ runId, token
       className="fixed right-0 top-0 z-50 h-screen w-[400px] border-l border-slate-800/70 bg-[#0a0f1e] p-4 shadow-2xl"
       style={{ fontFamily: "'Courier New', monospace" }}
     >
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="flex items-start justify-between gap-3">
+<div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-xs tracking-[0.22em] text-slate-300">WAR ROOM</div>
           <div className="mt-1 text-sm text-slate-100">RUN {runShort}</div>

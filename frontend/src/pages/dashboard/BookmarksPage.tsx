@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Bookmark, Trash2 } from 'lucide-react';
 import MaterialCard from '../../components/content/MaterialCard';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import {
   bookmarkContentMaterial,
@@ -15,7 +15,6 @@ import '../../assets/css/LearningMaterialsPage.css';
 const BookmarksPage: React.FC = () => {
   const [materials, setMaterials] = useState<ContentMaterial[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [bookmarkingSlug, setBookmarkingSlug] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -24,7 +23,7 @@ const BookmarksPage: React.FC = () => {
       const rows = await getBookmarks();
       setMaterials(rows.map((b) => ({ ...b.material, is_bookmarked: true })));
     } catch {
-      setToast({ type: 'error', message: 'Failed to load bookmarks' });
+      showToast({ type: 'error', message: 'Failed to load bookmarks' });
     } finally {
       setLoading(false);
     }
@@ -41,12 +40,12 @@ const BookmarksPage: React.FC = () => {
       if (!res.bookmarked) {
         setMaterials((prev) => prev.filter((m) => m.slug !== slug));
       }
-      setToast({
+      showToast({
         type: 'success',
         message: res.bookmarked ? 'Bookmarked' : 'Removed from saved references',
       });
     } catch {
-      setToast({ type: 'error', message: 'Failed to update bookmark' });
+      showToast({ type: 'error', message: 'Failed to update bookmark' });
     } finally {
       setBookmarkingSlug(null);
     }
@@ -57,17 +56,15 @@ const BookmarksPage: React.FC = () => {
     try {
       await clearBookmarks();
       setMaterials([]);
-      setToast({ type: 'success', message: 'All bookmarks cleared' });
+      showToast({ type: 'success', message: 'All bookmarks cleared' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to clear bookmarks' });
+      showToast({ type: 'error', message: 'Failed to clear bookmarks' });
     }
   };
 
   return (
     <div className="learning-materials-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <Link to="/dashboard/learning-materials" className="back-link">
+<Link to="/dashboard/learning-materials" className="back-link">
         <ArrowLeft size={16} /> Operational library
       </Link>
 

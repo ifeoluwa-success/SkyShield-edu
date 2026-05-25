@@ -4,7 +4,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import type { IncidentRun, SupervisorIntervention } from '../../types/incident';
 import { applyIntervention, getActiveRuns } from '../../services/incidentService';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { MissionCard } from '../../components/mission/MissionCard';
 import { LiveMissionPanel } from '../../components/mission/LiveMissionPanel';
 
@@ -18,9 +18,7 @@ export const SupervisorWarRoomPage: React.FC = () => {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [interventionModal] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  const token = useMemo(() => localStorage.getItem('access_token') ?? '', []);
+const token = useMemo(() => localStorage.getItem('access_token') ?? '', []);
 
   useEffect(() => {
     let mounted = true;
@@ -32,7 +30,7 @@ export const SupervisorWarRoomPage: React.FC = () => {
         setLastUpdated(new Date());
       } catch {
         if (!mounted) return;
-        setToast({ type: 'error', message: 'Failed to load active missions' });
+        showToast({ type: 'error', message: 'Failed to load active missions' });
       }
     };
 
@@ -47,9 +45,9 @@ export const SupervisorWarRoomPage: React.FC = () => {
   const handleIntervene = async (runId: string, intervention: SupervisorIntervention) => {
     try {
       await applyIntervention(runId, intervention);
-      setToast({ type: 'success', message: `Intervention applied: ${intervention.type}` });
+      showToast({ type: 'success', message: `Intervention applied: ${intervention.type}` });
     } catch {
-      setToast({ type: 'error', message: 'Intervention failed' });
+      showToast({ type: 'error', message: 'Intervention failed' });
     }
   };
 
@@ -58,9 +56,7 @@ export const SupervisorWarRoomPage: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="relative" style={{ fontFamily: "'Courier New', monospace" }}>
-        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+<div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <div className="text-2xl font-bold text-slate-100 tracking-wide">COMMAND CENTER</div>
             <div className="mt-1 text-xs text-slate-400">

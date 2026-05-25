@@ -23,9 +23,7 @@ const AdminSchedulePage: React.FC = () => {
   const [sessionPage, setSessionPage] = useState(1);
   const [meetingPage, setMeetingPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  const sessionQuery = useAdminScheduleSessionsQuery({
+const sessionQuery = useAdminScheduleSessionsQuery({
     upcoming: upcomingOnly,
     page: sessionPage,
     page_size: pageSize,
@@ -50,8 +48,6 @@ const AdminSchedulePage: React.FC = () => {
     <AdminPageShell
       title="All schedule"
       subtitle="Teaching sessions and meetings (paginated)"
-      toast={toast}
-      onCloseToast={() => setToast(null)}
       actions={
         <>
           <label className="filter-button" style={{ cursor: 'pointer' }}>

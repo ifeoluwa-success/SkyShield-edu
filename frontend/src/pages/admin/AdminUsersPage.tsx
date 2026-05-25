@@ -8,6 +8,7 @@ import { PageLoader } from '../../components/ui/Loading';
 import { useAdminUsersQuery, useAdminUserStatusMutation } from '../../hooks/useAdminPortal';
 import type { UserStatus } from '../../services/adminPortalService';
 import { adminKeys } from '../../lib/adminQueryKeys';
+import { showToast } from '../../lib/toast';
 import {
   PAGE_META,
   TAB_LABELS,
@@ -33,9 +34,6 @@ const AdminUsersPage: React.FC = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(
-    null,
-  );
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const activeTab = fixedTab ?? tab;
@@ -65,9 +63,9 @@ const AdminUsersPage: React.FC = () => {
     setUpdatingId(userId);
     try {
       await statusMutation.mutateAsync({ userId, status });
-      setToast({ type: 'success', message: `User status updated to ${status}` });
+      showToast({ type: 'success', message: `User status updated to ${status}` });
     } catch {
-      setToast({ type: 'error', message: 'Failed to update user status' });
+      showToast({ type: 'error', message: 'Failed to update user status' });
     } finally {
       setUpdatingId(null);
     }
@@ -80,8 +78,6 @@ const AdminUsersPage: React.FC = () => {
     <AdminPageShell
       title={meta.title}
       subtitle={meta.subtitle}
-      toast={toast}
-      onCloseToast={() => setToast(null)}
       actions={
         <button
           type="button"

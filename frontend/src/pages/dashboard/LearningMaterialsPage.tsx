@@ -32,7 +32,7 @@ import {
 import { queryKeys } from '../../lib/queryClient';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useContentLibraryBase } from '../../hooks/usePortalBasePath';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { ContentGridSkeleton } from '../../components/ui/ContentGridSkeleton';
 import '../../assets/css/LearningMaterialsPage.css';
 
@@ -215,10 +215,6 @@ const LearningMaterialsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const libraryBase = useContentLibraryBase();
   const isTraineeLibrary = libraryBase.startsWith('/dashboard');
-  const [toast, setToast] = useState<{
-    type: 'success' | 'error' | 'info';
-    message: string;
-  } | null>(null);
   const [bookmarkingSlug, setBookmarkingSlug] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -268,12 +264,12 @@ const LearningMaterialsPage: React.FC = () => {
         (old: typeof materialsQuery.data) =>
           old?.map((m) => (m.slug === slug ? { ...m, is_bookmarked: res.bookmarked } : m)),
       );
-      setToast({
+      showToast({
         type: 'success',
         message: res.bookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks',
       });
     },
-    onError: () => setToast({ type: 'error', message: 'Failed to bookmark material' }),
+    onError: () => showToast({ type: 'error', message: 'Failed to bookmark material' }),
   });
 
   const handleBookmark = (slug: string) => {
@@ -283,7 +279,7 @@ const LearningMaterialsPage: React.FC = () => {
 
   const handleEnroll = async (path: LearningPath) => {
     if (!path.slug) {
-      setToast({ type: 'error', message: 'This path is missing a link identifier.' });
+      showToast({ type: 'error', message: 'This path is missing a link identifier.' });
       return;
     }
     if (path.user_enrolled) {
@@ -292,14 +288,14 @@ const LearningMaterialsPage: React.FC = () => {
     }
     try {
       await enrollInLearningPath(path.slug);
-      setToast({ type: 'success', message: 'Enrolled in path' });
+      showToast({ type: 'success', message: 'Enrolled in path' });
       void queryClient.invalidateQueries({ queryKey: queryKeys.content.paths });
       navigate(learningPathDetailRoute(path.slug));
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
         'Failed to enroll';
-      setToast({ type: 'error', message: msg });
+      showToast({ type: 'error', message: msg });
     }
   };
 
@@ -339,11 +335,7 @@ const LearningMaterialsPage: React.FC = () => {
 
   return (
     <div className="learning-materials-page">
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
-
-      {announcements.length > 0 && (
+{announcements.length > 0 && (
         <section className="announcements-section">
           {announcements.map((a) => (
             <div

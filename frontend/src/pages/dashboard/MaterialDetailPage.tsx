@@ -13,7 +13,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import ContentBody from '../../components/content/ContentBody';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import { useAuth } from '../../hooks/useAuth';
 import { useContentLibraryBase } from '../../hooks/usePortalBasePath';
@@ -44,7 +44,6 @@ const MaterialDetailPage: React.FC = () => {
   const [comments, setComments] = useState<ContentComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [commentText, setCommentText] = useState('');
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
@@ -88,9 +87,9 @@ const MaterialDetailPage: React.FC = () => {
     try {
       const res = await bookmarkContentMaterial(slug);
       setMaterial({ ...material, is_bookmarked: res.bookmarked });
-      setToast({ type: 'success', message: res.bookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks' });
+      showToast({ type: 'success', message: res.bookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks' });
     } catch {
-      setToast({ type: 'error', message: 'Could not update bookmark' });
+      showToast({ type: 'error', message: 'Could not update bookmark' });
     }
   };
 
@@ -100,7 +99,7 @@ const MaterialDetailPage: React.FC = () => {
       const res = await likeMaterial(slug);
       setMaterial({ ...material, is_liked: res.liked, likes_count: res.likes_count });
     } catch {
-      setToast({ type: 'error', message: 'Could not update like' });
+      showToast({ type: 'error', message: 'Could not update like' });
     }
   };
 
@@ -111,9 +110,9 @@ const MaterialDetailPage: React.FC = () => {
       await rateMaterial(slug, { rating, review: review || undefined });
       const updated = await getContentMaterial(slug);
       setMaterial(updated);
-      setToast({ type: 'success', message: 'Rating submitted' });
+      showToast({ type: 'success', message: 'Rating submitted' });
     } catch {
-      setToast({ type: 'error', message: 'Could not submit rating' });
+      showToast({ type: 'error', message: 'Could not submit rating' });
     } finally {
       setSubmitting(false);
     }
@@ -126,9 +125,9 @@ const MaterialDetailPage: React.FC = () => {
       await updateMaterialProgress(slug, { completed: true });
       const updated = await getContentMaterial(slug);
       setMaterial(updated);
-      setToast({ type: 'success', message: 'Marked as reviewed' });
+      showToast({ type: 'success', message: 'Marked as reviewed' });
     } catch {
-      setToast({ type: 'error', message: 'Could not update progress' });
+      showToast({ type: 'error', message: 'Could not update progress' });
     } finally {
       setSubmitting(false);
     }
@@ -143,7 +142,7 @@ const MaterialDetailPage: React.FC = () => {
       setComments((prev) => [c, ...prev]);
       setCommentText('');
     } catch {
-      setToast({ type: 'error', message: 'Could not post comment' });
+      showToast({ type: 'error', message: 'Could not post comment' });
     } finally {
       setSubmitting(false);
     }
@@ -155,7 +154,7 @@ const MaterialDetailPage: React.FC = () => {
       await deleteMaterialComment(slug, commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
     } catch {
-      setToast({ type: 'error', message: 'Could not delete comment' });
+      showToast({ type: 'error', message: 'Could not delete comment' });
     }
   };
 
@@ -187,9 +186,7 @@ const MaterialDetailPage: React.FC = () => {
 
   return (
     <div className="learning-materials-page material-detail-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <Link to={libraryBase} className="back-link">
+<Link to={libraryBase} className="back-link">
         <ArrowLeft size={16} /> Operational library
       </Link>
 

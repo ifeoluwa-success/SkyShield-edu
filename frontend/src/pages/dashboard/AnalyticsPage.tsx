@@ -11,7 +11,7 @@ import {
   type ComparisonStats,
   type PerformanceTrend,
 } from '../../services/analyticsService';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/AnalyticsPage.css';
 
@@ -32,9 +32,7 @@ const DashboardAnalyticsPage: React.FC = () => {
   const [skills, setSkills] = useState<SkillAssessment[]>([]);
   const [comparison, setComparison] = useState<ComparisonStats | null>(null);
   const [trends, setTrends] = useState<PerformanceTrend[]>([]);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  useEffect(() => {
+useEffect(() => {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
@@ -120,7 +118,7 @@ const DashboardAnalyticsPage: React.FC = () => {
           })),
         });
       } catch {
-        setToast({ type: 'error', message: 'Failed to load analytics data' });
+        showToast({ type: 'error', message: 'Failed to load analytics data' });
         setStats({
           totalSimulations: 0, avgScore: 0, certificationsEarned: 0, totalHours: 0,
           weeklyProgress: [], completionRate: 0, performanceTrend: [],
@@ -145,9 +143,7 @@ const DashboardAnalyticsPage: React.FC = () => {
 
   return (
     <div className="dashboard-page analytics-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="welcome-header">
+<div className="welcome-header">
         <div className="welcome-content">
           <h1 className="welcome-title">
             Performance <span className="gradient-text">Analytics</span>

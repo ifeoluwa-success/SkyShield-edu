@@ -3,7 +3,7 @@ import { CheckCircle, XCircle, Clock, Award, Target, TrendingUp } from 'lucide-r
 import { getAllSessions } from '../../services/simulationService';
 import { getUserPerformance, type UserPerformance } from '../../services/analyticsService';
 import type { SimulationSession } from '../../types/simulation';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/ReportsPage.css';
 
@@ -35,7 +35,6 @@ const ReportsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<SimulationSession[]>([]);
   const [performance, setPerformance] = useState<UserPerformance | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('');
 
   useEffect(() => {
@@ -48,7 +47,7 @@ const ReportsPage: React.FC = () => {
         if (sessionData.status === 'fulfilled') setSessions(sessionData.value);
         if (perfData.status === 'fulfilled') setPerformance(perfData.value);
       } catch {
-        setToast({ type: 'error', message: 'Failed to load report data.' });
+        showToast({ type: 'error', message: 'Failed to load report data.' });
       } finally {
         setLoading(false);
       }
@@ -77,9 +76,7 @@ const ReportsPage: React.FC = () => {
 
   return (
     <div className="dashboard-page reports-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <h1>Performance Report</h1>
         <p>Your simulation history, scores, and learning progress</p>
       </div>

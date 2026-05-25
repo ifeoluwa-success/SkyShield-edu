@@ -5,8 +5,7 @@ import { PageLoader } from '../../components/ui/Loading';
 import { useAuth } from '../../hooks/useAuth';
 import type { CourseEnrollment, ModuleProgress } from '../../types/course';
 import { getCourseEnrollments, resetModuleAttempts } from '../../services/courseService';
-import Toast from '../../components/Toast';
-
+import { showToast } from '../../lib/toast';
 const statusClass = (s: CourseEnrollment['status']) => {
   switch (s) {
     case 'completed':
@@ -29,9 +28,6 @@ const TutorCourseEnrollmentsPage: React.FC = () => {
   const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(
-    null,
-  );
   const [resetRow, setResetRow] = useState<{
     enrollmentId: string;
     moduleId: string;
@@ -48,7 +44,7 @@ const TutorCourseEnrollmentsPage: React.FC = () => {
       const data = await getCourseEnrollments(courseId);
       setEnrollments(data);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load enrollments' });
+      showToast({ type: 'error', message: 'Failed to load enrollments' });
     } finally {
       setLoading(false);
     }
@@ -83,7 +79,7 @@ const TutorCourseEnrollmentsPage: React.FC = () => {
     const first = fails[0];
     const tid = e.trainee_id ?? e.user?.id;
     if (!first || !tid) {
-      setToast({
+      showToast({
         type: 'info',
         message: 'No failed modules or trainee id is missing for this enrollment',
       });
@@ -101,11 +97,11 @@ const TutorCourseEnrollmentsPage: React.FC = () => {
     try {
       setResetting(true);
       await resetModuleAttempts(courseId, resetRow.moduleId, resetRow.traineeId);
-      setToast({ type: 'success', message: 'Module attempts reset' });
+      showToast({ type: 'success', message: 'Module attempts reset' });
       setResetRow(null);
       await load();
     } catch {
-      setToast({ type: 'error', message: 'Reset failed' });
+      showToast({ type: 'error', message: 'Reset failed' });
     } finally {
       setResetting(false);
     }
@@ -121,9 +117,7 @@ const TutorCourseEnrollmentsPage: React.FC = () => {
 
   return (
     <div className="tutor-page px-4 py-8 md:px-8">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <button
+<button
         type="button"
         onClick={() => navigate(`${basePath}/courses`)}
         className="mb-6 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-amber-400"

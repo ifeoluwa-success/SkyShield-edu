@@ -15,9 +15,7 @@ const AdminCoursesPage: React.FC = () => {
   const [publishedFilter, setPublishedFilter] = useState<'all' | 'yes' | 'no'>('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  useEffect(() => {
+useEffect(() => {
     const t = window.setTimeout(() => setDebouncedSearch(search.trim()), 350);
     return () => window.clearTimeout(t);
   }, [search]);
@@ -39,8 +37,6 @@ const AdminCoursesPage: React.FC = () => {
     <AdminPageShell
       title="All courses"
       subtitle="Structured courses on the platform (published and draft)"
-      toast={toast}
-      onCloseToast={() => setToast(null)}
       actions={
         <button
           type="button"

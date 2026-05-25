@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BookOpen, HelpCircle, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { getGlossaryTerms, getFAQs, type GlossaryTerm, type FAQ } from '../../services/contentService';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { Spinner } from '../../components/ui/Loading';
 import '../../assets/css/HelpPage.css';
 
@@ -12,9 +12,7 @@ const HelpPage: React.FC = () => {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  useEffect(() => {
+useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
       const [glossaryRes, faqRes] = await Promise.allSettled([
@@ -22,9 +20,9 @@ const HelpPage: React.FC = () => {
         getFAQs(),
       ]);
       if (glossaryRes.status === 'fulfilled') setGlossary(glossaryRes.value);
-      else setToast({ type: 'error', message: 'Failed to load glossary' });
+      else showToast({ type: 'error', message: 'Failed to load glossary' });
       if (faqRes.status === 'fulfilled') setFaqs(faqRes.value);
-      else setToast({ type: 'error', message: 'Failed to load FAQs' });
+      else showToast({ type: 'error', message: 'Failed to load FAQs' });
       setLoading(false);
     };
     fetchAll();
@@ -57,9 +55,7 @@ const HelpPage: React.FC = () => {
 
   return (
     <div className="help-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="help-header">
+<div className="help-header">
         <div>
           <h1 className="help-title">Help Center</h1>
           <p className="help-subtitle">Cybersecurity glossary and frequently asked questions</p>

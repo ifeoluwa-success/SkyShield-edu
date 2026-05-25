@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import { enrollInCourse, getCourses, getMyProgress } from '../../services/courseService';
 import type { Course, CourseEnrollment } from '../../types/course';
@@ -77,9 +77,7 @@ const CoursesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  // Fetch real data
+// Fetch real data
   useEffect(() => {
     let cancelled = false;
 
@@ -111,7 +109,7 @@ const CoursesPage: React.FC = () => {
       } catch (err) {
         console.error(err);
         if (!cancelled) {
-          setToast({ type: 'error', message: 'Failed to load courses. Please try again.' });
+          showToast({ type: 'error', message: 'Failed to load courses. Please try again.' });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -145,10 +143,10 @@ const CoursesPage: React.FC = () => {
     try {
       setEnrollingId(courseId);
       await enrollInCourse(courseId);
-      setToast({ type: 'success', message: 'Successfully enrolled!' });
+      showToast({ type: 'success', message: 'Successfully enrolled!' });
       navigate(`/dashboard/courses/${courseId}`);
     } catch {
-      setToast({ type: 'error', message: 'Failed to enroll. Please try again.' });
+      showToast({ type: 'error', message: 'Failed to enroll. Please try again.' });
     } finally {
       setEnrollingId(null);
     }
@@ -164,11 +162,7 @@ const CoursesPage: React.FC = () => {
 
   return (
     <div className="dashboard-page">
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
-
-      <div className="welcome-header">
+<div className="welcome-header">
         <div className="welcome-content">
           <h1 className="welcome-title">
             Course <span className="gradient-text">Library</span>

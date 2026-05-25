@@ -15,7 +15,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../assets/css/LectureSchedulePage.css';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader, Spinner } from '../../components/ui/Loading';
 import {
   getInvitations,
@@ -31,7 +31,6 @@ const LectureSchedulePage: React.FC = () => {
   const [invitations, setInvitations] = useState<MeetingInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingId, setRespondingId] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinInput, setJoinInput] = useState('');
   const [joining, setJoining] = useState(false);
@@ -49,7 +48,7 @@ const LectureSchedulePage: React.FC = () => {
           setInvitations(invitesData.value.filter(i => i.status === 'pending'));
         }
       } catch {
-        setToast({ type: 'error', message: 'Failed to load lecture schedule' });
+        showToast({ type: 'error', message: 'Failed to load lecture schedule' });
       } finally {
         setLoading(false);
       }
@@ -62,10 +61,10 @@ const LectureSchedulePage: React.FC = () => {
     try {
       await acceptInvitation(inv.id);
       setInvitations(prev => prev.filter(i => i.id !== inv.id));
-      setToast({ type: 'success', message: `Accepted — joining ${inv.meeting.title}` });
+      showToast({ type: 'success', message: `Accepted — joining ${inv.meeting.title}` });
       navigate(`/meetings/join/${inv.meeting.meeting_code}`);
     } catch {
-      setToast({ type: 'error', message: 'Failed to accept invitation' });
+      showToast({ type: 'error', message: 'Failed to accept invitation' });
     } finally {
       setRespondingId(null);
     }
@@ -76,9 +75,9 @@ const LectureSchedulePage: React.FC = () => {
     try {
       await declineInvitation(id);
       setInvitations(prev => prev.filter(i => i.id !== id));
-      setToast({ type: 'info', message: 'Invitation declined' });
+      showToast({ type: 'info', message: 'Invitation declined' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to decline invitation' });
+      showToast({ type: 'error', message: 'Failed to decline invitation' });
     } finally {
       setRespondingId(null);
     }
@@ -96,7 +95,7 @@ const LectureSchedulePage: React.FC = () => {
   const handleJoinWithCode = () => {
     let code = joinInput.trim();
     if (!code) {
-      setToast({ type: 'error', message: 'Please enter a meeting code or link' });
+      showToast({ type: 'error', message: 'Please enter a meeting code or link' });
       return;
     }
     // Extract code from full URL if user pasted a link
@@ -122,9 +121,7 @@ const LectureSchedulePage: React.FC = () => {
 
   return (
     <div className="lecture-schedule-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      {/* Join Meeting Modal */}
+{/* Join Meeting Modal */}
       {showJoinModal && (
         <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
           <div className="join-modal" onClick={(e) => e.stopPropagation()}>

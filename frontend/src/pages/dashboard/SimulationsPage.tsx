@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getScenarios, startSimulation, getCurrentSession } from '../../services/simulationService';
 import type { Scenario, SimulationSession } from '../../types/simulation';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { ContentGridSkeleton } from '../../components/ui/ContentGridSkeleton';
 import { queryKeys } from '../../lib/queryClient';
 import '../../assets/css/Simulationdash.css';
@@ -32,7 +32,6 @@ const DashboardSimulationsPage: React.FC = () => {
   const { user } = useAuth();
   const [filterDifficulty, setFilterDifficulty] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [launchingScenarioId, setLaunchingScenarioId] = useState<string | null>(null);
 
   const filters = useMemo(
@@ -74,7 +73,7 @@ const DashboardSimulationsPage: React.FC = () => {
       const session = await startSimulation(scenarioId);
       navigate(`/dashboard/simulation/${session.id}`);
     } catch {
-      setToast({ type: 'error', message: 'Failed to start simulation' });
+      showToast({ type: 'error', message: 'Failed to start simulation' });
     }
   };
 
@@ -84,7 +83,7 @@ const DashboardSimulationsPage: React.FC = () => {
       const result = await startMissionRun({ scenario_id: scenarioId, operator_role: operatorRole });
       navigate(`/dashboard/mission/${result.run_id}`);
     } catch {
-      setToast({ type: 'error', message: 'Failed to launch mission' });
+      showToast({ type: 'error', message: 'Failed to launch mission' });
     } finally {
       setLaunchingScenarioId(null);
     }
@@ -126,9 +125,7 @@ const DashboardSimulationsPage: React.FC = () => {
 
   return (
     <div className="dashboard-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="welcome-header">
+<div className="welcome-header">
         <div className="welcome-content">
           <h1 className="welcome-title">
             Training <span className="gradient-text">Simulations</span>

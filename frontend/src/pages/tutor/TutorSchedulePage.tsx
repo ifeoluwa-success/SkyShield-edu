@@ -31,7 +31,7 @@ import {
 } from '../../services/tutorService';
 import type { TeachingSession, Meeting, ScheduleItem } from '../../types/tutor';
 import { getStartTime, getEndTime, getJoinLink, getRecordingUrl } from '../../types/tutor';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import ScheduleMeetingModal from '../../components/ScheduleMeetingModal';
 import ScheduleSessionModal from '../../components/ScheduleSessionModal';
@@ -44,7 +44,6 @@ const TutorSchedulePage: React.FC = () => {
   const [pastSessions, setPastSessions] = useState<TeachingSession[]>([]);
   const [upcomingMeetings, setUpcomingMeetings] = useState<Meeting[]>([]);
   const [pastMeetings, setPastMeetings] = useState<Meeting[]>([]);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
 
@@ -83,7 +82,7 @@ const TutorSchedulePage: React.FC = () => {
       setUpcomingSessions(upcoming);
       setPastSessions(past);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load teaching sessions' });
+      showToast({ type: 'error', message: 'Failed to load teaching sessions' });
     }
   }, []);
 
@@ -96,7 +95,7 @@ const TutorSchedulePage: React.FC = () => {
       setUpcomingMeetings(upcoming);
       setPastMeetings(past);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load meetings' });
+      showToast({ type: 'error', message: 'Failed to load meetings' });
     }
   }, []);
 
@@ -117,10 +116,10 @@ const TutorSchedulePage: React.FC = () => {
       onConfirm: async () => {
         try {
           await deleteTeachingSession(id);
-          setToast({ type: 'success', message: 'Session deleted' });
+          showToast({ type: 'success', message: 'Session deleted' });
           await fetchSessions();
         } catch {
-          setToast({ type: 'error', message: 'Failed to delete session' });
+          showToast({ type: 'error', message: 'Failed to delete session' });
         } finally {
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
@@ -136,10 +135,10 @@ const TutorSchedulePage: React.FC = () => {
       onConfirm: async () => {
         try {
           await deleteMeeting(id);
-          setToast({ type: 'success', message: 'Meeting deleted' });
+          showToast({ type: 'success', message: 'Meeting deleted' });
           await fetchMeetings();
         } catch {
-          setToast({ type: 'error', message: 'Failed to delete meeting' });
+          showToast({ type: 'error', message: 'Failed to delete meeting' });
         } finally {
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
@@ -151,9 +150,9 @@ const TutorSchedulePage: React.FC = () => {
     try {
       const updated = await startMeeting(id);
       setUpcomingMeetings(prev => prev.map(m => (m.id === updated.id ? updated : m)));
-      setToast({ type: 'success', message: 'Meeting started' });
+      showToast({ type: 'success', message: 'Meeting started' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to start meeting' });
+      showToast({ type: 'error', message: 'Failed to start meeting' });
     }
   };
 
@@ -162,9 +161,9 @@ const TutorSchedulePage: React.FC = () => {
       const updated = await endMeeting(id);
       setUpcomingMeetings(prev => prev.filter(m => m.id !== updated.id));
       await fetchMeetings();
-      setToast({ type: 'success', message: 'Meeting ended' });
+      showToast({ type: 'success', message: 'Meeting ended' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to end meeting' });
+      showToast({ type: 'error', message: 'Failed to end meeting' });
     }
   };
 
@@ -175,10 +174,10 @@ const TutorSchedulePage: React.FC = () => {
     setInviting(true);
     try {
       await inviteToMeeting(inviteModal.meetingId, emails);
-      setToast({ type: 'success', message: `Invitation sent to ${emails.length} recipient(s)` });
+      showToast({ type: 'success', message: `Invitation sent to ${emails.length} recipient(s)` });
       setInviteModal(null);
     } catch {
-      setToast({ type: 'error', message: 'Failed to send invitations' });
+      showToast({ type: 'error', message: 'Failed to send invitations' });
     } finally {
       setInviting(false);
     }
@@ -189,11 +188,11 @@ const TutorSchedulePage: React.FC = () => {
     setCancelling(true);
     try {
       await cancelSession(cancelModal.sessionId, cancelModal.reason);
-      setToast({ type: 'success', message: 'Session cancelled' });
+      showToast({ type: 'success', message: 'Session cancelled' });
       setCancelModal(null);
       await fetchSessions();
     } catch {
-      setToast({ type: 'error', message: 'Failed to cancel session' });
+      showToast({ type: 'error', message: 'Failed to cancel session' });
     } finally {
       setCancelling(false);
     }
@@ -203,9 +202,9 @@ const TutorSchedulePage: React.FC = () => {
     setRequestingRecordingId(meetingId);
     try {
       await requestMeetingRecording(meetingId);
-      setToast({ type: 'success', message: 'Recording request sent' });
+      showToast({ type: 'success', message: 'Recording request sent' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to request recording' });
+      showToast({ type: 'error', message: 'Failed to request recording' });
     } finally {
       setRequestingRecordingId(null);
     }
@@ -218,11 +217,11 @@ const TutorSchedulePage: React.FC = () => {
       if (recordingModal.itemType === 'session') {
         await addRecordingToSession(recordingModal.itemId, recordingModal.url);
       }
-      setToast({ type: 'success', message: 'Recording added' });
+      showToast({ type: 'success', message: 'Recording added' });
       setRecordingModal(null);
       await fetchSessions();
     } catch {
-      setToast({ type: 'error', message: 'Failed to add recording' });
+      showToast({ type: 'error', message: 'Failed to add recording' });
     } finally {
       setAddingRecording(false);
     }
@@ -261,9 +260,7 @@ const TutorSchedulePage: React.FC = () => {
 
   return (
     <div className="tutor-schedule-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <div className="header-content">
           <h1 className="page-title">Schedule &amp; Sessions</h1>
           <p className="page-subtitle">Manage your lectures, workshops, and meetings</p>

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { ArrowLeft, BookOpen, CheckCircle, ChevronRight, Clock, Circle } from 'lucide-react';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import { queryKeys } from '../../lib/queryClient';
 import {
@@ -32,7 +32,6 @@ const LearningPathDetailPage: React.FC = () => {
   const slug = rawSlug?.trim();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
 
   const slugValid = !!slug && slug !== 'undefined' && slug !== 'null';
@@ -62,14 +61,14 @@ const LearningPathDetailPage: React.FC = () => {
     if (!slug) return;
     try {
       await enrollInLearningPath(slug);
-      setToast({ type: 'success', message: 'Enrolled in mission path' });
+      showToast({ type: 'success', message: 'Enrolled in mission path' });
       await pathQuery.refetch();
       void queryClient.invalidateQueries({ queryKey: queryKeys.content.paths });
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
         'Enrollment failed';
-      setToast({ type: 'error', message: msg });
+      showToast({ type: 'error', message: msg });
     }
   };
 
@@ -93,9 +92,9 @@ const LearningPathDetailPage: React.FC = () => {
         user_enrollment: enrollment,
         user_progress: enrollment,
       });
-      setToast({ type: 'success', message: `Completed: ${material.title}` });
+      showToast({ type: 'success', message: `Completed: ${material.title}` });
     } catch {
-      setToast({ type: 'error', message: 'Could not mark material complete' });
+      showToast({ type: 'error', message: 'Could not mark material complete' });
     } finally {
       setCompletingId(null);
     }
@@ -134,9 +133,7 @@ const LearningPathDetailPage: React.FC = () => {
 
   return (
     <div className="learning-materials-page path-detail-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <Link to="/dashboard/learning-materials" className="back-link">
+<Link to="/dashboard/learning-materials" className="back-link">
         <ArrowLeft size={16} /> Operational library
       </Link>
 

@@ -8,6 +8,7 @@ import ScrollToTop from './components/ScrollToTop';
 import DashboardLayout from './components/DashboardLayout';
 import TutorDashboardLayout from './components/TutorDashboardLayout';
 import { RouteFallback } from './components/ui/RouteFallback';
+import AppToaster from './components/AppToaster';
 import * as Pages from './App.lazy';
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -46,6 +47,7 @@ function NotFound() {
 function App() {
   return (
     <AuthProvider>
+      <AppToaster />
       <Router>
         <ScrollToTop />
         <Routes>

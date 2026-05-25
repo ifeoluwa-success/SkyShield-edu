@@ -30,7 +30,7 @@ import TrendsTable from '../../components/analytics/TrendsTable';
 import { AdminAreaChart, AdminBarChart, AdminPieChart } from '../../components/charts/AdminCharts';
 import { useAdminChartMetricsQuery } from '../../hooks/useAdminPortal';
 import { adminKeys, ADMIN_STALE_MS } from '../../lib/adminQueryKeys';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import { downloadCsv } from '../../lib/apiUtils';
 import '../../assets/css/RoleDashboard.css';
@@ -50,9 +50,7 @@ const AdminDashboardPage: React.FC = () => {
   const [periodDays, setPeriodDays] = useState(30);
   const [trendMonths, setTrendMonths] = useState(8);
   const [chartDays, setChartDays] = useState(30);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  const bundleQuery = useQuery({
+const bundleQuery = useQuery({
     queryKey: adminKeys.dashboardBundle(periodDays, trendMonths, chartDays),
     queryFn: async () => {
       const [legacyRes, overview, users, certData, trendData, retryData] = await Promise.all([
@@ -116,7 +114,7 @@ const AdminDashboardPage: React.FC = () => {
         String(r.avg_sessions_per_user),
       ]),
     ]);
-    setToast({ type: 'success', message: 'Trends exported' });
+    showToast({ type: 'success', message: 'Trends exported' });
   };
 
   if (loading) {
@@ -130,8 +128,7 @@ const AdminDashboardPage: React.FC = () => {
   if (!platform) {
     return (
       <div className="role-dashboard error-state">
-        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-        <AlertTriangle size={40} />
+<AlertTriangle size={40} />
         <p>Could not load admin dashboard.</p>
         <button type="button" className="btn-secondary" onClick={refresh}>
           Retry
@@ -149,9 +146,7 @@ const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className="role-dashboard admin-dashboard-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <nav className="quick-links">
+<nav className="quick-links">
         <Link to="/admin/users" className="quick-link">
           <Users size={14} /> All users
         </Link>

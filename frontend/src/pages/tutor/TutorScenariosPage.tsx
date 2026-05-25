@@ -8,7 +8,7 @@ import {
   BarChart2,
   Pencil,
 } from 'lucide-react';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import { useAuth } from '../../hooks/useAuth';
 import { getStudents } from '../../services/tutorService';
@@ -47,7 +47,6 @@ const TutorScenariosPage: React.FC = () => {
   const [scenarios, setScenarios] = useState<StaffScenario[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [search, setSearch] = useState('');
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<StaffScenario | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -66,7 +65,7 @@ const TutorScenariosPage: React.FC = () => {
       });
       setScenarios(data);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load scenarios' });
+      showToast({ type: 'error', message: 'Failed to load scenarios' });
     } finally {
       setLoading(false);
     }
@@ -99,45 +98,45 @@ const TutorScenariosPage: React.FC = () => {
 
   const saveScenario = async () => {
     if (!form.title.trim()) {
-      setToast({ type: 'error', message: 'Title is required' });
+      showToast({ type: 'error', message: 'Title is required' });
       return;
     }
     try {
       if (editing) {
         await updateStaffScenario(editing.id, form);
-        setToast({ type: 'success', message: 'Scenario updated' });
+        showToast({ type: 'success', message: 'Scenario updated' });
       } else {
         await createStaffScenario({
           ...form,
           description: form.description || form.title,
           steps: [{ id: 'step-1', title: 'Introduction', content: 'Review scenario briefing.' }],
         });
-        setToast({ type: 'success', message: 'Scenario created as draft' });
+        showToast({ type: 'success', message: 'Scenario created as draft' });
       }
       setShowForm(false);
       load();
     } catch {
-      setToast({ type: 'error', message: 'Could not save scenario' });
+      showToast({ type: 'error', message: 'Could not save scenario' });
     }
   };
 
   const handleDuplicate = async (s: StaffScenario) => {
     try {
       await duplicateStaffScenario(s.id);
-      setToast({ type: 'success', message: 'Scenario duplicated' });
+      showToast({ type: 'success', message: 'Scenario duplicated' });
       load();
     } catch {
-      setToast({ type: 'error', message: 'Duplicate failed' });
+      showToast({ type: 'error', message: 'Duplicate failed' });
     }
   };
 
   const handleArchive = async (s: StaffScenario) => {
     try {
       await deleteStaffScenario(s.id);
-      setToast({ type: 'success', message: 'Scenario archived or removed' });
+      showToast({ type: 'success', message: 'Scenario archived or removed' });
       load();
     } catch {
-      setToast({ type: 'error', message: 'Archive failed' });
+      showToast({ type: 'error', message: 'Archive failed' });
     }
   };
 
@@ -149,13 +148,13 @@ const TutorScenariosPage: React.FC = () => {
       const list = await getStudents();
       setStudents(list);
     } catch {
-      setToast({ type: 'error', message: 'Could not load trainees' });
+      showToast({ type: 'error', message: 'Could not load trainees' });
     }
   };
 
   const submitAssign = async () => {
     if (!assignTarget || selectedTrainees.length === 0) {
-      setToast({ type: 'error', message: 'Select at least one trainee' });
+      showToast({ type: 'error', message: 'Select at least one trainee' });
       return;
     }
     try {
@@ -163,11 +162,11 @@ const TutorScenariosPage: React.FC = () => {
         trainee_ids: selectedTrainees,
         max_attempts: assignMaxAttempts === '' ? undefined : Number(assignMaxAttempts),
       });
-      setToast({ type: 'success', message: 'Scenario assigned' });
+      showToast({ type: 'success', message: 'Scenario assigned' });
       setAssignTarget(null);
       load();
     } catch {
-      setToast({ type: 'error', message: 'Assignment failed' });
+      showToast({ type: 'error', message: 'Assignment failed' });
     }
   };
 
@@ -180,7 +179,7 @@ const TutorScenariosPage: React.FC = () => {
         [s.id]: `${perf.sessions.completed}/${perf.sessions.total} completed · avg ${avg} · ${perf.active_assignments} active assignments`,
       }));
     } catch {
-      setToast({ type: 'error', message: 'Could not load performance' });
+      showToast({ type: 'error', message: 'Could not load performance' });
     }
   };
 
@@ -194,9 +193,7 @@ const TutorScenariosPage: React.FC = () => {
 
   return (
     <div className="role-dashboard tutor-scenarios-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <div className="header-content">
           <div>
             <h1 className="page-title">Training Scenarios</h1>

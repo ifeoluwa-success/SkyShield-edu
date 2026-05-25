@@ -3,7 +3,7 @@ import { Users, Search, Filter, Mail, Award, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getStudents } from '../../services/tutorService';
 import type { StudentProgress } from '../../types/tutor';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/TutorStudents.css';
 
@@ -12,9 +12,7 @@ const TutorStudentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<StudentProgress[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  const fetchStudents = useCallback(async () => {
+const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
       const params: Record<string, string> = {};
@@ -22,7 +20,7 @@ const TutorStudentsPage: React.FC = () => {
       const data = await getStudents(params);
       setStudents(data);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load students' });
+      showToast({ type: 'error', message: 'Failed to load students' });
     } finally {
       setLoading(false);
     }
@@ -44,9 +42,7 @@ const TutorStudentsPage: React.FC = () => {
 
   return (
     <div className="tutor-students-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <div className="header-content">
           <h1 className="page-title">Students</h1>
           <p className="page-subtitle">Manage and track student progress</p>

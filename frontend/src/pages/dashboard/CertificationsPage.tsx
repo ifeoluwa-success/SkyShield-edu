@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Award, Download, Shield } from 'lucide-react';
 import type { CourseCertificate } from '../../types/course';
 import { getMyCertificates } from '../../services/courseService';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import '../../assets/css/CertificationsPage.css';
 
 function formatIssuedDate(iso: string): string {
@@ -181,7 +181,6 @@ const CertificationsPage: React.FC = () => {
   const [certificates, setCertificates] = useState<CourseCertificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [printingCertificateId, setPrintingCertificateId] = useState<string | null>(null);
 
   const clearPrinting = useCallback(() => setPrintingCertificateId(null), []);
@@ -210,7 +209,7 @@ const CertificationsPage: React.FC = () => {
     } catch {
       setCertificates([]);
       setLoadError(true);
-      setToast({ type: 'error', message: 'Failed to load certificates.' });
+      showToast({ type: 'error', message: 'Failed to load certificates.' });
     } finally {
       setLoading(false);
     }
@@ -231,9 +230,7 @@ const CertificationsPage: React.FC = () => {
 
   return (
     <div className="certifications-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      {loading && (
+{loading && (
         <>
           <header className="certifications-header cert-no-print">
             <div className="header-content">

@@ -11,6 +11,7 @@ import {
   type Announcement,
   type AnnouncementPayload,
 } from '../../services/contentService';
+import { showToast } from '../../lib/toast';
 
 const PRIORITIES: AnnouncementPayload['priority'][] = ['low', 'medium', 'high', 'urgent'];
 
@@ -31,9 +32,6 @@ const emptyForm = (): AnnouncementPayload => ({
 
 const AdminAnnouncementsPage: React.FC = () => {
   const qc = useQueryClient();
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(
-    null,
-  );
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<AnnouncementPayload>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -51,7 +49,7 @@ const AdminAnnouncementsPage: React.FC = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['announcements'] });
-      setToast({
+      showToast({
         type: 'success',
         message: editingId ? 'Announcement updated' : 'Announcement published',
       });
@@ -59,7 +57,7 @@ const AdminAnnouncementsPage: React.FC = () => {
       setEditingId(null);
       setForm(emptyForm());
     },
-    onError: () => setToast({ type: 'error', message: 'Failed to save announcement' }),
+    onError: () => showToast({ type: 'error', message: 'Failed to save announcement' }),
   });
 
   const startEdit = (a: Announcement) => {
@@ -80,9 +78,9 @@ const AdminAnnouncementsPage: React.FC = () => {
     try {
       await updateAnnouncement(a.id, { is_active: !a.is_active });
       qc.invalidateQueries({ queryKey: ['announcements'] });
-      setToast({ type: 'success', message: a.is_active ? 'Announcement deactivated' : 'Announcement activated' });
+      showToast({ type: 'success', message: a.is_active ? 'Announcement deactivated' : 'Announcement activated' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to update status' });
+      showToast({ type: 'error', message: 'Failed to update status' });
     }
   };
 
@@ -100,8 +98,6 @@ const AdminAnnouncementsPage: React.FC = () => {
     <AdminPageShell
       title="Announcements"
       subtitle="Create and manage platform-wide notices shown on the learning hub"
-      toast={toast}
-      onCloseToast={() => setToast(null)}
       actions={
         <>
           <button type="button" className="filter-button" onClick={() => refetch()} disabled={isFetching}>

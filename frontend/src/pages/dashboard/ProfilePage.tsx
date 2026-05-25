@@ -2,14 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { updateProfile, changePassword } from '../../services/authService';
 import { User, Camera, Eye, EyeOff, Lock, UserCircle } from 'lucide-react';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import SuccessModal from '../../components/SuccessModal';
 import '../../assets/css/ProfilePage.css';
 
 const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [successModal, setSuccessModal] = useState<{ title: string; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,7 +73,7 @@ const ProfilePage: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
-        setToast({ type: 'info', message: 'Avatar upload will be implemented soon.' });
+        showToast({ type: 'info', message: 'Avatar upload will be implemented soon.' });
       };
       reader.readAsDataURL(file);
     }
@@ -104,7 +103,7 @@ const ProfilePage: React.FC = () => {
         message: 'Your profile has been successfully updated.',
       });
     } catch {
-      setToast({ type: 'error', message: 'Failed to update profile. Please try again.' });
+      showToast({ type: 'error', message: 'Failed to update profile. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -113,7 +112,7 @@ const ProfilePage: React.FC = () => {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.new_password !== passwordData.new_password2) {
-      setToast({ type: 'error', message: 'New passwords do not match.' });
+      showToast({ type: 'error', message: 'New passwords do not match.' });
       return;
     }
     setPasswordLoading(true);
@@ -129,7 +128,7 @@ const ProfilePage: React.FC = () => {
       });
       setPasswordData({ old_password: '', new_password: '', new_password2: '' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to change password. Check your old password.' });
+      showToast({ type: 'error', message: 'Failed to change password. Check your old password.' });
     } finally {
       setPasswordLoading(false);
     }
@@ -150,9 +149,6 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="role-dashboard profile-page">
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
       {successModal && (
         <SuccessModal
           isOpen

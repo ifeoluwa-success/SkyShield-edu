@@ -6,7 +6,7 @@ import type { JoinMeetingResponse } from '../../types/tutor';
 import { joinMeeting, trackMeetingAttendance } from '../../services/tutorService';
 import { useAuth } from '../../hooks/useAuth';
 import SimplePeer from 'simple-peer';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import '../../assets/css/MeetingRoom.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -226,9 +226,7 @@ const MeetingRoom: React.FC = () => {
   const [meetingTime, setMeetingTime] = useState(0);
   const [codeCopied, setCodeCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  const localVideoRef = useRef<HTMLVideoElement>(null);
+const localVideoRef = useRef<HTMLVideoElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const peersRef = useRef<Map<string, SimplePeer>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -287,7 +285,7 @@ const MeetingRoom: React.FC = () => {
         errorMsg += 'Unknown error.';
       }
       setMediaError(errorMsg);
-      setToast({ type: 'error', message: errorMsg });
+      showToast({ type: 'error', message: errorMsg });
     } finally {
       setRequestingMedia(false);
     }
@@ -805,9 +803,7 @@ const MeetingRoom: React.FC = () => {
 
   return (
     <div className="mr-root">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <header className="mr-topbar">
+<header className="mr-topbar">
         <div className="mr-topbar-left">
           <div className="mr-logo">
             <span className="mr-logo-dot" />

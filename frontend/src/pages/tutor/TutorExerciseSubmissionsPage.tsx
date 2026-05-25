@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, Award, CheckCircle, XCircle, Edit2, Save, FileText } from 'lucide-react';
 import { getExerciseAttempts, updateExerciseAttempt, type ExerciseAttemptDetail } from '../../services/tutorService';
 import { usePortalBasePath } from '../../hooks/usePortalBasePath';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/RoleDashboard.css';
 import '../../assets/css/TutorExerciseSubmissions.css';
@@ -70,7 +70,6 @@ const TutorExerciseSubmissionsPage: React.FC = () => {
   const basePath = usePortalBasePath();
   const [attempts, setAttempts] = useState<ExerciseAttemptDetail[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editScore, setEditScore] = useState<number>(0);
   const [editFeedback, setEditFeedback] = useState<string>('');
@@ -88,7 +87,7 @@ const TutorExerciseSubmissionsPage: React.FC = () => {
       const data = await getExerciseAttempts(exerciseId, params);
       setAttempts(data);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load submissions' });
+      showToast({ type: 'error', message: 'Failed to load submissions' });
     } finally {
       setLoading(false);
     }
@@ -114,10 +113,10 @@ const TutorExerciseSubmissionsPage: React.FC = () => {
         passed: score >= PASS_THRESHOLD,
       });
       setAttempts(prev => prev.map(a => (a.id === attemptId ? updated : a)));
-      setToast({ type: 'success', message: 'Grade updated' });
+      showToast({ type: 'success', message: 'Grade updated' });
       setEditingId(null);
     } catch {
-      setToast({ type: 'error', message: 'Failed to update grade' });
+      showToast({ type: 'error', message: 'Failed to update grade' });
     } finally {
       setSavingId(null);
     }
@@ -138,9 +137,7 @@ const TutorExerciseSubmissionsPage: React.FC = () => {
 
   return (
     <div className="role-dashboard submissions-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <button
           type="button"
           className="btn-secondary back-button"

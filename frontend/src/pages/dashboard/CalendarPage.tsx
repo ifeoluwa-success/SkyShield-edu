@@ -16,7 +16,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyUpcomingSessions, getAssignedExercises, type UpcomingSession, type AssignedExercise } from '../../services/simulationService';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader } from '../../components/ui/Loading';
 import '../../assets/css/CalendarPage.css';
 
@@ -48,9 +48,7 @@ const CalendarPage = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  useEffect(() => {
+useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
@@ -122,7 +120,7 @@ const CalendarPage = () => {
         calendarEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setEvents(calendarEvents);
       } catch {
-        setToast({ type: 'error', message: 'Failed to load calendar events' });
+        showToast({ type: 'error', message: 'Failed to load calendar events' });
       } finally {
         setLoading(false);
       }
@@ -430,9 +428,7 @@ const CalendarPage = () => {
 
   return (
     <div className="calendar-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      {/* Header */}
+{/* Header */}
       <div className="calendar-header">
         <div className="header-content">
           <div className="header-title">

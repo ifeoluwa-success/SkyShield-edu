@@ -22,9 +22,7 @@ const AdminLogsPage: React.FC = () => {
   const [tab, setTab] = useState<LogTab>('audit');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  const { data, isLoading, refetch } = useAdminLogsQuery(tab, { page, page_size: pageSize });
+const { data, isLoading, refetch } = useAdminLogsQuery(tab, { page, page_size: pageSize });
 
   const rows = (data?.results ?? []) as LogRow[];
 
@@ -32,8 +30,6 @@ const AdminLogsPage: React.FC = () => {
     <AdminPageShell
       title="Admin logs"
       subtitle="Audit, error, and API request logs (paginated)"
-      toast={toast}
-      onCloseToast={() => setToast(null)}
       actions={
         <button
           type="button"

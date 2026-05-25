@@ -18,7 +18,7 @@ import {
 
 import { getExercises, createExercise, deleteExercise } from '../../services/tutorService';
 import type { Exercise, Question } from '../../types/tutor';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader, Spinner } from '../../components/ui/Loading';
 import '../../assets/css/TutorExercises.css';
 
@@ -30,7 +30,6 @@ const TutorExercisesPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [creating, setCreating] = useState(false);
 
   const [newExercise, setNewExercise] = useState<Omit<Exercise, 'id' | 'created_at' | 'updated_at'>>({
@@ -54,7 +53,7 @@ const TutorExercisesPage: React.FC = () => {
       const data = await getExercises(params);
       setExercises(data);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load exercises' });
+      showToast({ type: 'error', message: 'Failed to load exercises' });
     } finally {
       setLoading(false);
     }
@@ -67,14 +66,14 @@ const TutorExercisesPage: React.FC = () => {
   const handleCreateExercise = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExercise.title) {
-      setToast({ type: 'error', message: 'Title is required' });
+      showToast({ type: 'error', message: 'Title is required' });
       return;
     }
 
     setCreating(true);
     try {
       await createExercise(newExercise);
-      setToast({ type: 'success', message: 'Exercise created successfully' });
+      showToast({ type: 'success', message: 'Exercise created successfully' });
       setShowCreateModal(false);
       
       // Reset form
@@ -91,7 +90,7 @@ const TutorExercisesPage: React.FC = () => {
       
       fetchExercises();
     } catch {
-      setToast({ type: 'error', message: 'Failed to create exercise' });
+      showToast({ type: 'error', message: 'Failed to create exercise' });
     } finally {
       setCreating(false);
     }
@@ -102,10 +101,10 @@ const TutorExercisesPage: React.FC = () => {
 
     try {
       await deleteExercise(id);
-      setToast({ type: 'success', message: 'Exercise deleted successfully' });
+      showToast({ type: 'success', message: 'Exercise deleted successfully' });
       fetchExercises();
     } catch {
-      setToast({ type: 'error', message: 'Failed to delete exercise' });
+      showToast({ type: 'error', message: 'Failed to delete exercise' });
     }
   };
 
@@ -143,9 +142,7 @@ const TutorExercisesPage: React.FC = () => {
 
   return (
     <div className="tutor-exercises-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      {/* Create Exercise Modal */}
+{/* Create Exercise Modal */}
       {showCreateModal && (
         <div className="create-exercise-modal-overlay">
           <div className="create-exercise-modal">

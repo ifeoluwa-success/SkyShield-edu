@@ -20,7 +20,7 @@ import {
   Briefcase,
   Video,
 } from 'lucide-react';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { Spinner } from '../../components/ui/Loading';
 import SuccessModal from '../../components/SuccessModal';
 import '../../assets/css/TutorProfilePage.css';
@@ -29,7 +29,6 @@ const TutorProfilePage: React.FC = () => {
   const { user: authUser, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [successModal, setSuccessModal] = useState<{ title: string; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,7 +100,7 @@ const TutorProfilePage: React.FC = () => {
         });
         setAvatarPreview(profile.user.profile_picture);
       } catch {
-        setToast({ type: 'error', message: 'Failed to load profile data.' });
+        showToast({ type: 'error', message: 'Failed to load profile data.' });
       }
     };
     fetchProfile();
@@ -127,9 +126,9 @@ const TutorProfilePage: React.FC = () => {
     try {
       const updatedUser = await uploadAvatar(file);
       updateUser(updatedUser);
-      setToast({ type: 'success', message: 'Profile picture updated!' });
+      showToast({ type: 'success', message: 'Profile picture updated!' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to upload picture.' });
+      showToast({ type: 'error', message: 'Failed to upload picture.' });
       setAvatarPreview(authUser?.profile_picture || null);
     } finally {
       setAvatarLoading(false);
@@ -224,7 +223,7 @@ const TutorProfilePage: React.FC = () => {
         message: 'Your profile has been successfully updated.',
       });
     } catch {
-      setToast({ type: 'error', message: 'Failed to update profile.' });
+      showToast({ type: 'error', message: 'Failed to update profile.' });
     } finally {
       setLoading(false);
     }
@@ -233,7 +232,7 @@ const TutorProfilePage: React.FC = () => {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.new_password !== passwordData.new_password2) {
-      setToast({ type: 'error', message: 'New passwords do not match.' });
+      showToast({ type: 'error', message: 'New passwords do not match.' });
       return;
     }
     setPasswordLoading(true);
@@ -249,7 +248,7 @@ const TutorProfilePage: React.FC = () => {
       });
       setPasswordData({ old_password: '', new_password: '', new_password2: '' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to change password. Check your old password.' });
+      showToast({ type: 'error', message: 'Failed to change password. Check your old password.' });
     } finally {
       setPasswordLoading(false);
     }
@@ -275,7 +274,6 @@ const TutorProfilePage: React.FC = () => {
 
   return (
     <div className="role-dashboard profile-page tutor-profile-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       {successModal && (
         <SuccessModal
           isOpen

@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { getReports, generateReport, deleteReport, downloadReport } from '../../services/tutorService';
 import type { Report } from '../../types/tutor';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader, Spinner } from '../../components/ui/Loading';
 import '../../assets/css/TutorReports.css';
 
@@ -13,7 +13,6 @@ const TutorReportsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [newReport, setNewReport] = useState({
@@ -31,7 +30,7 @@ const TutorReportsPage: React.FC = () => {
       const data = await getReports(params);
       setReports(data);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load reports' });
+      showToast({ type: 'error', message: 'Failed to load reports' });
     } finally {
       setLoading(false);
     }
@@ -44,7 +43,7 @@ const TutorReportsPage: React.FC = () => {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReport.title.trim()) {
-      setToast({ type: 'error', message: 'Please enter a report title' });
+      showToast({ type: 'error', message: 'Please enter a report title' });
       return;
     }
     setGenerating(true);
@@ -57,11 +56,11 @@ const TutorReportsPage: React.FC = () => {
           : undefined,
       });
       setReports(prev => [report, ...prev]);
-      setToast({ type: 'success', message: 'Report generated successfully' });
+      showToast({ type: 'success', message: 'Report generated successfully' });
       setShowGenerateModal(false);
       setNewReport({ title: '', type: 'student_performance', date_range: { start: '', end: '' } });
     } catch {
-      setToast({ type: 'error', message: 'Failed to generate report' });
+      showToast({ type: 'error', message: 'Failed to generate report' });
     } finally {
       setGenerating(false);
     }
@@ -72,9 +71,9 @@ const TutorReportsPage: React.FC = () => {
     try {
       await deleteReport(id);
       setReports(prev => prev.filter(r => r.id !== id));
-      setToast({ type: 'success', message: 'Report deleted' });
+      showToast({ type: 'success', message: 'Report deleted' });
     } catch {
-      setToast({ type: 'error', message: 'Failed to delete report' });
+      showToast({ type: 'error', message: 'Failed to delete report' });
     }
   };
 
@@ -90,7 +89,7 @@ const TutorReportsPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       a.remove();
     } catch {
-      setToast({ type: 'error', message: 'Failed to download report' });
+      showToast({ type: 'error', message: 'Failed to download report' });
     }
   };
 
@@ -108,9 +107,7 @@ const TutorReportsPage: React.FC = () => {
 
   return (
     <div className="tutor-reports-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <div className="header-content">
           <h1 className="page-title">Reports</h1>
           <p className="page-subtitle">Generate and manage performance reports</p>

@@ -2,14 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { ClipboardList, Clock, Award, CheckCircle, AlertCircle } from 'lucide-react';
 import { getAssignedExercises, submitExerciseAttempt, type AssignedExercise } from '../../services/simulationService';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader, Spinner } from '../../components/ui/Loading';
 import '../../assets/css/ExercisesPage.css';
 
 const ExercisesPage: React.FC = () => {
   const [exercises, setExercises] = useState<AssignedExercise[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<AssignedExercise | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -24,7 +23,7 @@ const ExercisesPage: React.FC = () => {
       const data = await getAssignedExercises();
       setExercises(data);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load exercises' });
+      showToast({ type: 'error', message: 'Failed to load exercises' });
     } finally {
       setLoading(false);
     }
@@ -35,7 +34,7 @@ const ExercisesPage: React.FC = () => {
     setSubmitting(exerciseId);
     try {
       const result = await submitExerciseAttempt(exerciseId, answers);
-      setToast({
+      showToast({
         type: result.passed ? 'success' : 'info',
         message: result.passed
           ? `Great job! You scored ${result.score}% and passed.`
@@ -45,7 +44,7 @@ const ExercisesPage: React.FC = () => {
       setAnswers({});
       fetchExercises(); // refresh list
     } catch {
-      setToast({ type: 'error', message: 'Failed to submit exercise' });
+      showToast({ type: 'error', message: 'Failed to submit exercise' });
     } finally {
       setSubmitting(null);
     }
@@ -107,9 +106,7 @@ const ExercisesPage: React.FC = () => {
 
   return (
     <div className="exercises-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <h1 className="page-title">Exercises</h1>
         <p className="page-subtitle">Complete assigned tasks to test your knowledge</p>
       </div>

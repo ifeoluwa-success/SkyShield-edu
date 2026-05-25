@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { getMaterials, uploadMaterial, updateMaterial, deleteMaterial, publishMaterial, unpublishMaterial } from '../../services/tutorService';
 import type { TeachingMaterial } from '../../types/tutor';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader, Spinner } from '../../components/ui/Loading';
 import '../../assets/css/TutorMaterialsPage.css';
 import '../../assets/css/RoleDashboard.css';
@@ -27,7 +27,6 @@ const TutorMaterialsPage: React.FC = () => {
   const [editingMaterial, setEditingMaterial] = useState<TeachingMaterial | null>(null);
   const [uploadType, setUploadType] = useState<'video' | 'ebook' | 'link' | 'exercise'>('video');
   const [uploading, setUploading] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
 
@@ -52,7 +51,7 @@ const TutorMaterialsPage: React.FC = () => {
       const data = await getMaterials(params);
       setMaterials(Array.isArray(data) ? data : []);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load materials' });
+      showToast({ type: 'error', message: 'Failed to load materials' });
     } finally {
       setLoading(false);
     }
@@ -107,17 +106,17 @@ const TutorMaterialsPage: React.FC = () => {
     e.preventDefault();
 
     if (!newMaterial.title.trim()) {
-      setToast({ type: 'error', message: 'Title is required' });
+      showToast({ type: 'error', message: 'Title is required' });
       return;
     }
 
     if (!editingMaterial && uploadType !== 'link' && !newMaterial.file) {
-      setToast({ type: 'error', message: 'Please select a file' });
+      showToast({ type: 'error', message: 'Please select a file' });
       return;
     }
 
     if (uploadType === 'link' && !newMaterial.video_url.trim()) {
-      setToast({ type: 'error', message: 'Please enter a valid URL' });
+      showToast({ type: 'error', message: 'Please enter a valid URL' });
       return;
     }
 
@@ -134,7 +133,7 @@ const TutorMaterialsPage: React.FC = () => {
           is_published: newMaterial.is_published,
         });
         setMaterials(prev => prev.map(m => (m.id === updated.id ? updated : m)));
-        setToast({ type: 'success', message: 'Material updated successfully!' });
+        showToast({ type: 'success', message: 'Material updated successfully!' });
       } else {
         const formData = new FormData();
         formData.append('title', newMaterial.title);
@@ -151,14 +150,14 @@ const TutorMaterialsPage: React.FC = () => {
           formData.append('file', newMaterial.file);
         }
         await uploadMaterial(formData);
-        setToast({ type: 'success', message: 'Material uploaded successfully!' });
+        showToast({ type: 'success', message: 'Material uploaded successfully!' });
         fetchMaterials();
       }
 
       setShowUploadModal(false);
       resetForm();
     } catch {
-      setToast({ type: 'error', message: editingMaterial ? 'Failed to update material' : 'Failed to upload material' });
+      showToast({ type: 'error', message: editingMaterial ? 'Failed to update material' : 'Failed to upload material' });
     } finally {
       setUploading(false);
     }
@@ -169,10 +168,10 @@ const TutorMaterialsPage: React.FC = () => {
 
     try {
       await deleteMaterial(id);
-      setToast({ type: 'success', message: 'Material deleted successfully' });
+      showToast({ type: 'success', message: 'Material deleted successfully' });
       fetchMaterials();
     } catch {
-      setToast({ type: 'error', message: 'Failed to delete material' });
+      showToast({ type: 'error', message: 'Failed to delete material' });
     }
   };
 
@@ -182,12 +181,12 @@ const TutorMaterialsPage: React.FC = () => {
         ? await unpublishMaterial(material.id)
         : await publishMaterial(material.id);
       setMaterials(prev => prev.map(m => (m.id === updated.id ? updated : m)));
-      setToast({
+      showToast({
         type: 'success',
         message: updated.is_published ? 'Material published' : 'Material unpublished',
       });
     } catch {
-      setToast({ type: 'error', message: 'Failed to update publish status' });
+      showToast({ type: 'error', message: 'Failed to update publish status' });
     }
   };
 
@@ -211,9 +210,7 @@ const TutorMaterialsPage: React.FC = () => {
 
   return (
     <div className="role-dashboard tutor-materials-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <div className="page-header">
+<div className="page-header">
         <div className="header-content">
           <h1 className="page-title">Teaching Materials</h1>
           <p className="page-subtitle">Upload and manage videos, e-books, exercises and links</p>

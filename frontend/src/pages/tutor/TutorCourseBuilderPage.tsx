@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Pencil, Trash2, ArrowLeft, BookOpen, Layers } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader, Spinner } from '../../components/ui/Loading';
 import '../../assets/css/TutorCourseBuilderPage.css';
 import type { Course, CourseModule } from '../../types/course';
@@ -54,9 +54,6 @@ const TutorCourseBuilderPage: React.FC = () => {
   const basePath = location.pathname.startsWith('/admin') ? '/admin' : '/tutor';
 
   const [view, setView] = useState<ViewMode>('list');
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(
-    null,
-  );
   const [loadingList, setLoadingList] = useState(true);
   const [loadingBuilder, setLoadingBuilder] = useState(false);
   const [loadingScenarios, setLoadingScenarios] = useState(true);
@@ -105,7 +102,7 @@ const TutorCourseBuilderPage: React.FC = () => {
       const data = await getCourses();
       setCourses(data);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load courses' });
+      showToast({ type: 'error', message: 'Failed to load courses' });
     } finally {
       setLoadingList(false);
     }
@@ -163,7 +160,7 @@ const TutorCourseBuilderPage: React.FC = () => {
       setEditingKey(null);
       setShowAddForm(false);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load course' });
+      showToast({ type: 'error', message: 'Failed to load course' });
     } finally {
       setLoadingBuilder(false);
     }
@@ -171,7 +168,7 @@ const TutorCourseBuilderPage: React.FC = () => {
 
   const handleSaveCourseDetails = async () => {
     if (!title.trim() || !description.trim()) {
-      setToast({ type: 'error', message: 'Title and description are required' });
+      showToast({ type: 'error', message: 'Title and description are required' });
       return;
     }
     try {
@@ -190,14 +187,14 @@ const TutorCourseBuilderPage: React.FC = () => {
           difficulty,
         });
         setCourseId(updated.id);
-        setToast({ type: 'success', message: 'Course details saved' });
+        showToast({ type: 'success', message: 'Course details saved' });
       } else {
         const created = await createCourse(payload);
         setCourseId(created.id);
-        setToast({ type: 'success', message: 'Course created' });
+        showToast({ type: 'success', message: 'Course created' });
       }
     } catch {
-      setToast({ type: 'error', message: 'Could not save course' });
+      showToast({ type: 'error', message: 'Could not save course' });
     } finally {
       setSavingCourse(false);
     }
@@ -205,7 +202,7 @@ const TutorCourseBuilderPage: React.FC = () => {
 
   const saveDraftToModules = () => {
     if (!draft.title.trim()) {
-      setToast({ type: 'error', message: 'Module title is required' });
+      showToast({ type: 'error', message: 'Module title is required' });
       return;
     }
     const pos =
@@ -234,7 +231,7 @@ const TutorCourseBuilderPage: React.FC = () => {
       minimum_passing_score: 70,
       max_simulation_attempts: 3,
     });
-    setToast({ type: 'success', message: 'Module added (local). Save all modules to sync.' });
+    showToast({ type: 'success', message: 'Module added (local). Save all modules to sync.' });
   };
 
   const updateModuleField = (key: string, patch: Partial<BuilderModule>) => {
@@ -265,7 +262,7 @@ const TutorCourseBuilderPage: React.FC = () => {
 
   const handleSaveAllModules = async () => {
     if (!courseId) {
-      setToast({ type: 'error', message: 'Save course details first' });
+      showToast({ type: 'error', message: 'Save course details first' });
       return;
     }
     const sorted = [...modules].sort((a, b) => a.position - b.position);
@@ -295,9 +292,9 @@ const TutorCourseBuilderPage: React.FC = () => {
       }
       const fresh = await getCourse(courseId);
       setModules((fresh.modules ?? []).map(courseModuleToBuilder));
-      setToast({ type: 'success', message: 'Modules saved' });
+      showToast({ type: 'success', message: 'Modules saved' });
     } catch {
-      setToast({ type: 'error', message: 'Could not save modules' });
+      showToast({ type: 'error', message: 'Could not save modules' });
     } finally {
       setSavingModules(false);
     }
@@ -308,12 +305,12 @@ const TutorCourseBuilderPage: React.FC = () => {
     try {
       setPublishing(true);
       await publishCourse(courseId);
-      setToast({ type: 'success', message: 'Course is now live' });
+      showToast({ type: 'success', message: 'Course is now live' });
       resetBuilder();
       setView('list');
       void loadCourses();
     } catch {
-      setToast({ type: 'error', message: 'Publish failed' });
+      showToast({ type: 'error', message: 'Publish failed' });
     } finally {
       setPublishing(false);
     }
@@ -323,10 +320,10 @@ const TutorCourseBuilderPage: React.FC = () => {
     setPublishingId(id);
     try {
       await publishCourse(id);
-      setToast({ type: 'success', message: 'Course published' });
+      showToast({ type: 'success', message: 'Course published' });
       void loadCourses();
     } catch {
-      setToast({ type: 'error', message: 'Publish failed' });
+      showToast({ type: 'error', message: 'Publish failed' });
     } finally {
       setPublishingId(null);
     }
@@ -339,9 +336,7 @@ const TutorCourseBuilderPage: React.FC = () => {
   if (view === 'list') {
     return (
       <div className="role-dashboard course-builder-page">
-        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-        <header className="page-header">
+<header className="page-header">
           <div className="header-content">
             <h1 className="page-title">Course Builder</h1>
             <p className="page-subtitle">Create and manage training courses for your trainees</p>
@@ -449,9 +444,7 @@ const TutorCourseBuilderPage: React.FC = () => {
 
   return (
     <div className="role-dashboard course-builder-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      <button
+<button
         type="button"
         onClick={() => {
           resetBuilder();

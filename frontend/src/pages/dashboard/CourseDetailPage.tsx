@@ -24,7 +24,7 @@ import {
 } from '../../services/courseService';
 import { startSimulation } from '../../services/simulationService';
 import { startMissionRun } from '../../services/incidentService';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { Spinner } from '../../components/ui/Loading';
 import { useAuth } from '../../hooks/useAuth';
 import '../../assets/css/CourseDetailPage.css';
@@ -412,7 +412,6 @@ const CourseDetailPage: React.FC = () => {
   const [launchingSim, setLaunchingSim] = useState(false);
   const [launchingMission, setLaunchingMission] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [courseNotFound, setCourseNotFound] = useState(false);
 
   const refreshProgress = useCallback(async () => {
@@ -465,7 +464,7 @@ const CourseDetailPage: React.FC = () => {
           setEnrollment(null);
           setShowEnrollPrompt(false);
         } else {
-          setToast({ type: 'error', message: 'Failed to load course progress' });
+          showToast({ type: 'error', message: 'Failed to load course progress' });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -512,9 +511,9 @@ const CourseDetailPage: React.FC = () => {
       setCompletingModuleId(activeModule.id);
       await markReadingComplete(courseId, activeModule.id);
       await refreshProgress();
-      setToast({ type: 'success', message: 'Reading marked complete' });
+      showToast({ type: 'success', message: 'Reading marked complete' });
     } catch {
-      setToast({ type: 'error', message: 'Could not mark module complete' });
+      showToast({ type: 'error', message: 'Could not mark module complete' });
     } finally {
       setCompletingModuleId(null);
     }
@@ -522,7 +521,7 @@ const CourseDetailPage: React.FC = () => {
 
   const handleLaunchSimulation = async () => {
     if (!activeModule?.scenario) {
-      setToast({ type: 'error', message: 'No scenario linked to this module' });
+      showToast({ type: 'error', message: 'No scenario linked to this module' });
       return;
     }
     if (!courseId) return;
@@ -533,7 +532,7 @@ const CourseDetailPage: React.FC = () => {
         state: { returnTo: `/dashboard/courses/${courseId}` },
       });
     } catch {
-      setToast({ type: 'error', message: 'Could not start simulation' });
+      showToast({ type: 'error', message: 'Could not start simulation' });
     } finally {
       setLaunchingSim(false);
     }
@@ -541,7 +540,7 @@ const CourseDetailPage: React.FC = () => {
 
   const handleLaunchImmersiveMission = async () => {
     if (!activeModule?.scenario) {
-      setToast({ type: 'error', message: 'No scenario linked to this module' });
+      showToast({ type: 'error', message: 'No scenario linked to this module' });
       return;
     }
     if (!courseId) return;
@@ -555,7 +554,7 @@ const CourseDetailPage: React.FC = () => {
         state: { returnTo: `/dashboard/courses/${courseId}` },
       });
     } catch {
-      setToast({ type: 'error', message: 'Could not start immersive mission' });
+      showToast({ type: 'error', message: 'Could not start immersive mission' });
     } finally {
       setLaunchingMission(false);
     }
@@ -567,14 +566,14 @@ const CourseDetailPage: React.FC = () => {
       setEnrolling(true);
       await enrollInCourse(courseId);
       await refreshProgress();
-      setToast({ type: 'success', message: 'You are enrolled' });
+      showToast({ type: 'success', message: 'You are enrolled' });
     } catch (err) {
       const status = (err as AxiosError)?.response?.status;
       if (status === 404) {
         setCourseNotFound(true);
         setShowEnrollPrompt(false);
       } else {
-        setToast({ type: 'error', message: 'Enrollment failed' });
+        showToast({ type: 'error', message: 'Enrollment failed' });
       }
     } finally {
       setEnrolling(false);
@@ -600,8 +599,7 @@ const CourseDetailPage: React.FC = () => {
   if (courseNotFound) {
     return (
       <div style={S.page}>
-        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-        <div style={S.stateWrap}>
+<div style={S.stateWrap}>
           <h1 style={S.stateTitle}>Course not found</h1>
           <p style={S.stateText}>
             This link may be outdated. Open the course from the library so the URL uses the course
@@ -627,8 +625,7 @@ const CourseDetailPage: React.FC = () => {
   if (showEnrollPrompt && !enrollment) {
     return (
       <div style={S.page}>
-        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-        <div style={S.stateWrap}>
+<div style={S.stateWrap}>
           <BookOpen size={40} className="cd-icon-success" />
           <h1 style={S.stateTitle}>Enroll to access this course</h1>
           <p style={S.stateText}>
@@ -654,9 +651,7 @@ const CourseDetailPage: React.FC = () => {
 
   return (
     <div style={S.page}>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      {/* top bar */}
+{/* top bar */}
       <div style={S.topbar}>
         <button style={S.backBtn} onClick={() => navigate('/dashboard/courses')}>
           <ArrowLeft size={14} />

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { getStudentProgress, addStudentNotes } from '../../services/tutorService';
 import type { StudentProgress } from '../../types/tutor';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import { PageLoader, Spinner } from '../../components/ui/Loading';
 import '../../assets/css/TutorStudentDetail.css';
 
@@ -17,7 +17,6 @@ const TutorStudentDetailPage: React.FC = () => {
 
   const [student, setStudent] = useState<StudentProgress | null>(null);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [notes, setNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const [showNotesForm, setShowNotesForm] = useState(false);
@@ -29,7 +28,7 @@ const TutorStudentDetailPage: React.FC = () => {
         const data = await getStudentProgress(studentId);
         setStudent(data);
       } catch {
-        setToast({ type: 'error', message: 'Failed to load student details' });
+        showToast({ type: 'error', message: 'Failed to load student details' });
       } finally {
         setLoading(false);
       }
@@ -42,11 +41,11 @@ const TutorStudentDetailPage: React.FC = () => {
     setSavingNotes(true);
     try {
       await addStudentNotes(studentId, notes);
-      setToast({ type: 'success', message: 'Notes saved successfully' });
+      showToast({ type: 'success', message: 'Notes saved successfully' });
       setNotes('');
       setShowNotesForm(false);
     } catch {
-      setToast({ type: 'error', message: 'Failed to save notes' });
+      showToast({ type: 'error', message: 'Failed to save notes' });
     } finally {
       setSavingNotes(false);
     }
@@ -77,9 +76,7 @@ const TutorStudentDetailPage: React.FC = () => {
 
   return (
     <div className="student-detail-page">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      {/* Header */}
+{/* Header */}
       <div className="sd-header">
         <button className="sd-back-btn" onClick={() => navigate(-1)}>
           <ArrowLeft size={18} /> Back to Students

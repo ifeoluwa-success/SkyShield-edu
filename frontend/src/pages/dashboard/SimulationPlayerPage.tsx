@@ -14,7 +14,7 @@ import type {
   StepOption,
   ScenarioWithSteps,
 } from '../../types/simulation';
-import Toast from '../../components/Toast';
+import { showToast } from '../../lib/toast';
 import '../../assets/css/SimulationPlayer.css';
 
 const KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -92,9 +92,7 @@ const SimulationPlayerPage: React.FC = () => {
       hints_used: number;
     };
   } | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-
-  const stepStartRef = useRef(Date.now());
+const stepStartRef = useRef(Date.now());
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -145,7 +143,7 @@ const SimulationPlayerPage: React.FC = () => {
 
       setSession(data);
     } catch {
-      setToast({ type: 'error', message: 'Failed to load simulation session.' });
+      showToast({ type: 'error', message: 'Failed to load simulation session.' });
     } finally {
       setLoading(false);
     }
@@ -260,7 +258,7 @@ const SimulationPlayerPage: React.FC = () => {
           if (fieldErrors.length) message = fieldErrors.join(' · ');
         }
       }
-      setToast({ type: 'error', message });
+      showToast({ type: 'error', message });
     } finally {
       setSubmitting(false);
     }
@@ -277,7 +275,7 @@ const SimulationPlayerPage: React.FC = () => {
       setHint(data.hint);
       setHintsRemaining(data.hints_remaining);
     } catch {
-      setToast({ type: 'error', message: 'No hints available for this step.' });
+      showToast({ type: 'error', message: 'No hints available for this step.' });
     } finally {
       setLoadingHint(false);
     }
@@ -334,8 +332,7 @@ const SimulationPlayerPage: React.FC = () => {
     const { passed, score, summary } = resultData;
     return (
       <div className="sim-player">
-        {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
-        <div className="sim-result">
+<div className="sim-result">
           <div className="sim-result-card">
             <div className="sim-result-icon">{passed ? '🏆' : '📋'}</div>
             <h1 className={`sim-result-title ${passed ? 'passed' : 'failed'}`}>
@@ -403,8 +400,7 @@ const SimulationPlayerPage: React.FC = () => {
   if (!currentStep) {
     return (
       <div className="sim-player">
-        {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
-        <div className="sim-no-step">
+<div className="sim-no-step">
           <span style={{ fontSize: '2.5rem' }}>⚠️</span>
           <p>Unable to load the current simulation step.</p>
           <button className="sim-result-secondary-btn" onClick={() => navigate(exitAfterSim)}>
@@ -418,9 +414,7 @@ const SimulationPlayerPage: React.FC = () => {
   // ── Player ───────────────────────────────────────────────────────────────
   return (
     <div className="sim-player">
-      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
-
-      {/* Header */}
+{/* Header */}
       <div className="sim-header">
         <div className="sim-header-left">
           <button className="sim-back-btn" onClick={() => navigate(exitAfterSim)}>
