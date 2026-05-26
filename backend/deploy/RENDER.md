@@ -31,17 +31,19 @@ Alternatively, apply the blueprint in `backend/render.yaml` when creating the se
 
 ## Frontend build
 
-Set at build time:
+Set at build time (HTTPS API → frontend automatically uses **wss://** for `/ws/...`):
 
 ```
 VITE_API_URL=https://skyshield-backend.onrender.com/api
 ```
 
-Optional override if WebSockets use a different host:
+Optional explicit socket base (must use `wss://` in production, not `ws://`):
 
 ```
 VITE_WS_URL=wss://skyshield-backend.onrender.com
 ```
+
+**Local dev:** The app may show `ws://localhost:5173/ws/...` in DevTools. That is correct — Vite proxies `/ws` to the backend. Production builds must never use `ws://` against Render.
 
 ## Origin validation
 
