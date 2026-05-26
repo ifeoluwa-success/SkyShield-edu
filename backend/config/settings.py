@@ -2,6 +2,8 @@ from pathlib import Path
 import importlib.util
 import os
 from datetime import timedelta
+from urllib.parse import urlparse
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,10 +13,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true")
 # testserver: required for Django/DRF APIClient and some integration tests
-ALLOWED_HOSTS = os.getenv(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,testserver,skyshield-backend.onrender.com",
-).split(",")
+def _parse_host_list(env_value: str) -> list[str]:
+    return [h.strip() for h in env_value.split(",") if h.strip()]
+
+
+_ALLOWED_HOSTS_BASE = _parse_host_list(
+    os.getenv(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1,testserver,skyshield-backend.onrender.com",
+    )
+)
+
+
+ALLOWED_HOSTS = list(dict.fromkeys(_ALLOWED_HOSTS_BASE))
 
 # Application definition
 _INSTALLED_APPS = [
@@ -377,6 +388,12 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Allow frontend hostnames in ALLOWED_HOSTS (useful for proxies and host checks)
+for _origin in CORS_ALLOWED_ORIGINS:
+    _host = urlparse(_origin).hostname
+    if _host and _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
 
 # Security settings for production
 if not DEBUG:

@@ -6,6 +6,11 @@ export function buildMeetingWebSocketUrl(apiPath: string, token: string): string
   const path = apiPath.startsWith('/') ? apiPath : `/${apiPath}`;
   const qs = token ? `?token=${encodeURIComponent(token)}` : '';
 
+  const wsBase = (import.meta.env.VITE_WS_URL as string | undefined)?.replace(/\/$/, '');
+  if (wsBase) {
+    return `${wsBase}${path}${qs}`;
+  }
+
   if (import.meta.env.DEV) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${protocol}//${window.location.host}${path}${qs}`;

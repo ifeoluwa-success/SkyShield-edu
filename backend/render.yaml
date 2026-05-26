@@ -1,0 +1,32 @@
+# Render Blueprint — WebSockets require an ASGI server (Daphne), not Gunicorn WSGI.
+# In the Render dashboard you can paste the startCommand below if you are not using this file.
+services:
+  - type: web
+    name: skyshield-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: daphne -b 0.0.0.0 -p $PORT config.asgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings
+      - key: ALLOWED_HOSTS
+        value: skyshield-backend.onrender.com
+      - key: FRONTEND_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: skyshield-db
+          property: connectionString
+
+databases:
+  - name: skyshield-db
+    plan: free
