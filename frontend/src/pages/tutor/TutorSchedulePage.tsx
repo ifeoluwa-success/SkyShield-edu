@@ -356,12 +356,12 @@ const TutorSchedulePage: React.FC = () => {
                   </div>
                 </div>
                 <div className="session-footer">
-                  {item.type === 'meeting' && item.status !== 'in_progress' && (
+                  {item.type === 'meeting' && item.status !== 'live' && item.status !== 'in_progress' && (
                     <button className="start-btn" onClick={() => handleStartMeeting(item.id)}>
                       <Play size={14} /> Start
                     </button>
                   )}
-                  {item.type === 'meeting' && item.status === 'in_progress' && (
+                  {item.type === 'meeting' && (item.status === 'live' || item.status === 'in_progress') && (
                     <>
                       <button className="end-btn" onClick={() => handleEndMeeting(item.id)}>
                         <Square size={14} /> End
@@ -376,7 +376,7 @@ const TutorSchedulePage: React.FC = () => {
                       <ExternalLink size={16} /> Join Session
                     </a>
                   )}
-                  {item.type === 'meeting' && getJoinLink(item) && item.status === 'in_progress' && (
+                  {item.type === 'meeting' && getJoinLink(item) && (item.status === 'live' || item.status === 'in_progress') && (
                     <a href={getJoinLink(item)} rel="noopener noreferrer" className="join-link">
                       <ExternalLink size={16} /> Join
                     </a>

@@ -470,11 +470,7 @@ class StudentProgressViewSet(viewsets.ModelViewSet):
         meeting_id = request.data.get('meeting_id')
         if not meeting_id:
             return Response({'error': 'Meeting ID required'}, status=status.HTTP_400_BAD_REQUEST)
-        if progress.attended_meetings is None:
-            progress.attended_meetings = []
-        if meeting_id not in progress.attended_meetings:
-            progress.attended_meetings.append(meeting_id)
-            progress.save()
+        progress.add_meeting_attendance(meeting_id)
         return Response({'message': 'Meeting attendance tracked'})
 
     @extend_schema(
@@ -800,6 +796,52 @@ class TraineeExerciseViewSet(viewsets.ReadOnlyModelViewSet):
         context = super().get_serializer_context()
         context['user'] = self.request.user
         return context
+
+
+class TraineeTrackMeetingView(APIView):
+    """Record meeting attendance on the trainee's StudentProgress rows."""
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {'meeting_id': {'type': 'string', 'format': 'uuid'}},
+                'required': ['meeting_id'],
+            }
+        },
+        responses={200: OpenApiResponse(description='Attendance recorded (or no tutor assignment)')}
+    )
+    def post(self, request):
+        user = request.user
+        if user.role != 'trainee':
+            return Response({'error': 'Only trainees can record meeting attendance here'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        meeting_id = request.data.get('meeting_id')
+        if not meeting_id:
+            return Response({'error': 'meeting_id required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        Meeting = get_meeting_model()
+        try:
+            meeting = Meeting.objects.select_related('tutor_profile').get(pk=meeting_id)
+        except Meeting.DoesNotExist:
+            return Response({'error': 'Meeting not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        progress_qs = StudentProgress.objects.filter(student=user)
+        if meeting.tutor_profile_id:
+            progress_qs = progress_qs.filter(tutor_id=meeting.tutor_profile_id)
+
+        updated = 0
+        for progress in progress_qs:
+            progress.add_meeting_attendance(meeting.id)
+            updated += 1
+
+        return Response({
+            'message': 'Meeting attendance tracked' if updated else 'No tutor assignment found',
+            'updated': updated,
+        })
 
 
 class TraineeExerciseStatusView(APIView):

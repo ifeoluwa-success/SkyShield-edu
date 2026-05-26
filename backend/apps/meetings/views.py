@@ -305,11 +305,15 @@ class MeetingViewSet(viewsets.ModelViewSet):
         )
 
         if not created and participant.status == 'connected':
+            ws_url = f'/ws/meeting/{meeting.room_name}/'
             return Response({
                 'message': 'Already in meeting',
                 'meeting': MeetingDetailSerializer(meeting, context={'request': request}).data,
                 'participant': MeetingParticipantSerializer(participant).data,
-                'signaling_server': '/ws/meeting/'
+                'signaling': {
+                    'websocket_url': ws_url,
+                    'ice_servers': self.get_ice_servers(),
+                },
             })
 
         # Check max participants

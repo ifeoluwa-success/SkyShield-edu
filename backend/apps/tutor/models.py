@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 import uuid
 
 User = get_user_model()
@@ -232,11 +233,14 @@ class StudentProgress(models.Model):
         return f"{self.tutor.user.email} - {self.student.email}"
     
     def add_meeting_attendance(self, meeting_id):
+        meeting_key = str(meeting_id)
         if self.attended_meetings is None:
             self.attended_meetings = []
-        if meeting_id not in self.attended_meetings:
-            self.attended_meetings.append(meeting_id)
-            self.save()
+        attended = [str(m) for m in self.attended_meetings]
+        if meeting_key not in attended:
+            self.attended_meetings = attended + [meeting_key]
+            self.last_activity = timezone.now()
+            self.save(update_fields=['attended_meetings', 'last_activity', 'updated_at'])
 
 
 class Exercise(models.Model):

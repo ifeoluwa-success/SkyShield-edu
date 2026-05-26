@@ -196,8 +196,9 @@ export const addStudentNotes = async (studentId: string, notes: string): Promise
   return response.data;
 };
 
-export const trackMeetingAttendance = async (studentId: string, meetingId: string): Promise<void> => {
-  await api.post(`/tutor/students/${studentId}/track-meeting/`, { meeting_id: meetingId });
+/** Trainee records attendance after joining a live meeting. */
+export const trackMeetingAttendance = async (meetingId: string): Promise<void> => {
+  await api.post('/tutor/trainee/meetings/track/', { meeting_id: meetingId });
 };
 
 // =============================================================================
@@ -264,6 +265,7 @@ export const joinMeeting = async (meetingCode: string, password?: string): Promi
   const response = await api.post<JoinMeetingResponse & {
     meeting?: Meeting & { code?: string; room?: string };
     participant?: JoinMeetingResponse['participant'] & { user?: string };
+    signaling_server?: string;
   }>('/meetings/meetings/join/', {
     meeting_code: meetingCode.trim(),
     password,
@@ -271,14 +273,31 @@ export const joinMeeting = async (meetingCode: string, password?: string): Promi
   const raw = response.data;
   const m = raw.meeting;
   const p = raw.participant;
+  if (!m || !p) {
+    throw new Error('Invalid join response from server');
+  }
+  const roomName = m.room_name ?? m.room ?? '';
+
+  const signaling =
+    raw.signaling ??
+    (raw.signaling_server
+      ? {
+          websocket_url: roomName
+            ? `${raw.signaling_server.replace(/\/$/, '')}/${roomName}/`
+            : raw.signaling_server,
+          ice_servers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        }
+      : {
+          websocket_url: roomName ? `/ws/meeting/${roomName}/` : '/ws/meeting/',
+          ice_servers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        });
 
   return {
-    ...raw,
     meeting: {
       ...m,
       meeting_code: m.meeting_code ?? m.code ?? meetingCode.trim(),
-      room_name: m.room_name ?? m.room ?? '',
-      host: m.host ?? p?.user ?? '',
+      room_name: roomName,
+      host: typeof m.host === 'string' ? m.host : (p.user ?? (p as { user_id?: string }).user_id ?? ''),
     },
     participant: {
       id: p.id,
@@ -287,6 +306,7 @@ export const joinMeeting = async (meetingCode: string, password?: string): Promi
       audio_enabled: p.audio_enabled ?? false,
       user_id: p.user ?? (p as { user_id?: string }).user_id,
     },
+    signaling,
   };
 };
 

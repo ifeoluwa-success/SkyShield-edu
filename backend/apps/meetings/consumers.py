@@ -134,6 +134,7 @@ class MeetingConsumer(AsyncWebsocketConsumer):
                 'ice_candidate': self.handle_ice_candidate,
                 'chat':          self.handle_chat,
                 'admit':         self.handle_admit,
+                'leave':         self.handle_leave,
                 'get_participants': self.handle_get_participants,
                 'media_state':   self.handle_media_state,
                 'screen_share':  self.handle_screen_share,
@@ -196,6 +197,24 @@ class MeetingConsumer(AsyncWebsocketConsumer):
 
         # Refresh waiting list for host
         await self.notify_host_waiting_update()
+
+    async def handle_leave(self, data):
+        """Client is leaving the meeting room."""
+        if getattr(self, 'participant', None) and self.participant:
+            status = await self.get_participant_status()
+            if status == 'connected':
+                await self.mark_participant_disconnected()
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'user_left',
+                        'user_id': str(self.user.id),
+                        'username': self.user.username,
+                    },
+                )
+            elif status == 'waiting':
+                await self.delete_participant()
+                await self.notify_host_waiting_update()
 
     async def handle_get_participants(self, data):
         """Called by a freshly admitted trainee to get the current participant list."""
@@ -347,16 +366,33 @@ class MeetingConsumer(AsyncWebsocketConsumer):
         }))
 
     async def user_joined(self, event):
-        await self.send(text_data=json.dumps(event))
+        await self.send(text_data=json.dumps({
+            'type': 'user_joined',
+            'user_id': event.get('user_id'),
+            'username': event.get('username'),
+            'full_name': event.get('full_name'),
+            'user_name': event.get('username'),
+            'participant_id': event.get('participant_id'),
+        }))
 
     async def user_left(self, event):
-        await self.send(text_data=json.dumps(event))
+        await self.send(text_data=json.dumps({
+            'type': 'user_left',
+            'user_id': event.get('user_id'),
+            'username': event.get('username'),
+        }))
 
     async def admitted(self, event):
-        await self.send(text_data=json.dumps(event))
+        await self.send(text_data=json.dumps({
+            'type': 'admitted',
+            'message': event.get('message', 'You have been admitted to the meeting.'),
+        }))
 
     async def waiting_room_update(self, event):
-        await self.send(text_data=json.dumps(event))
+        await self.send(text_data=json.dumps({
+            'type': 'waiting_room_update',
+            'waiting_participants': event.get('waiting_participants', []),
+        }))
 
     async def participant_list(self, event):
         await self.send(text_data=json.dumps(event))
@@ -452,15 +488,15 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             self.participant.is_active = True
             self.participant.joined_at = timezone.now()
             self.participant.status = 'connected'
+            self.participant.video_enabled = True
+            self.participant.audio_enabled = True
             self.participant.save()
+            self.meeting.update_participant_count()
 
     @database_sync_to_async
     def mark_participant_disconnected(self):
         if self.participant:
-            self.participant.is_active = False
-            self.participant.left_at = timezone.now()
-            self.participant.status = 'disconnected'
-            self.participant.save()
+            self.participant.leave()
 
     @database_sync_to_async
     def get_participant_status(self):
@@ -482,10 +518,12 @@ class MeetingConsumer(AsyncWebsocketConsumer):
         return [
             {
                 'id': str(p.user.id),
+                'user_id': str(p.user.id),
                 'username': p.user.username,
                 'full_name': p.user.get_full_name() or p.user.username,
             }
             for p in qs
+            if p.user_id != self.user.id
         ]
 
     @database_sync_to_async

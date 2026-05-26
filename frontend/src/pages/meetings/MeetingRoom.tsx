@@ -7,6 +7,8 @@ import { joinMeeting, trackMeetingAttendance } from '../../services/tutorService
 import { useAuth } from '../../hooks/useAuth';
 import SimplePeer from 'simple-peer';
 import { showToast } from '../../lib/toast';
+import { buildMeetingWebSocketUrl } from '../../lib/meetingWs';
+import { shouldInitiateCall, streamHasLiveVideo } from '../../lib/meetingWebRtc';
 import '../../assets/css/MeetingRoom.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -71,7 +73,34 @@ interface PeerWithPC extends SimplePeer {
   _pc: RTCPeerConnection;
 }
 
-// ─── RemoteVideo Component ───────────────────────────────────────────────────
+function getPostMeetingPath(role?: string): string {
+  switch (role) {
+    case 'trainee':
+      return '/dashboard/lecture-schedule';
+    case 'admin':
+      return '/admin/schedule';
+    case 'instructor':
+    case 'supervisor':
+      return '/tutor/schedule';
+    default:
+      return '/dashboard';
+  }
+}
+
+// ─── Local / remote video tiles ───────────────────────────────────────────────
+function LocalVideo({ stream, muted = true }: { stream: MediaStream; muted?: boolean }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.srcObject = stream;
+    void el.play().catch(() => {});
+  }, [stream]);
+
+  return <video ref={videoRef} autoPlay muted={muted} playsInline />;
+}
+
 interface RemoteVideoProps {
   participant: RemoteParticipant;
   small?: boolean;
@@ -79,18 +108,22 @@ interface RemoteVideoProps {
 
 const RemoteVideo: React.FC<RemoteVideoProps> = ({ participant, small = false }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const showVideo =
+    Boolean(participant.stream) &&
+    (participant.videoEnabled || streamHasLiveVideo(participant.stream));
 
   useEffect(() => {
-    if (videoRef.current && participant.stream) {
-      videoRef.current.srcObject = participant.stream;
-    }
+    const el = videoRef.current;
+    if (!el || !participant.stream) return;
+    el.srcObject = participant.stream;
+    void el.play().catch(() => {});
   }, [participant.stream]);
 
   const initial = participant.name.charAt(0).toUpperCase();
 
   return (
     <div className={`video-tile remote-tile${small ? ' tile-small' : ''}`}>
-      {participant.stream && participant.videoEnabled ? (
+      {showVideo ? (
         <video ref={videoRef} autoPlay playsInline />
       ) : (
         <div className="video-placeholder">
@@ -202,8 +235,10 @@ const MeetingRoom: React.FC = () => {
   const { user } = useAuth();
 
   const [meeting, setMeeting] = useState<JoinMeetingResponse['meeting'] | null>(null);
+  const [signaling, setSignaling] = useState<JoinMeetingResponse['signaling'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [wsError, setWsError] = useState<string | null>(null);
   const [joined, setJoined] = useState(false);
   const [wsReady, setWsReady] = useState(false);
   const [inWaitingRoom, setInWaitingRoom] = useState(false);
@@ -226,7 +261,10 @@ const MeetingRoom: React.FC = () => {
   const [meetingTime, setMeetingTime] = useState(0);
   const [codeCopied, setCodeCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-const localVideoRef = useRef<HTMLVideoElement>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [hasLeft, setHasLeft] = useState(false);
+
+  const hasLeftRef = useRef(false);
   const wsRef = useRef<WebSocket | null>(null);
   const peersRef = useRef<Map<string, SimplePeer>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -236,6 +274,8 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
   const screenSharingRef = useRef(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const activePanelRef = useRef<PanelType | null>(null);
+  const pendingPeersRef = useRef<Map<string, string>>(new Map());
+  const syncPeersAfterMediaRef = useRef<() => void>(() => {});
 
   const safeSend = useCallback((data: unknown) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -264,15 +304,19 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
 
   // Request media only when needed (delayed for waiting trainees)
   const requestLocalMedia = useCallback(async () => {
-    if (localStreamRef.current) return;
+    if (localStreamRef.current) return localStreamRef.current;
     setRequestingMedia(true);
     setMediaError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
       localStreamRef.current = stream;
+      setLocalStream(stream);
       setVideoEnabled(true);
       setAudioEnabled(true);
-      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+      return stream;
     } catch (err) {
       console.error('Media devices error:', err);
       let errorMsg = 'Unable to access camera/microphone. ';
@@ -286,6 +330,7 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
       }
       setMediaError(errorMsg);
       showToast({ type: 'error', message: errorMsg });
+      return null;
     } finally {
       setRequestingMedia(false);
     }
@@ -296,40 +341,119 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
     void requestLocalMedia();
   }, [requestLocalMedia]);
 
-  // Initialize meeting
+  const userRef = useRef(user);
+  userRef.current = user;
+  const requestLocalMediaRef = useRef(requestLocalMedia);
+  requestLocalMediaRef.current = requestLocalMedia;
+
+  const cleanupMeetingResources = useCallback(() => {
+    try {
+      const ws = wsRef.current;
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'leave' }));
+      }
+    } catch {
+      // Best-effort notify; local cleanup always runs
+    }
+
+    try {
+      wsRef.current?.close(1000, 'user_left');
+    } catch {
+      // ignore
+    }
+    wsRef.current = null;
+
+    peersRef.current.forEach(p => {
+      try {
+        p.destroy();
+      } catch {
+        // ignore
+      }
+    });
+    peersRef.current.clear();
+    pendingPeersRef.current.clear();
+
+    screenStreamRef.current?.getTracks().forEach(t => t.stop());
+    screenStreamRef.current = null;
+    screenSharingRef.current = false;
+
+    localStreamRef.current?.getTracks().forEach(t => t.stop());
+    localStreamRef.current = null;
+    setLocalStream(null);
+    setScreenSharing(false);
+    setParticipants(new Map());
+    setJoined(false);
+    setWsReady(false);
+    setActivePanel(null);
+  }, []);
+
+  const leaveMeeting = useCallback(() => {
+    if (hasLeftRef.current) return;
+    hasLeftRef.current = true;
+    setHasLeft(true);
+    cleanupMeetingResources();
+  }, [cleanupMeetingResources]);
+
+  const exitAfterMeeting = useCallback(() => {
+    navigate(getPostMeetingPath(user?.role), { replace: true });
+  }, [navigate, user?.role]);
+
+  // Initialize meeting (React Strict Mode runs cleanup then re-runs — must not skip the second run)
   useEffect(() => {
+    if (hasLeftRef.current) return;
+
+    const meetingCode = code?.trim();
+    if (!meetingCode) {
+      setLoading(false);
+      setError('Invalid meeting link.');
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    setError(null);
+
     const init = async () => {
       try {
-        const data = await joinMeeting(code ?? '', '');
+        const data = await joinMeeting(meetingCode, '');
+        if (!active) return;
+
         setMeeting(data.meeting);
+        setSignaling(data.signaling);
         signalingRef.current = data.signaling;
         participantRef.current = data.participant;
+
+        const currentUser = userRef.current;
         const hostFlag =
           data.participant.role === 'host' ||
-          (!!user?.id && data.meeting.host === user.id);
+          (!!currentUser?.id && String(data.meeting.host) === String(currentUser.id));
         setIsHost(hostFlag);
 
-        const isTrainee = user?.role === 'trainee';
+        const isTrainee = currentUser?.role === 'trainee';
 
-        if (isTrainee && user?.id) {
-          trackMeetingAttendance(user.id, data.meeting.id).catch(() => {});
+        if (isTrainee && data.meeting.id) {
+          trackMeetingAttendance(data.meeting.id).catch(() => {});
         }
 
         if (data.meeting.waiting_room_enabled && !hostFlag && isTrainee) {
           setInWaitingRoom(true);
         } else {
-          // For host or non-trainee, request media immediately
-          await requestLocalMedia();
+          void requestLocalMediaRef.current().then(() => syncPeersAfterMediaRef.current());
         }
       } catch (err) {
+        if (!active) return;
         console.error(err);
         setError('Unable to join the meeting. Please check the meeting code and try again.');
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
+
     void init();
-  }, [code, requestLocalMedia, user?.id, user?.role]);
+    return () => {
+      active = false;
+    };
+  }, [code]);
 
   // When trainee is admitted, request media
   useEffect(() => {
@@ -394,8 +518,15 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
 
   const connectToParticipant = useCallback(
     (remoteUserId: string, displayName?: string) => {
-      if (!remoteUserId || remoteUserId === user?.id) return;
-      if (!localStreamRef.current || inWaitingRoom) return;
+      if (!remoteUserId) return;
+      const myId = userRef.current?.id;
+      if (!myId || remoteUserId === myId) return;
+      if (inWaitingRoom) return;
+
+      if (!localStreamRef.current) {
+        pendingPeersRef.current.set(remoteUserId, displayName ?? remoteUserId.slice(0, 8));
+        return;
+      }
 
       setParticipants(prev => {
         if (prev.has(remoteUserId)) return prev;
@@ -409,12 +540,31 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
         return next;
       });
 
-      if (!peersRef.current.has(remoteUserId)) {
+      if (!peersRef.current.has(remoteUserId) && shouldInitiateCall(myId, remoteUserId)) {
         buildPeer(remoteUserId, true, localStreamRef.current);
       }
     },
-    [buildPeer, inWaitingRoom, user?.id],
+    [buildPeer, inWaitingRoom],
   );
+
+  const syncPeersAfterMedia = useCallback(() => {
+    if (!localStreamRef.current || inWaitingRoom) return;
+    pendingPeersRef.current.forEach((name, remoteUserId) => {
+      connectToParticipant(remoteUserId, name);
+    });
+    pendingPeersRef.current.clear();
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      safeSend({ type: 'get_participants' });
+    }
+  }, [connectToParticipant, inWaitingRoom, safeSend]);
+
+  syncPeersAfterMediaRef.current = syncPeersAfterMedia;
+
+  useEffect(() => {
+    if (localStream && wsReady && !inWaitingRoom) {
+      syncPeersAfterMedia();
+    }
+  }, [localStream, wsReady, inWaitingRoom, syncPeersAfterMedia]);
 
   const handleMessage = useCallback(
     (data: SignalingMessage) => {
@@ -438,9 +588,14 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
           }
           break;
 
+        case 'waiting':
+          setInWaitingRoom(true);
+          break;
+
         case 'admitted':
           setInWaitingRoom(false);
-          safeSend({ type: 'get_participants' });
+          setWsError(null);
+          void requestLocalMediaRef.current().then(() => syncPeersAfterMediaRef.current());
           break;
 
         case 'user_joined': {
@@ -542,51 +697,89 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
           break;
       }
     },
-    [buildPeer, connectToParticipant, inWaitingRoom, safeSend, user?.id],
+    [buildPeer, connectToParticipant, inWaitingRoom, safeSend, syncPeersAfterMedia, user?.id],
   );
 
-  // WebSocket Connection
+  // WebSocket connection (runs after REST join returns signaling URL)
   useEffect(() => {
-    if (!meeting || !signalingRef.current) return;
+    if (hasLeftRef.current) return;
+    if (!meeting?.room_name || !signaling?.websocket_url) return;
 
-    const token = localStorage.getItem('access_token') ?? '';
-    const rawWsUrl = signalingRef.current.websocket_url;
-    const wsUrl = rawWsUrl.startsWith('ws://') || rawWsUrl.startsWith('wss://')
-      ? rawWsUrl
-      : (() => {
-          const apiBase = import.meta.env.VITE_API_URL as string ?? 'http://localhost:8000/api';
-          const origin = new URL(apiBase).origin;
-          const scheme = origin.startsWith('https') ? 'wss' : 'ws';
-          return `${origin.replace(/^https?/, scheme)}${rawWsUrl}`;
-        })();
-    const ws = new WebSocket(`${wsUrl}?token=${token}`);
+    const token = localStorage.getItem('access_token')?.trim() ?? '';
+    if (!token) {
+      setWsError('You must be signed in to join the meeting.');
+      return;
+    }
+
+    const wsUrl = buildMeetingWebSocketUrl(signaling.websocket_url, token);
+    const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
+    setWsError(null);
+
+    const connectTimeout = window.setTimeout(() => {
+      if (ws.readyState !== WebSocket.OPEN) {
+        setWsError(
+          'Could not connect to the meeting server. Ensure the backend is running (with Daphne) and Redis or in-memory channels are available.',
+        );
+        ws.close();
+      }
+    }, 20_000);
 
     ws.onopen = () => {
-      console.log('✅ WebSocket connected');
+      window.clearTimeout(connectTimeout);
       setWsReady(true);
-      // Room is determined by the WebSocket URL (/ws/meeting/<room_name>/).
-      // Request current participants so we connect to users already in the room.
-      safeSend({ type: 'get_participants' });
+      setWsError(null);
       setJoined(true);
+      if (localStreamRef.current && !inWaitingRoom) {
+        safeSend({ type: 'get_participants' });
+      }
     };
 
     ws.onmessage = (ev: MessageEvent) => {
       try {
-        handleMessage(JSON.parse(ev.data as string) as SignalingMessage);
+        const payload = JSON.parse(ev.data as string) as SignalingMessage;
+        if (!payload.type) return;
+        handleMessage(payload);
       } catch (err) {
         console.error('Failed to parse WebSocket message:', err);
       }
     };
 
-    ws.onerror = () => console.error('WebSocket error');
-    ws.onclose = () => {
-      setJoined(false);
-      setWsReady(false);
+    ws.onerror = () => {
+      setWsError('Meeting connection error. Check your network and try again.');
     };
 
-    return () => ws.close();
-  }, [meeting, handleMessage, safeSend]);
+    ws.onclose = (ev) => {
+      window.clearTimeout(connectTimeout);
+      if (hasLeftRef.current) return;
+      setJoined(false);
+      setWsReady(false);
+      if (!ev.wasClean) {
+        setWsError(prev => prev ?? 'Meeting connection closed.');
+      }
+    };
+
+    return () => {
+      window.clearTimeout(connectTimeout);
+      if (!hasLeftRef.current) {
+        try {
+          ws.close(1000, 'component_unmount');
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [meeting?.room_name, signaling, handleMessage, safeSend]);
+
+  useEffect(() => {
+    return () => {
+      if (!hasLeftRef.current) {
+        localStreamRef.current?.getTracks().forEach(t => t.stop());
+        screenStreamRef.current?.getTracks().forEach(t => t.stop());
+        wsRef.current?.close(1000, 'unmount');
+      }
+    };
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -609,6 +802,17 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
     safeSend({ type: 'media_state', videoEnabled: track.enabled });
   }, [safeSend]);
 
+  const renegotiateAllPeers = () => {
+    peersRef.current.forEach(peer => {
+      try {
+        const p = peer as SimplePeer & { renegotiate?: (opts?: Record<string, unknown>) => void };
+        p.renegotiate?.({});
+      } catch {
+        // ignore
+      }
+    });
+  };
+
   const replaceVideoTrackInPeers = (newTrack: MediaStreamTrack) => {
     peersRef.current.forEach(peer => {
       try {
@@ -619,6 +823,7 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
         // ignore
       }
     });
+    renegotiateAllPeers();
   };
 
   const stopScreenShare = useCallback(async () => {
@@ -633,7 +838,7 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
         });
         stream.addTrack(newTrack);
         localStreamRef.current = stream;
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+        setLocalStream(stream);
       }
       replaceVideoTrackInPeers(newTrack);
       safeSend({ type: 'screen_share', sharing: false });
@@ -655,17 +860,16 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
-        audio: false,
+        audio: true,
       });
       screenStreamRef.current = screenStream;
       const screenTrack = screenStream.getVideoTracks()[0];
       replaceVideoTrackInPeers(screenTrack);
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = new MediaStream([
-          screenTrack,
-          ...(localStreamRef.current?.getAudioTracks() ?? []),
-        ]);
-      }
+      const preview = new MediaStream([
+        screenTrack,
+        ...(localStreamRef.current?.getAudioTracks() ?? []),
+      ]);
+      setLocalStream(preview);
       safeSend({ type: 'screen_share', sharing: true });
       screenTrack.addEventListener('ended', () => {
         void stopScreenShare();
@@ -694,16 +898,6 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
     ]);
     setChatInput('');
   }, [chatInput, safeSend]);
-
-  const leaveMeeting = useCallback(() => {
-    safeSend({ type: 'leave' });
-    wsRef.current?.close();
-    peersRef.current.forEach(p => p.destroy());
-    peersRef.current.clear();
-    localStreamRef.current?.getTracks().forEach(t => t.stop());
-    screenStreamRef.current?.getTracks().forEach(t => t.stop());
-    navigate(-1);
-  }, [navigate, safeSend]);
 
   const admitParticipant = (participantId: string) => {
     safeSend({ type: 'admit', participant_id: participantId });
@@ -744,13 +938,38 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
             ? 'grid-hex'
             : 'grid-many';
 
-  const controlsDisabled = !joined || !wsReady || !localStreamRef.current;
+  const controlsDisabled = !joined || !wsReady || !localStream;
+
+  if (hasLeft) {
+    return (
+      <div className="mr-left">
+        <div className="mr-left-card">
+          <div className="mr-left-icon" aria-hidden>
+            ✓
+          </div>
+          <h1>Thanks for joining!</h1>
+          <p className="mr-left-sub">
+            {meeting?.title
+              ? `You have left "${meeting.title}".`
+              : 'You have left the meeting.'}
+          </p>
+          {meetingTime > 0 && (
+            <p className="mr-left-duration">Time in meeting: {formatTime(meetingTime)}</p>
+          )}
+          <button type="button" className="mr-left-primary" onClick={exitAfterMeeting}>
+            Return to schedule
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="mr-loading">
         <div className="mr-spinner" />
-        <p>Connecting to meeting…</p>
+        <p>Joining meeting…</p>
+        <p className="mr-loading-hint">Setting up your session</p>
       </div>
     );
   }
@@ -776,7 +995,7 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
           <div className="waiting-icon">⏳</div>
           <h2>Waiting for host to admit you</h2>
           <p>The meeting host will let you in shortly.</p>
-          <button className="mr-leave-btn" onClick={leaveMeeting}>
+          <button type="button" className="mr-leave-btn" onClick={leaveMeeting}>
             Leave Meeting
           </button>
         </div>
@@ -784,8 +1003,8 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
     );
   }
 
-  // Media error overlay (if no stream after trying)
-  if (!localStreamRef.current && !requestingMedia && !inWaitingRoom) {
+  // Media error overlay (only after an explicit failure, not while prompting)
+  if (mediaError && !localStream && !inWaitingRoom) {
     return (
       <div className="mr-error">
         <div className="mr-error-icon">🎥</div>
@@ -794,7 +1013,12 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
         <button className="mr-back-btn" onClick={retryMedia}>
           Retry
         </button>
-        <button className="mr-back-btn" onClick={leaveMeeting} style={{ marginLeft: '1rem', background: '#ef4444' }}>
+        <button
+          type="button"
+          className="mr-back-btn"
+          onClick={leaveMeeting}
+          style={{ marginLeft: '1rem', background: '#ef4444' }}
+        >
           Leave Meeting
         </button>
       </div>
@@ -803,6 +1027,14 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
 
   return (
     <div className="mr-root">
+      {wsError && (
+        <div className="mr-ws-error" role="alert">
+          {wsError}
+          <button type="button" className="mr-ws-error-retry" onClick={() => window.location.reload()}>
+            Retry
+          </button>
+        </div>
+      )}
 <header className="mr-topbar">
         <div className="mr-topbar-left">
           <div className="mr-logo">
@@ -840,7 +1072,7 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
           <div className={`mr-presenting-wrapper${activePanel ? ' mr-presenting-wrapper--panel' : ''}`}>
             <div className="mr-presenting-main">
               <div className="video-tile presenting-tile">
-                <video ref={localVideoRef} autoPlay muted playsInline />
+                {localStream ? <LocalVideo stream={localStream} muted /> : null}
                 <div className="tile-overlay" style={{ opacity: 1 }}>
                   <span className="tile-name">You · Presenting</span>
                 </div>
@@ -851,11 +1083,15 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
             </div>
             <div className="mr-presenting-strip">
               <div className="video-tile tile-small self-strip-tile">
-                <div className="video-placeholder">
-                  <div className="avatar-circle" style={{ width: 40, height: 40, fontSize: 16 }}>
-                    Y
+                {localStream && videoEnabled ? (
+                  <LocalVideo stream={localStream} muted />
+                ) : (
+                  <div className="video-placeholder">
+                    <div className="avatar-circle" style={{ width: 40, height: 40, fontSize: 16 }}>
+                      Y
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="tile-overlay" style={{ opacity: 1 }}>
                   <span className="tile-name">You</span>
                   {!audioEnabled && (
@@ -876,16 +1112,14 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
         ) : (
           <div className={`mr-grid ${gridClass}${activePanel ? ' mr-grid--panel-open' : ''}`}>
             <div className="video-tile local-tile">
-              {videoEnabled && localStreamRef.current ? (
-                <video ref={localVideoRef} autoPlay muted playsInline />
+              {localStream && videoEnabled ? (
+                <LocalVideo stream={localStream} muted />
               ) : (
-                <>
-                  <video ref={localVideoRef} autoPlay muted playsInline className="sr-only" />
-                  <div className="video-placeholder">
-                    <div className="avatar-circle">Y</div>
-                    <p className="avatar-name">You</p>
-                  </div>
-                </>
+                <div className="video-placeholder">
+                  <div className="avatar-circle">Y</div>
+                  <p className="avatar-name">You</p>
+                  {requestingMedia && <p className="avatar-name">Starting camera…</p>}
+                </div>
               )}
               <div className="tile-overlay">
                 <span className="tile-name">
@@ -917,6 +1151,13 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
         )}
 
         {activePanel && (
+          <>
+          <button
+            type="button"
+            className="mr-panel-backdrop"
+            aria-label="Close panel"
+            onClick={() => setActivePanel(null)}
+          />
           <aside className="mr-panel">
             <div className="mr-panel-tabs">
               <button
@@ -1055,6 +1296,7 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
               </div>
             )}
           </aside>
+          </>
         )}
       </div>
 
@@ -1140,7 +1382,7 @@ const localVideoRef = useRef<HTMLVideoElement>(null);
         </div>
 
         <div className="mr-controls-right">
-          <button className="mr-leave-btn" onClick={leaveMeeting}>
+          <button type="button" className="mr-leave-btn" onClick={leaveMeeting}>
             Leave
           </button>
         </div>

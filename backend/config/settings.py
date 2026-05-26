@@ -133,18 +133,37 @@ CACHES = {
     }
 }
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [REDIS_URL],
-            "capacity": 1500,
-            # Mission events must survive brief subscriber gaps during reconnect.
-            "expiry": 60,
-            "symmetric_encryption_keys": [SECRET_KEY],
+def _redis_channel_layer():
+    return {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL],
+                "capacity": 1500,
+                "expiry": 60,
+                "symmetric_encryption_keys": [SECRET_KEY],
+            },
         },
-    },
-}
+    }
+
+
+def _memory_channel_layer():
+    return {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
+
+_channel_mode = os.getenv("CHANNEL_LAYER", "auto").lower()
+if _channel_mode in ("memory", "inmemory"):
+    CHANNEL_LAYERS = _memory_channel_layer()
+elif _channel_mode == "redis":
+    CHANNEL_LAYERS = _redis_channel_layer()
+else:
+    try:
+        import redis
+
+        redis.from_url(REDIS_URL).ping()
+        CHANNEL_LAYERS = _redis_channel_layer()
+    except Exception:
+        CHANNEL_LAYERS = _memory_channel_layer()
 
 # Immersive mission WebSocket keepalive (application-level JSON ping)
 MISSION_WS_PING_INTERVAL_SECONDS = int(os.getenv("MISSION_WS_PING_INTERVAL_SECONDS", "25"))

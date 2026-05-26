@@ -15,7 +15,7 @@ from apps.simulations.ws_support import (
 
 
 def _http_disconnect_response(request, exc) -> HttpResponse:
-    """Log client abort and return 499 (client closed request)."""
+    """Log client abort and return 204 (avoids runserver 'Unknown Status Code' on 499)."""
     path = getattr(request, 'path', '') or ''
     log_client_disconnect(
         channel='http',
@@ -29,7 +29,7 @@ def _http_disconnect_response(request, exc) -> HttpResponse:
         peer=request.META.get('REMOTE_ADDR'),
         detail=f'{getattr(request, "method", "?")} {path}',
     )
-    return HttpResponse(status=499)
+    return HttpResponse(status=204)
 
 
 def _handle_disconnect(exc: BaseException) -> bool:

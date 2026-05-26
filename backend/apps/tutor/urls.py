@@ -24,6 +24,9 @@ urlpatterns = [
          name='exercise-attempt-detail'),  # <-- new endpoint
 
     # Trainee exercise endpoints
+    path('trainee/meetings/track/',
+         views.TraineeTrackMeetingView.as_view(),
+         name='trainee-track-meeting'),
     path('trainee/exercises/status/',
          views.TraineeExerciseStatusView.as_view(),
          name='trainee-exercise-status'),

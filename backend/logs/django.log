@@ -643,3 +643,15 @@ WARNING 2026-05-25 12:57:09,297 ws_support 18024 19920 mission.client_disconnect
 WARNING 2026-05-25 12:57:10,562 ws_support 18024 7440 mission.client_disconnect channel=http run_id=- participant_id=- user_id=d9221000-cc4c-49bc-ac6b-6ecf3a2b8213 peer=127.0.0.1 detail=GET /api/content/paths/ exc=CancelledError()
 WARNING 2026-05-25 12:57:20,073 ws_support 18024 18512 mission.client_disconnect channel=http run_id=- participant_id=- user_id=d9221000-cc4c-49bc-ac6b-6ecf3a2b8213 peer=127.0.0.1 detail=GET /api/content/paths/incident-commander-professional-track-4/ exc=CancelledError()
 INFO 2026-05-25 12:59:02,443 views 18024 11784 User logged out: olaniyanp11@gmail.com
+INFO 2026-05-25 13:16:03,937 views 18024 8644 User logged in: olaniyanp11@gmail.com (role=trainee)
+INFO 2026-05-25 13:17:28,840 views 18024 15996 User logged out: olaniyanp11@gmail.com
+INFO 2026-05-26 13:10:12,920 views 11412 5176 User logged in: olaniyanp11@gmail.com (role=trainee)
+INFO 2026-05-26 13:11:28,455 signals 11412 7900 Participant olaniyanp11@gmail.com joined meeting Incident Response Tabletop
+WARNING 2026-05-26 13:11:39,987 ws_support 11412 5580 mission.client_disconnect channel=http run_id=- participant_id=- user_id=d9221000-cc4c-49bc-ac6b-6ecf3a2b8213 peer=127.0.0.1 detail=POST /api/meetings/meetings/join/ exc=CancelledError()
+INFO 2026-05-26 13:11:42,276 signals 11412 12708 Participant olaniyanp11@gmail.com joined meeting Incident Response Tabletop
+INFO 2026-05-26 13:11:45,778 signals 11412 12708 Participant olaniyanp11@gmail.com joined meeting Incident Response Tabletop
+WARNING 2026-05-26 13:16:23,233 ws_support 18684 2536 mission.client_disconnect channel=http run_id=- participant_id=- user_id=d9221000-cc4c-49bc-ac6b-6ecf3a2b8213 peer=127.0.0.1 detail=POST /api/meetings/meetings/join/ exc=CancelledError()
+WARNING 2026-05-26 13:16:23,709 ws_support 18684 12892 mission.client_disconnect channel=http run_id=- participant_id=- user_id=d9221000-cc4c-49bc-ac6b-6ecf3a2b8213 peer=127.0.0.1 detail=POST /api/meetings/meetings/join/ exc=CancelledError()
+INFO 2026-05-26 13:27:05,478 signals 892 21304 Participant olaniyanp11@gmail.com joined meeting Q2 Cohort Sync
+INFO 2026-05-26 13:29:03,794 signals 892 10844 Participant olaniyanp11@gmail.com joined meeting Q2 Cohort Sync
+INFO 2026-05-26 13:29:07,482 signals 892 10844 Participant olaniyanp11@gmail.com joined meeting Q2 Cohort Sync
