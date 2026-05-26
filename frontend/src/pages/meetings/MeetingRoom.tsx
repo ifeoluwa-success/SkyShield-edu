@@ -711,7 +711,20 @@ const MeetingRoom: React.FC = () => {
       return;
     }
 
-    const wsUrl = buildMeetingWebSocketUrl(signaling.websocket_url, token);
+    let wsUrl: string;
+    try {
+      wsUrl = buildMeetingWebSocketUrl(signaling.websocket_url, token);
+      const parsed = new URL(wsUrl);
+      if (!parsed.hostname) {
+        throw new Error('missing hostname');
+      }
+    } catch {
+      setWsError(
+        'Invalid meeting server URL. Redeploy the frontend with VITE_API_URL=https://skyshield-backend.onrender.com/api and remove VITE_WS_URL if it is empty or only "wss://".',
+      );
+      return;
+    }
+
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
     setWsError(null);

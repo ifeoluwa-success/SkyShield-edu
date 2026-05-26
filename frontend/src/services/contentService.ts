@@ -1,7 +1,9 @@
 import axios, { isAxiosError } from 'axios';
 import api from './api';
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'https://skyshield-backend.onrender.com/api';
+import { resolveApiBase } from '../lib/websocketUrl';
+
+const API_BASE = resolveApiBase();
 
 /** AllowAny content reads: retry without JWT when an invalid token would otherwise 401. */
 async function getWithAuthPublicFallback<T>(path: string): Promise<T> {

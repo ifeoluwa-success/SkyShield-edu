@@ -37,11 +37,13 @@ Set at build time (HTTPS API → frontend automatically uses **wss://** for `/ws
 VITE_API_URL=https://skyshield-backend.onrender.com/api
 ```
 
-Optional explicit socket base (must use `wss://` in production, not `ws://`):
+Optional explicit socket base — **must include the hostname** (do not set `VITE_WS_URL=wss://` alone; that produces a broken URL):
 
 ```
 VITE_WS_URL=wss://skyshield-backend.onrender.com
 ```
+
+If `VITE_API_URL` is set correctly, you do not need `VITE_WS_URL` at all.
 
 **Local dev:** The app may show `ws://localhost:5173/ws/...` in DevTools. That is correct — Vite proxies `/ws` to the backend. Production builds must never use `ws://` against Render.
 

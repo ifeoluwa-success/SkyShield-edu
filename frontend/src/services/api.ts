@@ -2,7 +2,9 @@
 import axios, { AxiosError } from 'axios';
 import { clearStoredSession } from '../lib/authSession';
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'https://skyshield-backend.onrender.com/api';
+import { resolveApiBase } from '../lib/websocketUrl';
+
+const BASE_URL = resolveApiBase();
 
 const api = axios.create({
   baseURL: BASE_URL,
