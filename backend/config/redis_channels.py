@@ -1,18 +1,17 @@
 """
 Redis / Channels configuration tuned for Upstash and other serverless Redis hosts.
 
-Upstash closes idle TCP connections; channels_redis long-lived pub/sub reads need
-keepalives, health checks, and no aggressive socket read timeout.
+Use rediss:// in the URL for TLS — do not pass ssl=True to redis.asyncio (unsupported).
 """
 from __future__ import annotations
 
 import os
 import ssl
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 
 def normalize_redis_url(url: str) -> str:
-    """Ensure TLS for Upstash; strip query params we apply via client kwargs."""
+    """Ensure TLS for Upstash; add ssl_cert_reqs for managed Redis certs."""
     parsed = urlparse(url.strip())
     if not parsed.hostname:
         return url
@@ -21,14 +20,17 @@ def normalize_redis_url(url: str) -> str:
     if "upstash.io" in parsed.hostname and scheme == "redis":
         scheme = "rediss"
 
-    # Rebuild without query — options are passed explicitly to redis-py
-    return urlunparse(
-        (scheme, parsed.netloc, parsed.path or "/0", "", "", "")
-    )
+    path = parsed.path or "/0"
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    if scheme == "rediss":
+        query.setdefault("ssl_cert_reqs", ["none"])
+
+    query_str = urlencode({k: v[0] for k, v in query.items()}, doseq=False)
+    return urlunparse((scheme, parsed.netloc, path, "", query_str, ""))
 
 
 def redis_cache_options(url: str) -> dict:
-    """django-redis OPTIONS for cache (short timeouts, tolerate failures)."""
+    """django-redis OPTIONS (sync client — ssl_cert_reqs in pool kwargs is OK)."""
     parsed = urlparse(url)
     opts: dict = {
         "CLIENT_CLASS": "django_redis.client.DefaultClient",
@@ -50,30 +52,20 @@ def redis_cache_options(url: str) -> dict:
 
 def channel_layer_host_config(url: str) -> dict:
     """
-    channels_redis host entry — passed through to redis-py ConnectionPool.
+    channels_redis → redis.asyncio host entry.
 
-    socket_timeout=None avoids TimeoutError on blocking pub/sub reads (Channels).
+    TLS comes from rediss:// in address only (never pass ssl= to async connection).
     """
     normalized = normalize_redis_url(url)
-    parsed = urlparse(normalized)
-
-    host: dict = {
+    return {
         "address": normalized,
         "socket_connect_timeout": int(os.getenv("REDIS_CONNECT_TIMEOUT", "15")),
-        # None = no read timeout on listener (required for group_receive loop)
+        # No read timeout on pub/sub listener
         "socket_timeout": None,
         "retry_on_timeout": True,
         "health_check_interval": int(os.getenv("REDIS_HEALTH_CHECK_INTERVAL", "25")),
         "socket_keepalive": True,
     }
-
-    if parsed.scheme == "rediss" or (
-        parsed.hostname and "upstash.io" in parsed.hostname
-    ):
-        host["ssl"] = True
-        host["ssl_cert_reqs"] = ssl.CERT_NONE
-
-    return host
 
 
 def redis_channel_layer_config(
@@ -108,9 +100,7 @@ def redis_startup_ping(redis_url: str) -> bool:
             "socket_timeout": int(os.getenv("REDIS_SOCKET_TIMEOUT", "10")),
             "retry_on_timeout": True,
         }
-        if parsed.scheme == "rediss" or (
-            parsed.hostname and "upstash.io" in parsed.hostname
-        ):
+        if parsed.scheme == "rediss":
             kwargs["ssl_cert_reqs"] = ssl.CERT_NONE
             kwargs["ssl_check_hostname"] = False
 
