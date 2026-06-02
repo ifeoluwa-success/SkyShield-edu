@@ -57,6 +57,9 @@ class HealthCheckResponseSerializer(serializers.Serializer):
     status = serializers.CharField()
     timestamp = serializers.DateTimeField()
     version = serializers.CharField()
+    websockets = serializers.BooleanField(required=False)
+    server = serializers.CharField(required=False, allow_blank=True)
+    websocket_hint = serializers.CharField(required=False, allow_blank=True)
 
 
 class CoreDashboardStatsResponseSerializer(serializers.Serializer):
@@ -454,11 +457,21 @@ class HealthCheckView(APIView):
         responses={200: HealthCheckResponseSerializer()}
     )
     def get(self, request):
-        serializer = HealthCheckSerializer(data={
+        server = (request.META.get('SERVER_SOFTWARE') or '').lower()
+        websockets = 'daphne' in server or 'uvicorn' in server
+        payload = {
             'status': 'healthy',
             'timestamp': timezone.now(),
-            'version': getattr(settings, 'VERSION', '1.0.0')
-        })
+            'version': getattr(settings, 'VERSION', '1.0.0'),
+            'websockets': websockets,
+            'server': request.META.get('SERVER_SOFTWARE', ''),
+        }
+        if not websockets:
+            payload['websocket_hint'] = (
+                'Running WSGI only — /ws/* will 404. Start with: '
+                'daphne -b 0.0.0.0 -p $PORT config.asgi:application'
+            )
+        serializer = HealthCheckSerializer(data=payload)
         serializer.is_valid()
         return Response(serializer.data)
 

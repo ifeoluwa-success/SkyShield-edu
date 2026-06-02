@@ -5,7 +5,11 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
+from config.ws_views import websocket_wsgi_fallback
+
 urlpatterns = [
+    # Only reached under WSGI (Gunicorn). Daphne routes /ws/* via config.asgi.
+    re_path(r"^ws/.*$", websocket_wsgi_fallback),
     # Admin
     path("admin/", admin.site.urls),
 

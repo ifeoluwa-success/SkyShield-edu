@@ -10,13 +10,21 @@ In **Render → your web service → Settings → Start Command**, set:
 daphne -b 0.0.0.0 -p $PORT config.asgi:application
 ```
 
+Or use the repo script:
+
+```bash
+./start.sh
+```
+
 Do **not** use:
 
 ```bash
 gunicorn config.wsgi:application
 ```
 
-Gunicorn serves HTTP only; the browser will show `WebSocket connection to wss://... failed` with no useful body.
+Gunicorn serves HTTP only. Logs will show **`Not Found: /ws/mission/...`** or **`GET /ws/mission/... HTTP/1.1" 404`** — that means WebSockets are not wired up.
+
+After switching to Daphne, `GET https://skyshield-backend.onrender.com/api/core/health/` should include `"websockets": true`.
 
 Alternatively, apply the blueprint in `backend/render.yaml` when creating the service.
 

@@ -137,6 +137,9 @@ class HealthCheckSerializer(serializers.Serializer):
     status = serializers.CharField()
     timestamp = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ")
     version = serializers.CharField()
+    websockets = serializers.BooleanField(required=False)
+    server = serializers.CharField(required=False, allow_blank=True)
+    websocket_hint = serializers.CharField(required=False, allow_blank=True)
 
 
 class AdminDashboardStatsSerializer(serializers.Serializer):

@@ -6,12 +6,22 @@ from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Render sets RENDER=true; never load local .env there (avoids DEBUG=True leaking to prod).
+_ON_RENDER = os.getenv("RENDER", "").lower() in ("true", "1", "yes")
+if not _ON_RENDER:
+    load_dotenv(BASE_DIR / ".env", override=False)
+
 SECRET_KEY = os.getenv("SECRET_KEY")
-DEBUG = os.getenv("DEBUG", "False").lower() in ("true")
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
+if _ON_RENDER and DEBUG:
+    import warnings
+
+    warnings.warn(
+        "DEBUG=True on Render exposes settings and stack traces. Set DEBUG=False in the Render dashboard.",
+        stacklevel=1,
+    )
 # testserver: required for Django/DRF APIClient and some integration tests
 def _parse_host_list(env_value: str) -> list[str]:
     return [h.strip() for h in env_value.split(",") if h.strip()]
