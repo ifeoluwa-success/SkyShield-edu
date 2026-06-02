@@ -67,13 +67,17 @@ If logs show `Timeout reading from *.upstash.io:6379`:
 Optional tuning: `REDIS_HEALTH_CHECK_INTERVAL=25`, `REDIS_CONNECT_TIMEOUT=15`.
 | `SECRET_KEY`, `DATABASE_URL` | Standard Django |
 
-## Frontend build
+## Frontend build (fixes CORS / Network Error on courses)
 
-Set at build time (HTTPS API → frontend automatically uses **wss://** for `/ws/...`):
+On the **static site** service, set at **build** time:
 
 ```
 VITE_API_URL=https://skyshield-backend.onrender.com/api
 ```
+
+**Must be `https://`** — if you use `http://`, Render redirects to HTTPS **without** `Access-Control-Allow-Origin`, and the browser shows a CORS error on `GET /api/simulations/courses/` (and other API calls).
+
+After changing env vars, **rebuild and redeploy the frontend** (not just the backend).
 
 Optional explicit socket base — **must include the hostname** (do not set `VITE_WS_URL=wss://` alone; that produces a broken URL):
 

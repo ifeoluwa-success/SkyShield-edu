@@ -32,6 +32,29 @@ def _http_disconnect_response(request, exc) -> HttpResponse:
     return HttpResponse(status=204)
 
 
+class ApiUnauthorizedLogMiddleware:
+    """Clarify 401 logs: missing Authorization header vs invalid/expired JWT."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if (
+            response.status_code == 401
+            and request.path.startswith('/api/')
+            and not request.path.startswith('/api/users/login')
+        ):
+            import logging
+
+            logger = logging.getLogger('config.auth')
+            if request.META.get('HTTP_AUTHORIZATION'):
+                logger.info('API 401 (token present): %s %s', request.method, request.path)
+            else:
+                logger.info('API 401 (no Authorization header): %s %s', request.method, request.path)
+        return response
+
+
 def _handle_disconnect(exc: BaseException) -> bool:
     if isinstance(exc, (KeyboardInterrupt, SystemExit)):
         return False
