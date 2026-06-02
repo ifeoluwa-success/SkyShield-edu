@@ -15,6 +15,16 @@ if not _ON_RENDER:
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
+
+if _ON_RENDER:
+    from django.core.exceptions import ImproperlyConfigured
+
+    if not SECRET_KEY or len(SECRET_KEY) < 50:
+        raise ImproperlyConfigured(
+            "SECRET_KEY on Render must be at least 50 random characters. "
+            "In Render → Environment, set SECRET_KEY (Generate or: "
+            "python -c \"import secrets; print(secrets.token_urlsafe(64))\")."
+        )
 if _ON_RENDER and DEBUG:
     import warnings
 
@@ -407,6 +417,12 @@ for _origin in CORS_ALLOWED_ORIGINS:
 
 # Security settings for production
 if not DEBUG:
+    # Render/nginx terminate TLS and forward HTTP with X-Forwarded-Proto.
+    # Without this, SECURE_SSL_REDIRECT 301s every API call; browsers see CORS errors
+    # because redirect responses lack Access-Control-Allow-Origin.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
+
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
