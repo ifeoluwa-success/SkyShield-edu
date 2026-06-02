@@ -148,38 +148,30 @@ DATABASES = {
 }
 
 # Redis Cache & Channel Layers
-REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+from config.redis_channels import (
+    normalize_redis_url,
+    redis_cache_options,
+    redis_channel_layer_config,
+    redis_startup_ping,
+)
+
+REDIS_URL = normalize_redis_url(os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"))
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": REDIS_URL,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "IGNORE_EXCEPTIONS": True,  # Critical for serverless resilience
-            "SOCKET_CONNECT_TIMEOUT": 5,
-            "SOCKET_TIMEOUT": 5,
-            "RETRY_ON_TIMEOUT": True,
-        }
+        "OPTIONS": redis_cache_options(REDIS_URL),
     }
 }
-
-def _redis_channel_layer():
-    return {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": [REDIS_URL],
-                "capacity": 1500,
-                "expiry": 60,
-                "symmetric_encryption_keys": [SECRET_KEY],
-            },
-        },
-    }
 
 
 def _memory_channel_layer():
     return {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
+
+def _redis_channel_layer():
+    return redis_channel_layer_config(REDIS_URL, secret_key=SECRET_KEY)
 
 
 _channel_mode = os.getenv("CHANNEL_LAYER", "auto").lower()
@@ -188,13 +180,11 @@ if _channel_mode in ("memory", "inmemory"):
 elif _channel_mode == "redis":
     CHANNEL_LAYERS = _redis_channel_layer()
 else:
-    try:
-        import redis
-
-        redis.from_url(REDIS_URL).ping()
-        CHANNEL_LAYERS = _redis_channel_layer()
-    except Exception:
-        CHANNEL_LAYERS = _memory_channel_layer()
+    CHANNEL_LAYERS = (
+        _redis_channel_layer()
+        if redis_startup_ping(REDIS_URL)
+        else _memory_channel_layer()
+    )
 
 # Immersive mission WebSocket keepalive (application-level JSON ping)
 MISSION_WS_PING_INTERVAL_SECONDS = int(os.getenv("MISSION_WS_PING_INTERVAL_SECONDS", "25"))

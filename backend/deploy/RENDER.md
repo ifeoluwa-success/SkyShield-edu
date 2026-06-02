@@ -53,7 +53,18 @@ Alternatively, apply the blueprint in `backend/render.yaml` when creating the se
 |----------|---------|
 | `ALLOWED_HOSTS` | `skyshield-backend.onrender.com` (comma-separated if more) |
 | `FRONTEND_URL` | Exact frontend origin, e.g. `https://www.skyshieldedu.com` (added to CORS) |
-| `REDIS_URL` | **Recommended** for Channels (Render Redis). Without it, meetings use in-memory layer (single instance only). |
+| `REDIS_URL` | Full URL from provider — for **Upstash** use `rediss://…` from the console (TLS required). |
+| `CHANNEL_LAYER` | `auto` (default), `redis`, or `memory` (single Render instance, no cross-tab broadcast via Redis) |
+
+### Upstash Redis timeouts
+
+If logs show `Timeout reading from *.upstash.io:6379`:
+
+1. Copy the **TLS** URL (`rediss://default:…@….upstash.io:6379`) into `REDIS_URL` on Render (not `redis://`).
+2. Redeploy after changing env vars.
+3. If issues persist on the free tier, set `CHANNEL_LAYER=memory` temporarily (one Daphne instance only), or use **Render Redis** instead of Upstash for Channels.
+
+Optional tuning: `REDIS_HEALTH_CHECK_INTERVAL=25`, `REDIS_CONNECT_TIMEOUT=15`.
 | `SECRET_KEY`, `DATABASE_URL` | Standard Django |
 
 ## Frontend build

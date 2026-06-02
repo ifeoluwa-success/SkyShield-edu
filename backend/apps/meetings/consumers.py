@@ -50,7 +50,19 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             return
 
         # ── Join channel layer group & accept ─────────────────────────────────
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        self._channel_ok = True
+        try:
+            if self.channel_layer:
+                await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        except Exception as exc:
+            self._channel_ok = False
+            logger.warning(
+                'meeting.ws_group_add_skipped room=%s user_id=%s err=%s',
+                self.room_name,
+                getattr(self.user, 'pk', '-'),
+                exc,
+            )
+
         await self.accept()
 
         # ── BUG FIX: always save channel_name right after accept() ────────────
