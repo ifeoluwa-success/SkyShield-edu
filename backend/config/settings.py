@@ -286,7 +286,7 @@ ANYMAIL = {
 }
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SkyShield <noreply@skyshieldedu.com>')
 SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL', 'support@skyshieldedu.com')
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://skyshieldedu.com')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://www.skyshieldedu.com')
 
 # Genie / Gemini API (DeepMind scenario generation)
 GENIE_API_KEY = os.environ.get('GENIE_API_KEY', '')
@@ -393,12 +393,22 @@ if _frontend_url and _frontend_url not in CORS_ALLOWED_ORIGINS:
 
 # Also allow preview/branch deployment URLs from common platforms
 CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://([\w-]+\.)?skyshieldedu\.com$",
     r"^https://[\w-]+\.onrender\.com$",
     r"^https://[\w-]+\.vercel\.app$",
     r"^https://[\w-]+\.netlify\.app$",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 # Allow frontend hostnames in ALLOWED_HOSTS (useful for proxies and host checks)
 for _origin in CORS_ALLOWED_ORIGINS:

@@ -17,7 +17,7 @@ services:
       - key: ALLOWED_HOSTS
         value: skyshield-backend.onrender.com
       - key: FRONTEND_URL
-        sync: false
+        value: https://www.skyshieldedu.com
       - key: REDIS_URL
         sync: false
       - key: SECRET_KEY
