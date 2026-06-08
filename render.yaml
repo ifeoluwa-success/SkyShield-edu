@@ -1,0 +1,25 @@
+# Blueprint at repo root — link this when creating/updating the Render service.
+# Existing services: still set Start Command manually in the dashboard.
+services:
+  - type: web
+    name: skyshield-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: daphne -b 0.0.0.0 -p $PORT config.asgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings
+      - key: ALLOWED_HOSTS
+        value: skyshield-backend.onrender.com
+      - key: FRONTEND_URL
+        value: https://www.skyshieldedu.com
+      # Frontend build (static site): VITE_API_URL must be https://…/api (not http://)
+      - key: REDIS_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true

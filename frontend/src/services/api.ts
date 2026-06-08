@@ -1,23 +1,27 @@
 // src/services/api.ts
 import axios, { AxiosError } from 'axios';
 import { clearStoredSession } from '../lib/authSession';
-
-import { resolveApiBase } from '../lib/websocketUrl';
-
-const BASE_URL = resolveApiBase();
+import { ensureHttpsUrl, resolveApiBase } from '../lib/apiConfig';
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: resolveApiBase(),
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
 
-// ── Request interceptor: attach access token ──────────────────────────────────
+// ── Request interceptor: attach token + never call http:// API in production ─
 api.interceptors.request.use(
   config => {
+    if (config.baseURL) {
+      config.baseURL = ensureHttpsUrl(config.baseURL);
+    }
+    if (config.url) {
+      config.url = ensureHttpsUrl(config.url);
+    }
+
     const token = localStorage.getItem('access_token')?.trim();
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
     }
     return config;
   },
@@ -45,9 +49,6 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as typeof error.config & { _retry?: boolean };
 
-    // ── KEY FIX: Never intercept auth endpoints. ──────────────────────────────
-    // If the login or token endpoints themselves return 401/4xx, let the error
-    // propagate directly to the caller (LoginPage) so it can show the message.
     const url = originalRequest?.url ?? '';
     const isAuthEndpoint =
       url.includes('/users/login/') ||
@@ -58,10 +59,8 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Only attempt a token refresh for non-auth 401s (e.g. expired session)
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // Queue this request until the in-flight refresh finishes
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -85,9 +84,9 @@ api.interceptors.response.use(
       }
 
       try {
-        // ── FIX: use the correct refresh endpoint from your urls.py ──────────
+        const refreshUrl = ensureHttpsUrl(`${resolveApiBase()}/users/token/refresh/`);
         const { data } = await axios.post(
-          `${BASE_URL}/users/token/refresh/`,
+          refreshUrl,
           { refresh: refreshToken },
           { headers: { 'Content-Type': 'application/json' } },
         );
@@ -100,10 +99,8 @@ api.interceptors.response.use(
         originalRequest.headers!.Authorization = `Bearer ${newAccess}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed — session is truly expired, clean up quietly
         processQueue(refreshError, null);
         clearStoredSession();
-        // Redirect to login only if not already there
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }

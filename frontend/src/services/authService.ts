@@ -22,10 +22,8 @@ import type {
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   const response = await api.post<LoginResponse>('/users/login/', credentials);
   const data = response.data;
-  if (data.access) {
-    localStorage.setItem('access_token', data.access);
-    localStorage.setItem('refresh_token', data.refresh);
-    localStorage.setItem('user', JSON.stringify(data.user));
+  if (!data.access || !data.refresh) {
+    throw new Error('Login succeeded but the server did not return access tokens.');
   }
   return data;
 };

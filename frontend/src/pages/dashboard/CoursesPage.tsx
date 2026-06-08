@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { isAxiosError } from 'axios';
 import { showToast } from '../../lib/toast';
+import { useAuth } from '../../hooks/useAuth';
 import { PageLoader } from '../../components/ui/Loading';
 import { enrollInCourse, getCourses, getMyEnrollments } from '../../services/courseService';
 import type { Course, CourseEnrollment } from '../../types/course';
@@ -69,6 +71,7 @@ function enrollmentMapFromList(enrollments: CourseEnrollment[]): Map<string, Cou
 // ─── Component ───────────────────────────────────────────────────────────────
 const CoursesPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollmentByCourseId, setEnrollmentByCourseId] = useState<Map<string, CourseEnrollment>>(
@@ -80,6 +83,10 @@ const CoursesPage: React.FC = () => {
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
     let cancelled = false;
 
     const loadData = async () => {
@@ -104,7 +111,12 @@ const CoursesPage: React.FC = () => {
       } catch (err) {
         console.error(err);
         if (!cancelled) {
-          showToast({ type: 'error', message: 'Failed to load courses. Please try again.' });
+          if (isAxiosError(err) && err.response?.status === 401) {
+            showToast({ type: 'error', message: 'Session expired. Please sign in again.' });
+            navigate('/login', { replace: true });
+          } else {
+            showToast({ type: 'error', message: 'Failed to load courses. Please try again.' });
+          }
           setLoading(false);
         }
       }
@@ -112,7 +124,7 @@ const CoursesPage: React.FC = () => {
 
     void loadData();
     return () => { cancelled = true; };
-  }, []);
+  }, [isAuthenticated, navigate]);
 
   const enrollmentMap = enrollmentByCourseId;
 

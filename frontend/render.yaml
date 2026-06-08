@@ -1,0 +1,16 @@
+# Render static site — SkyShield frontend (www.skyshieldedu.com)
+# Link in dashboard or copy env vars to an existing static site service.
+services:
+  - type: web
+    name: skyshield-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://skyshield-backend.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

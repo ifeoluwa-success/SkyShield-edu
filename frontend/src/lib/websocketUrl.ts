@@ -1,17 +1,11 @@
-/**
- * Build a WebSocket URL for Django Channels (/ws/...).
- *
- * Local dev: ws://localhost:5173/ws/... (Vite proxy).
- * Production: wss://<api-host>/ws/... (must include a hostname — never bare "wss://").
- */
+import {
+  DEFAULT_API_BASE,
+  ensureHttpsUrl,
+  resolveApiBase,
+  resolveApiOrigin,
+} from './apiConfig';
 
-export const DEFAULT_API_BASE = 'https://skyshield-backend.onrender.com/api';
-
-/** Same default as api.ts; treats blank env as unset. */
-export function resolveApiBase(): string {
-  const raw = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
-  return raw ? raw : DEFAULT_API_BASE;
-}
+export { DEFAULT_API_BASE, resolveApiBase, resolveApiOrigin };
 
 function httpOriginToWsOrigin(httpOrigin: string): string {
   const url = new URL(httpOrigin);
@@ -28,7 +22,7 @@ export function resolveWebSocketOrigin(): string {
   if (wsOverride) {
     const candidate = wsOverride.includes('://') ? wsOverride : `wss://${wsOverride}`;
     try {
-      const url = new URL(candidate);
+      const url = new URL(ensureHttpsUrl(candidate));
       if (url.hostname) {
         url.protocol = url.protocol === 'https:' || url.protocol === 'wss:' ? 'wss:' : 'ws:';
         return url.origin;
@@ -44,11 +38,7 @@ export function resolveWebSocketOrigin(): string {
   }
 
   try {
-    const apiUrl = new URL(resolveApiBase());
-    if (!apiUrl.hostname) {
-      throw new Error('no hostname');
-    }
-    return httpOriginToWsOrigin(apiUrl.origin);
+    return httpOriginToWsOrigin(resolveApiOrigin());
   } catch {
     return httpOriginToWsOrigin(new URL(DEFAULT_API_BASE).origin);
   }
@@ -60,19 +50,10 @@ export function buildWebSocketUrl(
 ): string {
   const trimmed = path.trim();
 
-  const params = new URLSearchParams();
-  if (query) {
-    for (const [key, value] of Object.entries(query)) {
-      if (value != null && value !== '') {
-        params.set(key, value);
-      }
-    }
-  }
-
   let url: URL;
 
   if (/^wss?:\/\//i.test(trimmed)) {
-    url = new URL(trimmed);
+    url = new URL(ensureHttpsUrl(trimmed));
   } else if (import.meta.env.DEV) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const normalizedPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;

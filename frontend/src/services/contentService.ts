@@ -1,7 +1,7 @@
 import axios, { isAxiosError } from 'axios';
 import api from './api';
 
-import { resolveApiBase } from '../lib/websocketUrl';
+import { resolveApiBase, resolveApiOrigin } from '../lib/apiConfig';
 
 const API_BASE = resolveApiBase();
 
@@ -243,7 +243,7 @@ function unwrap<T>(data: T[] | { results: T[] }): T[] {
   return [];
 }
 
-const API_ORIGIN = (import.meta.env.VITE_API_URL ?? '').replace(/\/api\/?$/, '');
+const API_ORIGIN = resolveApiOrigin();
 
 /** Resolve relative media URLs from the API. */
 export function resolveContentMediaUrl(url?: string | null): string | undefined {

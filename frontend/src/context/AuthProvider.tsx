@@ -57,21 +57,6 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     return () => window.removeEventListener(AUTH_SESSION_EXPIRED, onSessionExpired);
   }, []);
 
-  const login = useCallback(async (identifier: string, password: string): Promise<User> => {
-    const data = await apiLogin({ identifier, password });
-    const role = normalizeRole(data.user?.role);
-    if (!role) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      throw new Error('Your account has an invalid role. Contact support.');
-    }
-    const user = { ...data.user, role };
-    localStorage.setItem('user', JSON.stringify(user));
-    setUser(user);
-    return user;
-  }, []);
-
   const applySession = useCallback((sessionUser: User, access: string, refresh: string) => {
     const role = normalizeRole(sessionUser?.role);
     if (!role) return;
@@ -81,6 +66,20 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
   }, []);
+
+  const login = useCallback(async (identifier: string, password: string): Promise<User> => {
+    const data = await apiLogin({ identifier, password });
+    const role = normalizeRole(data.user?.role);
+    if (!role) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      throw new Error('Your account has an invalid role. Contact support.');
+    }
+    const loggedInUser = { ...data.user, role };
+    applySession(loggedInUser, data.access, data.refresh);
+    return loggedInUser;
+  }, [applySession]);
 
   const logout = useCallback(async (): Promise<void> => {
     await apiLogout();

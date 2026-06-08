@@ -244,6 +244,8 @@ const MeetingRoom: React.FC = () => {
   const [inWaitingRoom, setInWaitingRoom] = useState(false);
   const [waitingParticipants, setWaitingParticipants] = useState<WaitingParticipant[]>([]);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [mediaWarning, setMediaWarning] = useState<string | null>(null);
+  const [mediaPromptPending, setMediaPromptPending] = useState(false);
   const [requestingMedia, setRequestingMedia] = useState(false);
   const [isHost, setIsHost] = useState(false); // replace ref with state
 
@@ -276,6 +278,7 @@ const MeetingRoom: React.FC = () => {
   const activePanelRef = useRef<PanelType | null>(null);
   const pendingPeersRef = useRef<Map<string, string>>(new Map());
   const syncPeersAfterMediaRef = useRef<() => void>(() => {});
+  const mediaRequestInFlightRef = useRef(false);
 
   const safeSend = useCallback((data: unknown) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -302,49 +305,107 @@ const MeetingRoom: React.FC = () => {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
+  const MEDIA_CONSTRAINTS: MediaStreamConstraints[] = [
+    {
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: { echoCancellation: true, noiseSuppression: true },
+    },
+    { video: true, audio: true },
+    { audio: true },
+    { video: true },
+  ];
+
   // Request media only when needed (delayed for waiting trainees)
   const requestLocalMedia = useCallback(async () => {
     if (localStreamRef.current) return localStreamRef.current;
+    if (mediaRequestInFlightRef.current) return null;
+
+    mediaRequestInFlightRef.current = true;
     setRequestingMedia(true);
     setMediaError(null);
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
-      localStreamRef.current = stream;
-      setLocalStream(stream);
-      setVideoEnabled(true);
-      setAudioEnabled(true);
-      return stream;
-    } catch (err) {
-      console.error('Media devices error:', err);
-      let errorMsg = 'Unable to access camera/microphone. ';
-      if (err instanceof Error) {
-        if (err.name === 'NotReadableError') errorMsg += 'Device is already in use by another application.';
-        else if (err.name === 'NotAllowedError') errorMsg += 'Permission denied. Please allow camera and microphone.';
-        else if (err.name === 'NotFoundError') errorMsg += 'No camera or microphone found.';
-        else errorMsg += err.message;
-      } else {
-        errorMsg += 'Unknown error.';
+      for (const constraints of MEDIA_CONSTRAINTS) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          const hasVideo = stream.getVideoTracks().length > 0;
+          const hasAudio = stream.getAudioTracks().length > 0;
+          localStreamRef.current = stream;
+          setLocalStream(stream);
+          setVideoEnabled(hasVideo);
+          setAudioEnabled(hasAudio);
+
+          if (!hasVideo && !hasAudio) {
+            const msg = 'No active camera or microphone tracks. You can still listen and chat.';
+            setMediaWarning(msg);
+            showToast({ type: 'info', message: msg });
+          } else if (!hasVideo) {
+            const msg = 'No camera found — audio only. Others can hear you but not see you.';
+            setMediaWarning(msg);
+            showToast({ type: 'info', message: msg });
+          } else if (!hasAudio) {
+            const msg = 'No microphone found — video only. Others can see you but not hear you.';
+            setMediaWarning(msg);
+            showToast({ type: 'info', message: msg });
+          }
+          return stream;
+        } catch (err) {
+          if (err instanceof DOMException && err.name === 'NotAllowedError') {
+            const errorMsg =
+              'Permission denied. Click "Allow camera & microphone" again and choose Allow in the browser prompt.';
+            setMediaError(errorMsg);
+            showToast({ type: 'error', message: errorMsg });
+            return null;
+          }
+        }
       }
+
+      const errorMsg =
+        'No camera or microphone was found on this device. You can join without them or connect a device and try again.';
       setMediaError(errorMsg);
-      showToast({ type: 'error', message: errorMsg });
+      showToast({ type: 'info', message: errorMsg });
       return null;
     } finally {
+      mediaRequestInFlightRef.current = false;
       setRequestingMedia(false);
     }
   }, []);
 
-  // Retry media request
+  const joinListenOnly = useCallback(() => {
+    if (localStreamRef.current) return;
+    const emptyStream = new MediaStream();
+    localStreamRef.current = emptyStream;
+    setLocalStream(emptyStream);
+    setVideoEnabled(false);
+    setAudioEnabled(false);
+    setMediaError(null);
+    setMediaPromptPending(false);
+    setMediaWarning('Joined without camera or microphone. Others cannot see or hear you.');
+    syncPeersAfterMediaRef.current();
+  }, []);
+
+  const grantMediaAccess = useCallback(async () => {
+    const stream = await requestLocalMedia();
+    if (stream) {
+      setMediaPromptPending(false);
+      syncPeersAfterMediaRef.current();
+    }
+  }, [requestLocalMedia]);
+
+  // Retry media request (user gesture — e.g. banner Retry button)
   const retryMedia = useCallback(() => {
-    void requestLocalMedia();
+    localStreamRef.current?.getTracks().forEach(t => t.stop());
+    localStreamRef.current = null;
+    setLocalStream(null);
+    setMediaError(null);
+    setMediaWarning(null);
+    void requestLocalMedia().then(stream => {
+      if (stream) syncPeersAfterMediaRef.current();
+    });
   }, [requestLocalMedia]);
 
   const userRef = useRef(user);
   userRef.current = user;
-  const requestLocalMediaRef = useRef(requestLocalMedia);
-  requestLocalMediaRef.current = requestLocalMedia;
 
   const cleanupMeetingResources = useCallback(() => {
     try {
@@ -438,7 +499,7 @@ const MeetingRoom: React.FC = () => {
         if (data.meeting.waiting_room_enabled && !hostFlag && isTrainee) {
           setInWaitingRoom(true);
         } else {
-          void requestLocalMediaRef.current().then(() => syncPeersAfterMediaRef.current());
+          setMediaPromptPending(true);
         }
       } catch (err) {
         if (!active) return;
@@ -454,13 +515,6 @@ const MeetingRoom: React.FC = () => {
       active = false;
     };
   }, [code]);
-
-  // When trainee is admitted, request media
-  useEffect(() => {
-    if (!inWaitingRoom && !isHost && !localStreamRef.current && !requestingMedia) {
-      void requestLocalMedia();
-    }
-  }, [inWaitingRoom, isHost, requestLocalMedia, requestingMedia]);
 
   const buildPeer = useCallback(
     (userId: string, initiator: boolean, stream: MediaStream): SimplePeer => {
@@ -595,7 +649,7 @@ const MeetingRoom: React.FC = () => {
         case 'admitted':
           setInWaitingRoom(false);
           setWsError(null);
-          void requestLocalMediaRef.current().then(() => syncPeersAfterMediaRef.current());
+          setMediaPromptPending(true);
           break;
 
         case 'user_joined': {
@@ -1016,24 +1070,39 @@ const MeetingRoom: React.FC = () => {
     );
   }
 
-  // Media error overlay (only after an explicit failure, not while prompting)
-  if (mediaError && !localStream && !inWaitingRoom) {
+  // Pre-join permission gate — getUserMedia only runs after the user clicks Allow
+  if (mediaPromptPending && !inWaitingRoom) {
     return (
-      <div className="mr-error">
-        <div className="mr-error-icon">🎥</div>
-        <h2>Camera / Microphone Error</h2>
-        <p>{mediaError || 'Unable to access camera or microphone.'}</p>
-        <button className="mr-back-btn" onClick={retryMedia}>
-          Retry
-        </button>
-        <button
-          type="button"
-          className="mr-back-btn"
-          onClick={leaveMeeting}
-          style={{ marginLeft: '1rem', background: '#ef4444' }}
-        >
-          Leave Meeting
-        </button>
+      <div className="mr-waiting-room">
+        <div className="waiting-room-card mr-permission-card">
+          <div className="waiting-icon">🎥</div>
+          <h2>Allow camera &amp; microphone</h2>
+          <p className="mr-permission-desc">
+            LiveRoom needs access to your camera and microphone so others can see and hear you.
+            Click the button below — your browser will ask you to allow access.
+          </p>
+          {mediaError && (
+            <p className="mr-permission-error" role="alert">
+              {mediaError}
+            </p>
+          )}
+          <div className="mr-permission-actions">
+            <button
+              type="button"
+              className="mr-back-btn mr-permission-primary"
+              onClick={() => void grantMediaAccess()}
+              disabled={requestingMedia}
+            >
+              {requestingMedia ? 'Waiting for permission…' : 'Allow camera & microphone'}
+            </button>
+            <button type="button" className="mr-permission-secondary" onClick={joinListenOnly}>
+              Join without camera or microphone
+            </button>
+            <button type="button" className="mr-leave-btn" onClick={leaveMeeting}>
+              Leave meeting
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1044,6 +1113,14 @@ const MeetingRoom: React.FC = () => {
         <div className="mr-ws-error" role="alert">
           {wsError}
           <button type="button" className="mr-ws-error-retry" onClick={() => window.location.reload()}>
+            Retry
+          </button>
+        </div>
+      )}
+      {mediaWarning && (
+        <div className="mr-ws-error" role="status" style={{ background: '#92400e' }}>
+          {mediaWarning}
+          <button type="button" className="mr-ws-error-retry" onClick={retryMedia}>
             Retry
           </button>
         </div>

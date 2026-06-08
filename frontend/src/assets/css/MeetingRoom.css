@@ -888,6 +888,49 @@ aside.mr-panel .mr-waiting-list {
   margin: auto;
 }
 
+.mr-permission-card { max-width: 480px; }
+
+.mr-permission-desc {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.mr-permission-error {
+  color: var(--danger);
+  font-size: 0.88rem;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: var(--radius-md);
+}
+
+.mr-permission-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.mr-permission-primary { width: 100%; margin: 0; }
+
+.mr-permission-secondary {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.mr-permission-secondary:hover {
+  border-color: var(--cyan);
+  color: var(--text-primary);
+}
+
 /* Avatar circle in participants */
 .avatar-circle {
   width: 40px;
