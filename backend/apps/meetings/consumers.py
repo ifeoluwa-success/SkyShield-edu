@@ -1,6 +1,8 @@
 # consumers.py  — fully fixed
 import json
 import logging
+import uuid as uuid_lib
+from urllib.parse import parse_qs
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
@@ -116,7 +118,7 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             status = await self.get_participant_status()
 
             if status == 'connected':
-                await self.mark_participant_disconnected()
+                await self.mark_participant_disconnected_if_owner()
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
@@ -151,6 +153,8 @@ class MeetingConsumer(AsyncWebsocketConsumer):
                 'media_state':   self.handle_media_state,
                 'screen_share':  self.handle_screen_share,
                 'media_ready':   self.handle_media_ready,
+                'request_offer': self.handle_request_offer,
+                'renegotiate':   self.handle_renegotiate,
             }
 
             handler = handlers.get(message_type)
@@ -216,7 +220,7 @@ class MeetingConsumer(AsyncWebsocketConsumer):
         if getattr(self, 'participant', None) and self.participant:
             status = await self.get_participant_status()
             if status == 'connected':
-                await self.mark_participant_disconnected()
+                await self.mark_participant_disconnected_if_owner()
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
@@ -228,6 +232,27 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             elif status == 'waiting':
                 await self.delete_participant()
                 await self.notify_host_waiting_update()
+
+    async def handle_request_offer(self, data):
+        """Answerer asks the initiator to send a fresh WebRTC offer."""
+        target_channel = await self._get_target_channel(data)
+        if not target_channel:
+            return
+        await self.channel_layer.send(target_channel, {
+            'type': 'relay_request_offer',
+            'from_user': str(self.user.id),
+            'from_username': self.user.get_full_name() or self.user.username,
+        })
+
+    async def handle_renegotiate(self, data):
+        target_channel = await self._get_target_channel(data)
+        if not target_channel:
+            return
+        await self.channel_layer.send(target_channel, {
+            'type': 'relay_renegotiate',
+            'signal': data.get('signal', data),
+            'from_user': str(self.user.id),
+        })
 
     async def handle_get_participants(self, data):
         """Called by a freshly admitted trainee to get the current participant list."""
@@ -270,8 +295,26 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             return None
         status = await self.get_participant_status()
         if status != 'connected':
+            await self.send(text_data=json.dumps({
+                'type': 'signaling_error',
+                'reason': 'not_connected',
+                'message': 'You must be fully connected before WebRTC signaling.',
+            }))
             return None
-        return await self.get_channel_name_by_user_id(target_user_id)
+        channel = await self.get_channel_name_by_user_id(target_user_id)
+        if not channel:
+            logger.warning(
+                'meeting.signaling_target_missing from=%s target=%s room=%s',
+                self.user.id,
+                target_user_id,
+                self.room_name,
+            )
+            await self.send(text_data=json.dumps({
+                'type': 'signaling_error',
+                'reason': 'peer_not_found',
+                'target': str(target_user_id),
+            }))
+        return channel
 
     async def handle_offer(self, data):
         target_channel = await self._get_target_channel(data)
@@ -406,6 +449,20 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             'full_name': event.get('full_name'),
         }))
 
+    async def relay_request_offer(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'request_offer',
+            'from_user': event['from_user'],
+            'from_username': event.get('from_username', ''),
+        }))
+
+    async def relay_renegotiate(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'renegotiate',
+            'signal': event.get('signal'),
+            'from_user': event['from_user'],
+        }))
+
     async def user_joined(self, event):
         await self.send(text_data=json.dumps({
             'type': 'user_joined',
@@ -457,8 +514,8 @@ class MeetingConsumer(AsyncWebsocketConsumer):
         User = get_user_model()
         try:
             qs = self.scope['query_string'].decode()
-            params = dict(p.split('=') for p in qs.split('&') if '=' in p)
-            token = params.get('token')
+            params = parse_qs(qs)
+            token = (params.get('token') or [None])[0]
             if not token:
                 return AnonymousUser()
             payload = AccessToken(token)
@@ -517,10 +574,14 @@ class MeetingConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def save_channel_name(self):
-        """Persist this connection's channel_name so direct sends work."""
-        if self.participant:
-            self.participant.channel_name = self.channel_name
-            self.participant.save(update_fields=['channel_name'])
+        """Persist channel_name and mark active when connected."""
+        if not self.participant:
+            return
+        self.participant.channel_name = self.channel_name
+        if self.participant.status == 'connected':
+            self.participant.is_active = True
+        self.participant.last_heartbeat = timezone.now()
+        self.participant.save(update_fields=['channel_name', 'is_active', 'last_heartbeat'])
 
     @database_sync_to_async
     def mark_participant_connected(self):
@@ -531,8 +592,19 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             self.participant.status = 'connected'
             self.participant.video_enabled = True
             self.participant.audio_enabled = True
+            self.participant.last_heartbeat = timezone.now()
             self.participant.save()
             self.meeting.update_participant_count()
+
+    @database_sync_to_async
+    def mark_participant_disconnected_if_owner(self):
+        """Only clear DB state if this websocket still owns the participant row."""
+        if not self.participant:
+            return
+        self.participant.refresh_from_db(fields=['channel_name', 'is_active', 'status'])
+        if self.participant.channel_name and self.participant.channel_name != self.channel_name:
+            return
+        self.participant.leave()
 
     @database_sync_to_async
     def mark_participant_disconnected(self):
@@ -584,9 +656,11 @@ class MeetingConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def admit_participant_in_db(self, participant):
+        participant.refresh_from_db(fields=['channel_name'])
         participant.status = 'connected'
         participant.joined_at = timezone.now()
         participant.is_active = True
+        participant.last_heartbeat = timezone.now()
         participant.save()
 
     @database_sync_to_async
@@ -614,12 +688,16 @@ class MeetingConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_channel_name_by_user_id(self, user_id):
         try:
+            uid = uuid_lib.UUID(str(user_id))
+        except ValueError:
+            return None
+        try:
             p = self.meeting.participants.filter(
-                user_id=str(user_id),
+                user_id=uid,
                 is_active=True,
                 status='connected',
             ).first()
-            return p.channel_name if p else None
+            return p.channel_name if p and p.channel_name else None
         except Exception as exc:
             logger.warning('get_channel_name_by_user_id failed user_id=%s err=%s', user_id, exc)
             return None

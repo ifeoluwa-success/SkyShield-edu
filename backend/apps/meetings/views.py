@@ -125,7 +125,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
             meeting=meeting,
             user=request.user,
             role='host',
-            status='connected'
+            status='joining',
         )
 
         # Log activity – fixed import

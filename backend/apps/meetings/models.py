@@ -234,6 +234,7 @@ class MeetingParticipant(models.Model):
         self.status = 'disconnected'
         self.left_at = timezone.now()
         self.is_active = False
+        self.channel_name = ''
         self.video_enabled = False
         self.audio_enabled = False
         self.screen_sharing = False
