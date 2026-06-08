@@ -926,9 +926,21 @@ aside.mr-panel .mr-waiting-list {
   font-size: 0.9rem;
 }
 
-.mr-permission-secondary:hover {
-  border-color: var(--cyan);
-  color: var(--text-primary);
+.mr-remote-play-btn {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: fit-content;
+  height: fit-content;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: rgba(251, 191, 36, 0.92);
+  color: #111827;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 2;
 }
 
 /* Avatar circle in participants */

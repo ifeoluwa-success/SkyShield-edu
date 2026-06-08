@@ -150,6 +150,7 @@ class MeetingConsumer(AsyncWebsocketConsumer):
                 'get_participants': self.handle_get_participants,
                 'media_state':   self.handle_media_state,
                 'screen_share':  self.handle_screen_share,
+                'media_ready':   self.handle_media_ready,
             }
 
             handler = handlers.get(message_type)
@@ -275,6 +276,12 @@ class MeetingConsumer(AsyncWebsocketConsumer):
     async def handle_offer(self, data):
         target_channel = await self._get_target_channel(data)
         if not target_channel:
+            logger.warning(
+                'meeting.offer_dropped from=%s target=%s room=%s',
+                self.user.id,
+                data.get('target'),
+                self.room_name,
+            )
             return
         await self.channel_layer.send(target_channel, {
             'type': 'relay_offer',          # internal channel layer event name
@@ -322,6 +329,18 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             'type': 'screen_share',
             'user_id': str(self.user.id),
             'sharing': data.get('sharing', False),
+        })
+
+    async def handle_media_ready(self, data):
+        """Client has granted camera/mic — tell others to (re)connect WebRTC."""
+        status = await self.get_participant_status()
+        if status != 'connected':
+            return
+        await self.channel_layer.group_send(self.room_group_name, {
+            'type': 'media_ready_broadcast',
+            'user_id': str(self.user.id),
+            'username': self.user.username,
+            'full_name': self.user.get_full_name() or self.user.username,
         })
 
     # =========================================================================
@@ -375,6 +394,16 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             'type': 'ice_candidate',            # ← what frontend expects
             'candidate': event['candidate'],
             'from_user': event['from_user'],
+        }))
+
+    async def media_ready_broadcast(self, event):
+        if str(self.user.id) == str(event.get('user_id')):
+            return
+        await self.send(text_data=json.dumps({
+            'type': 'media_ready',
+            'user_id': event.get('user_id'),
+            'username': event.get('username'),
+            'full_name': event.get('full_name'),
         }))
 
     async def user_joined(self, event):
@@ -585,11 +614,14 @@ class MeetingConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_channel_name_by_user_id(self, user_id):
         try:
-            p = self.meeting.participants.get(
-                user_id=user_id, is_active=True, status='connected'
-            )
-            return p.channel_name
-        except MeetingParticipant.DoesNotExist:
+            p = self.meeting.participants.filter(
+                user_id=str(user_id),
+                is_active=True,
+                status='connected',
+            ).first()
+            return p.channel_name if p else None
+        except Exception as exc:
+            logger.warning('get_channel_name_by_user_id failed user_id=%s err=%s', user_id, exc)
             return None
 
     @database_sync_to_async

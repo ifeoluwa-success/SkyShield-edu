@@ -8,7 +8,12 @@ import { useAuth } from '../../hooks/useAuth';
 import SimplePeer from 'simple-peer';
 import { showToast } from '../../lib/toast';
 import { buildMeetingWebSocketUrl } from '../../lib/meetingWs';
-import { shouldInitiateCall, streamHasLiveVideo } from '../../lib/meetingWebRtc';
+import {
+  normalizeUserId,
+  peerConnectionIsBroken,
+  shouldInitiateCall,
+  streamHasLiveVideo,
+} from '../../lib/meetingWebRtc';
 import '../../assets/css/MeetingRoom.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -36,6 +41,7 @@ interface SignalingMessage {
   message?: string;
   content?: string;
   sender_name?: string;
+  from_username?: string;
   videoEnabled?: boolean;
   audioEnabled?: boolean;
   sharing?: boolean;
@@ -108,23 +114,44 @@ interface RemoteVideoProps {
 
 const RemoteVideo: React.FC<RemoteVideoProps> = ({ participant, small = false }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [needsPlayClick, setNeedsPlayClick] = useState(false);
   const showVideo =
     Boolean(participant.stream) &&
     (participant.videoEnabled || streamHasLiveVideo(participant.stream));
 
-  useEffect(() => {
+  const attachRemoteStream = useCallback((stream: MediaStream) => {
     const el = videoRef.current;
-    if (!el || !participant.stream) return;
-    el.srcObject = participant.stream;
-    void el.play().catch(() => {});
-  }, [participant.stream]);
+    if (!el) return;
+    el.srcObject = stream;
+    el.muted = false;
+    void el.play().then(() => setNeedsPlayClick(false)).catch(() => setNeedsPlayClick(true));
+  }, []);
+
+  useEffect(() => {
+    if (!participant.stream) return;
+    attachRemoteStream(participant.stream);
+    const onAddTrack = () => attachRemoteStream(participant.stream!);
+    participant.stream.addEventListener('addtrack', onAddTrack);
+    return () => participant.stream?.removeEventListener('addtrack', onAddTrack);
+  }, [attachRemoteStream, participant.stream]);
 
   const initial = participant.name.charAt(0).toUpperCase();
 
   return (
     <div className={`video-tile remote-tile${small ? ' tile-small' : ''}`}>
       {showVideo ? (
-        <video ref={videoRef} autoPlay playsInline />
+        <>
+          <video ref={videoRef} autoPlay playsInline />
+          {needsPlayClick && (
+            <button
+              type="button"
+              className="mr-remote-play-btn"
+              onClick={() => participant.stream && attachRemoteStream(participant.stream)}
+            >
+              Tap to hear
+            </button>
+          )}
+        </>
       ) : (
         <div className="video-placeholder">
           <div
@@ -277,8 +304,12 @@ const MeetingRoom: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const activePanelRef = useRef<PanelType | null>(null);
   const pendingPeersRef = useRef<Map<string, string>>(new Map());
+  const pendingOffersRef = useRef<Map<string, SignalingMessage>>(new Map());
+  const pendingIceRef = useRef<Map<string, SimplePeer.SignalData[]>>(new Map());
   const syncPeersAfterMediaRef = useRef<() => void>(() => {});
   const mediaRequestInFlightRef = useRef(false);
+  const inWaitingRoomRef = useRef(inWaitingRoom);
+  const handleMessageRef = useRef<(data: SignalingMessage) => void>(() => {});
 
   const safeSend = useCallback((data: unknown) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -291,6 +322,10 @@ const MeetingRoom: React.FC = () => {
   useEffect(() => {
     activePanelRef.current = activePanel;
   }, [activePanel]);
+
+  useEffect(() => {
+    inWaitingRoomRef.current = inWaitingRoom;
+  }, [inWaitingRoom]);
 
   // Timer
   useEffect(() => {
@@ -382,15 +417,17 @@ const MeetingRoom: React.FC = () => {
     setMediaPromptPending(false);
     setMediaWarning('Joined without camera or microphone. Others cannot see or hear you.');
     syncPeersAfterMediaRef.current();
-  }, []);
+    safeSend({ type: 'media_ready' });
+  }, [safeSend]);
 
   const grantMediaAccess = useCallback(async () => {
     const stream = await requestLocalMedia();
     if (stream) {
       setMediaPromptPending(false);
       syncPeersAfterMediaRef.current();
+      safeSend({ type: 'media_ready' });
     }
-  }, [requestLocalMedia]);
+  }, [requestLocalMedia, safeSend]);
 
   // Retry media request (user gesture — e.g. banner Retry button)
   const retryMedia = useCallback(() => {
@@ -400,9 +437,12 @@ const MeetingRoom: React.FC = () => {
     setMediaError(null);
     setMediaWarning(null);
     void requestLocalMedia().then(stream => {
-      if (stream) syncPeersAfterMediaRef.current();
+      if (stream) {
+        syncPeersAfterMediaRef.current();
+        safeSend({ type: 'media_ready' });
+      }
     });
-  }, [requestLocalMedia]);
+  }, [requestLocalMedia, safeSend]);
 
   const userRef = useRef(user);
   userRef.current = user;
@@ -433,6 +473,8 @@ const MeetingRoom: React.FC = () => {
     });
     peersRef.current.clear();
     pendingPeersRef.current.clear();
+    pendingOffersRef.current.clear();
+    pendingIceRef.current.clear();
 
     screenStreamRef.current?.getTracks().forEach(t => t.stop());
     screenStreamRef.current = null;
@@ -516,8 +558,22 @@ const MeetingRoom: React.FC = () => {
     };
   }, [code]);
 
+  const flushPendingIce = useCallback((userId: string, peer: SimplePeer) => {
+    const queued = pendingIceRef.current.get(userId);
+    if (!queued?.length) return;
+    for (const candidate of queued) {
+      try {
+        peer.signal(candidate);
+      } catch {
+        // ignore stale candidates
+      }
+    }
+    pendingIceRef.current.delete(userId);
+  }, []);
+
   const buildPeer = useCallback(
     (userId: string, initiator: boolean, stream: MediaStream): SimplePeer => {
+      const normalizedId = normalizeUserId(userId);
       const iceServers = signalingRef.current?.ice_servers ?? [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
@@ -532,85 +588,173 @@ const MeetingRoom: React.FC = () => {
 
       peer.on('signal', (data: SimplePeer.SignalData) => {
         if (data.type === 'offer') {
-          safeSend({ type: 'offer', target: userId, offer: data });
+          safeSend({ type: 'offer', target: normalizedId, offer: data });
         } else if (data.type === 'answer') {
-          safeSend({ type: 'answer', target: userId, answer: data });
+          safeSend({ type: 'answer', target: normalizedId, answer: data });
         } else if (data.candidate) {
-          safeSend({ type: 'ice_candidate', target: userId, candidate: data });
+          safeSend({ type: 'ice_candidate', target: normalizedId, candidate: data });
         }
       });
 
       peer.on('stream', (remoteStream: MediaStream) => {
         setParticipants(prev => {
           const next = new Map(prev);
-          const existing = next.get(userId) ?? {
-            userId,
-            name: userId.slice(0, 8),
+          const existing = next.get(normalizedId) ?? {
+            userId: normalizedId,
+            name: normalizedId.slice(0, 8),
             videoEnabled: true,
             audioEnabled: true,
           };
-          next.set(userId, { ...existing, stream: remoteStream });
+          next.set(normalizedId, { ...existing, stream: remoteStream });
           return next;
         });
       });
 
-      peer.on('error', (err: Error) => console.error(`Peer [${userId}] error:`, err.message));
+      peer.on('error', (err: Error) => console.error(`Peer [${normalizedId}] error:`, err.message));
       peer.on('close', () => {
-        peersRef.current.delete(userId);
+        peersRef.current.delete(normalizedId);
         setParticipants(prev => {
           const next = new Map(prev);
-          next.delete(userId);
+          next.delete(normalizedId);
           return next;
         });
       });
 
-      peersRef.current.set(userId, peer);
+      const pc = (peer as PeerWithPC)._pc;
+      pc?.addEventListener('connectionstatechange', () => {
+        if (peerConnectionIsBroken(pc)) {
+          console.warn(`Peer [${normalizedId}] connection ${pc?.connectionState}, will retry on next sync`);
+        }
+      });
+
+      peersRef.current.set(normalizedId, peer);
+      flushPendingIce(normalizedId, peer);
       return peer;
     },
-    [safeSend],
+    [flushPendingIce, safeSend],
+  );
+
+  const acceptIncomingOffer = useCallback(
+    (senderId: string, offer: SimplePeer.SignalData, userName?: string) => {
+      const normalizedId = normalizeUserId(senderId);
+      if (!normalizedId || !localStreamRef.current || inWaitingRoomRef.current) return;
+      peersRef.current.get(normalizedId)?.destroy();
+      peersRef.current.delete(normalizedId);
+      const peer = buildPeer(normalizedId, false, localStreamRef.current);
+      peer.signal(offer);
+      setParticipants(prev => {
+        if (prev.has(normalizedId)) return prev;
+        const next = new Map(prev);
+        next.set(normalizedId, {
+          userId: normalizedId,
+          name: userName ?? normalizedId.slice(0, 8),
+          videoEnabled: true,
+          audioEnabled: true,
+        });
+        return next;
+      });
+    },
+    [buildPeer],
   );
 
   const connectToParticipant = useCallback(
     (remoteUserId: string, displayName?: string) => {
-      if (!remoteUserId) return;
-      const myId = userRef.current?.id;
-      if (!myId || remoteUserId === myId) return;
-      if (inWaitingRoom) return;
+      const normalizedRemote = normalizeUserId(remoteUserId);
+      const myId = normalizeUserId(userRef.current?.id);
+      if (!normalizedRemote || !myId || normalizedRemote === myId) return;
+      if (inWaitingRoomRef.current) return;
 
       if (!localStreamRef.current) {
-        pendingPeersRef.current.set(remoteUserId, displayName ?? remoteUserId.slice(0, 8));
+        pendingPeersRef.current.set(normalizedRemote, displayName ?? normalizedRemote.slice(0, 8));
         return;
       }
 
       setParticipants(prev => {
-        if (prev.has(remoteUserId)) return prev;
+        if (prev.has(normalizedRemote)) return prev;
         const next = new Map(prev);
-        next.set(remoteUserId, {
-          userId: remoteUserId,
-          name: displayName ?? remoteUserId.slice(0, 8),
+        next.set(normalizedRemote, {
+          userId: normalizedRemote,
+          name: displayName ?? normalizedRemote.slice(0, 8),
           videoEnabled: true,
           audioEnabled: true,
         });
         return next;
       });
 
-      if (!peersRef.current.has(remoteUserId) && shouldInitiateCall(myId, remoteUserId)) {
-        buildPeer(remoteUserId, true, localStreamRef.current);
+      const existing = peersRef.current.get(normalizedRemote);
+      const pc = existing ? (existing as PeerWithPC)._pc : undefined;
+      if (existing && !peerConnectionIsBroken(pc) && pc?.connectionState === 'connected') {
+        return;
+      }
+      if (existing) {
+        existing.destroy();
+        peersRef.current.delete(normalizedRemote);
+      }
+
+      if (shouldInitiateCall(myId, normalizedRemote)) {
+        buildPeer(normalizedRemote, true, localStreamRef.current);
       }
     },
-    [buildPeer, inWaitingRoom],
+    [buildPeer],
+  );
+
+  const reconnectToParticipant = useCallback(
+    (remoteUserId: string, displayName?: string) => {
+      const normalizedRemote = normalizeUserId(remoteUserId);
+      if (!normalizedRemote) return;
+      peersRef.current.get(normalizedRemote)?.destroy();
+      peersRef.current.delete(normalizedRemote);
+      pendingOffersRef.current.delete(normalizedRemote);
+      pendingIceRef.current.delete(normalizedRemote);
+      connectToParticipant(normalizedRemote, displayName);
+    },
+    [connectToParticipant],
   );
 
   const syncPeersAfterMedia = useCallback(() => {
-    if (!localStreamRef.current || inWaitingRoom) return;
+    if (!localStreamRef.current || inWaitingRoomRef.current) return;
+
+    const myId = normalizeUserId(userRef.current?.id);
+    peersRef.current.forEach((peer, remoteId) => {
+      const pc = (peer as PeerWithPC)._pc;
+      const stuckInitiator =
+        myId &&
+        shouldInitiateCall(myId, remoteId) &&
+        (!pc?.remoteDescription ||
+          peerConnectionIsBroken(pc) ||
+          pc.connectionState === 'disconnected');
+      const stuckAnswerer =
+        myId &&
+        !shouldInitiateCall(myId, remoteId) &&
+        (peerConnectionIsBroken(pc) || pc?.connectionState === 'disconnected');
+      if (stuckInitiator || stuckAnswerer) {
+        try {
+          peer.destroy();
+        } catch {
+          // ignore
+        }
+        peersRef.current.delete(remoteId);
+      }
+    });
+
+    pendingOffersRef.current.forEach((offerData, senderId) => {
+      if (!offerData.offer) return;
+      const name = [offerData.user_name, offerData.full_name, offerData.username, offerData.from_username].find(
+        (v): v is string => typeof v === 'string' && v.length > 0,
+      );
+      acceptIncomingOffer(senderId, offerData.offer, name);
+    });
+    pendingOffersRef.current.clear();
+
     pendingPeersRef.current.forEach((name, remoteUserId) => {
       connectToParticipant(remoteUserId, name);
     });
     pendingPeersRef.current.clear();
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       safeSend({ type: 'get_participants' });
     }
-  }, [connectToParticipant, inWaitingRoom, safeSend]);
+  }, [acceptIncomingOffer, connectToParticipant, safeSend]);
 
   syncPeersAfterMediaRef.current = syncPeersAfterMedia;
 
@@ -653,55 +797,74 @@ const MeetingRoom: React.FC = () => {
           break;
 
         case 'user_joined': {
-          if (!data.user_id || data.user_id === user?.id) break;
+          const joinedId = normalizeUserId(data.user_id);
+          if (!joinedId || joinedId === normalizeUserId(userRef.current?.id)) break;
           connectToParticipant(
-            data.user_id,
+            joinedId,
             data.full_name ?? data.user_name ?? data.username,
           );
           break;
         }
 
         case 'user_left': {
-          if (!data.user_id) break;
-          peersRef.current.get(data.user_id)?.destroy();
-          peersRef.current.delete(data.user_id);
+          const leftId = normalizeUserId(data.user_id);
+          if (!leftId) break;
+          peersRef.current.get(leftId)?.destroy();
+          peersRef.current.delete(leftId);
           setParticipants(prev => {
             const next = new Map(prev);
-            next.delete(data.user_id!);
+            next.delete(leftId);
             return next;
           });
+          break;
+        }
+
+        case 'media_ready': {
+          const readyId = normalizeUserId(data.user_id);
+          if (!readyId || readyId === normalizeUserId(userRef.current?.id)) break;
+          if (!localStreamRef.current || inWaitingRoomRef.current) break;
+          reconnectToParticipant(
+            readyId,
+            data.full_name ?? data.user_name ?? data.username ?? data.from_username,
+          );
           break;
         }
 
         case 'offer': {
-          if (!senderId || !data.offer || !localStreamRef.current || inWaitingRoom) break;
-          peersRef.current.get(senderId)?.destroy();
-          peersRef.current.delete(senderId);
-          const peer = buildPeer(senderId, false, localStreamRef.current);
-          peer.signal(data.offer);
-          setParticipants(prev => {
-            if (prev.has(senderId)) return prev;
-            const next = new Map(prev);
-            next.set(senderId, {
-              userId: senderId,
-              name: data.user_name ?? senderId.slice(0, 8),
-              videoEnabled: true,
-              audioEnabled: true,
-            });
-            return next;
-          });
+          const senderId = normalizeUserId(data.from_user ?? data.from);
+          if (!senderId || !data.offer || inWaitingRoomRef.current) break;
+          if (!localStreamRef.current) {
+            pendingOffersRef.current.set(senderId, data);
+            break;
+          }
+          acceptIncomingOffer(
+            senderId,
+            data.offer,
+            [data.user_name, data.full_name, data.username, data.from_username].find(
+              (v): v is string => typeof v === 'string' && v.length > 0,
+            ),
+          );
           break;
         }
 
         case 'answer': {
+          const senderId = normalizeUserId(data.from_user ?? data.from);
           if (!senderId || !data.answer) break;
           peersRef.current.get(senderId)?.signal(data.answer);
           break;
         }
 
         case 'ice_candidate': {
+          const senderId = normalizeUserId(data.from_user ?? data.from);
           if (!senderId || !data.candidate) break;
-          peersRef.current.get(senderId)?.signal(data.candidate);
+          const peer = peersRef.current.get(senderId);
+          if (peer) {
+            peer.signal(data.candidate);
+          } else {
+            const queue = pendingIceRef.current.get(senderId) ?? [];
+            queue.push(data.candidate);
+            pendingIceRef.current.set(senderId, queue);
+          }
           break;
         }
 
@@ -720,12 +883,13 @@ const MeetingRoom: React.FC = () => {
         }
 
         case 'media_state': {
-          if (!data.user_id) break;
+          const userId = normalizeUserId(data.user_id);
+          if (!userId) break;
           setParticipants(prev => {
-            const existing = prev.get(data.user_id!);
+            const existing = prev.get(userId);
             if (!existing) return prev;
             const next = new Map(prev);
-            next.set(data.user_id!, {
+            next.set(userId, {
               ...existing,
               videoEnabled: data.videoEnabled !== undefined ? Boolean(data.videoEnabled) : existing.videoEnabled,
               audioEnabled: data.audioEnabled !== undefined ? Boolean(data.audioEnabled) : existing.audioEnabled,
@@ -736,12 +900,13 @@ const MeetingRoom: React.FC = () => {
         }
 
         case 'screen_share': {
-          if (!data.user_id) break;
+          const userId = normalizeUserId(data.user_id);
+          if (!userId) break;
           setParticipants(prev => {
-            const existing = prev.get(data.user_id!);
+            const existing = prev.get(userId);
             if (!existing) return prev;
             const next = new Map(prev);
-            next.set(data.user_id!, { ...existing, isScreenSharing: data.sharing === true });
+            next.set(userId, { ...existing, isScreenSharing: data.sharing === true });
             return next;
           });
           break;
@@ -751,8 +916,10 @@ const MeetingRoom: React.FC = () => {
           break;
       }
     },
-    [buildPeer, connectToParticipant, inWaitingRoom, safeSend, syncPeersAfterMedia, user?.id],
+    [acceptIncomingOffer, connectToParticipant, reconnectToParticipant],
   );
+
+  handleMessageRef.current = handleMessage;
 
   // WebSocket connection (runs after REST join returns signaling URL)
   useEffect(() => {
@@ -797,7 +964,7 @@ const MeetingRoom: React.FC = () => {
       setWsReady(true);
       setWsError(null);
       setJoined(true);
-      if (localStreamRef.current && !inWaitingRoom) {
+      if (localStreamRef.current && !inWaitingRoomRef.current) {
         safeSend({ type: 'get_participants' });
       }
     };
@@ -806,7 +973,7 @@ const MeetingRoom: React.FC = () => {
       try {
         const payload = JSON.parse(ev.data as string) as SignalingMessage;
         if (!payload.type) return;
-        handleMessage(payload);
+        handleMessageRef.current(payload);
       } catch (err) {
         console.error('Failed to parse WebSocket message:', err);
       }
@@ -836,7 +1003,7 @@ const MeetingRoom: React.FC = () => {
         }
       }
     };
-  }, [meeting?.room_name, signaling, handleMessage, safeSend]);
+  }, [meeting?.room_name, signaling?.websocket_url, safeSend]);
 
   useEffect(() => {
     return () => {
@@ -990,6 +1157,23 @@ const MeetingRoom: React.FC = () => {
       setTimeout(() => setLinkCopied(false), 2000);
     });
   };
+
+  const reconnectMedia = useCallback(() => {
+    if (!localStreamRef.current) return;
+    peersRef.current.forEach(peer => {
+      try {
+        peer.destroy();
+      } catch {
+        // ignore
+      }
+    });
+    peersRef.current.clear();
+    pendingOffersRef.current.clear();
+    pendingIceRef.current.clear();
+    syncPeersAfterMedia();
+    safeSend({ type: 'media_ready' });
+    showToast({ type: 'info', message: 'Reconnecting to other participants…' });
+  }, [safeSend, syncPeersAfterMedia]);
 
   const totalCount = participants.size + 1;
   const remoteParticipants = Array.from(participants.values());
@@ -1414,6 +1598,16 @@ const MeetingRoom: React.FC = () => {
           >
             <span className="mr-ctrl-icon">{videoEnabled ? <CamIcon /> : <CamOffIcon />}</span>
             <span className="mr-ctrl-label">{videoEnabled ? 'Camera' : 'No Camera'}</span>
+          </button>
+
+          <button
+            className="mr-ctrl-btn"
+            onClick={reconnectMedia}
+            title="Reconnect audio and video"
+            disabled={!joined || !wsReady || !localStream}
+          >
+            <span className="mr-ctrl-icon">↻</span>
+            <span className="mr-ctrl-label">Reconnect</span>
           </button>
 
           <button
