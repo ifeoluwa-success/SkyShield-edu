@@ -1,7 +1,7 @@
 /** Normalize user ids so "5" and 5 always match in maps and comparisons. */
 export function normalizeUserId(id: string | number | undefined | null): string {
   if (id === undefined || id === null || id === '') return '';
-  return String(id);
+  return String(id).trim().toLowerCase();
 }
 
 /** Deterministic initiator: lower user id offers, higher id answers (avoids glare). */
