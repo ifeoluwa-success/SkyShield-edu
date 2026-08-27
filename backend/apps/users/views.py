@@ -333,14 +333,19 @@ class LogoutView(APIView):
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
 
-            # Blacklist the refresh token if provided
-            try:
-                refresh_token = request.data.get('refresh')
-                if refresh_token:
+            # Blacklist the refresh token if provided (requires token_blacklist app)
+            refresh_token = request.data.get('refresh')
+            if refresh_token:
+                try:
                     token = RefreshToken(refresh_token)
                     token.blacklist()
-            except Exception:
-                pass
+                except Exception as blacklist_error:
+                    # Invalid/expired tokens should not fail logout; log for operators.
+                    logger.warning(
+                        "Refresh token blacklist skipped during logout for %s: %s",
+                        request.user.email,
+                        blacklist_error,
+                    )
 
             logger.info(f"User logged out: {request.user.email}")
             return Response({"message": "Successfully logged out"}, status=status.HTTP_200_OK)
