@@ -22,6 +22,12 @@ urlpatterns = [
     # Profile
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
+
+    # Two-factor authentication
+    path('2fa/setup/', views.TwoFactorSetupView.as_view(), name='two-factor-setup'),
+    path('2fa/confirm/', views.TwoFactorConfirmView.as_view(), name='two-factor-confirm'),
+    path('2fa/verify-login/', views.TwoFactorVerifyLoginView.as_view(), name='two-factor-verify-login'),
+    path('2fa/disable/', views.TwoFactorDisableView.as_view(), name='two-factor-disable'),
     
     # Password Reset
     path('forgot-password/', views.ForgotPasswordView.as_view(), name='forgot-password'),

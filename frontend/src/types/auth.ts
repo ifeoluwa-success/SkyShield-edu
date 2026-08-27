@@ -52,6 +52,14 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface TwoFactorChallenge {
+  requires_2fa: true;
+  temp_token: string;
+  message?: string;
+}
+
+export type LoginApiResponse = LoginResponse | TwoFactorChallenge;
+
 export interface RegisterRequest {
   email: string;
   username: string;
@@ -123,7 +131,34 @@ export interface ProfileUpdateRequest {
   date_of_birth?: string;
   address?: string;
   email_notifications?: boolean;
-  two_factor_enabled?: boolean;
+}
+
+export interface TwoFactorSetupResponse {
+  secret: string;
+  otpauth_url: string;
+  qr_code: string;
+  two_factor_enabled: boolean;
+}
+
+export interface TwoFactorConfirmResponse {
+  message: string;
+  two_factor_enabled: boolean;
+  backup_codes: string[];
+}
+
+export interface TwoFactorDisableRequest {
+  password: string;
+  otp: string;
+}
+
+export interface TwoFactorDisableResponse {
+  message: string;
+  two_factor_enabled: boolean;
+}
+
+export interface TwoFactorVerifyLoginRequest {
+  temp_token: string;
+  otp: string;
 }
 
 export type UserRole = User['role'];

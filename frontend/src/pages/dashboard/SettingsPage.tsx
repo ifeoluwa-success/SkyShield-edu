@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { updateProfile } from '../../services/authService';
-import { Bell, Shield } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { showToast } from '../../lib/toast';
 import SuccessModal from '../../components/SuccessModal';
+import TwoFactorSettings from '../../components/TwoFactorSettings';
 import '../../assets/css/SettingsPage.css';
 
 const SettingsPage: React.FC = () => {
@@ -60,21 +61,7 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="settings-card">
-          <div className="card-header">
-            <Shield size={20} />
-            <h2>Two-Factor Authentication</h2>
-          </div>
-          <div className="card-content">
-            <p>Add an extra layer of security to your account.</p>
-            <button
-              onClick={() => showToast({ type: 'info', message: 'Two-factor authentication setup is coming soon.' })}
-              className="btn-secondary"
-            >
-              {user?.two_factor_enabled ? 'Manage 2FA' : 'Enable 2FA'}
-            </button>
-          </div>
-        </div>
+        <TwoFactorSettings />
       </div>
     </div>
   );

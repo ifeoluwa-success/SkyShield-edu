@@ -7,6 +7,7 @@ export interface AuthContextType {
   /** JWT access token from localStorage when a user session exists; refreshes on each render if logged in. */
   token: string | null;
   login: (identifier: string, password: string) => Promise<User>;
+  completeTwoFactorLogin: (tempToken: string, otp: string) => Promise<User>;
   applySession: (user: User, access: string, refresh: string) => void;
   logout: () => Promise<void>;
   updateUser: (updatedData: Partial<User>) => void;

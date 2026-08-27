@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AuthContext } from './AuthContext';
 import type { User } from '../types/auth';
-import { login as apiLogin, logout as apiLogout } from '../services/authService';
+import { login as apiLogin, logout as apiLogout, verifyTwoFactorLogin } from '../services/authService';
 import { normalizeRole } from '../lib/authRouting';
 import { AUTH_SESSION_EXPIRED } from '../lib/authSession';
 
@@ -81,6 +81,20 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     return loggedInUser;
   }, [applySession]);
 
+  const completeTwoFactorLogin = useCallback(async (tempToken: string, otp: string): Promise<User> => {
+    const data = await verifyTwoFactorLogin({ temp_token: tempToken, otp });
+    const role = normalizeRole(data.user?.role);
+    if (!role) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      throw new Error('Your account has an invalid role. Contact support.');
+    }
+    const loggedInUser = { ...data.user, role };
+    applySession(loggedInUser, data.access, data.refresh);
+    return loggedInUser;
+  }, [applySession]);
+
   const logout = useCallback(async (): Promise<void> => {
     await apiLogout();
     setUser(null);
@@ -103,6 +117,7 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
       user,
       token: user ? readAccessToken() : null,
       login,
+      completeTwoFactorLogin,
       applySession,
       logout,
       updateUser,
@@ -112,7 +127,7 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
       isInstructor: user?.role === 'instructor',
       isTrainee: user?.role === 'trainee',
     }),
-    [user, login, applySession, logout, updateUser],
+    [user, login, completeTwoFactorLogin, applySession, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
