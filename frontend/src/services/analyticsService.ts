@@ -151,6 +151,7 @@ export interface PlatformMetricsPeriod {
   all_time?: boolean;
   days?: number;
   custom?: boolean;
+  snapshot?: boolean;
   start_date?: string;
   end_date?: string;
 }

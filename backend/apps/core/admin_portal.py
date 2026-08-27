@@ -15,6 +15,7 @@ from rest_framework.views import APIView
 
 from apps.analytics.metrics_window import (
     filter_in_window,
+    filter_snapshot,
     parse_metrics_window,
     period_payload,
 )
@@ -351,28 +352,33 @@ class AdminChartMetricsView(APIView):
         since = window['since']
         until = window['until']
         now = timezone.now()
+        snapshot = window.get('custom', False)
+        user_date_field = 'date_joined' if snapshot else 'created_at'
 
         users = User.objects.filter(deleted_at__isnull=True)
-        users_in_period = filter_in_window(users, 'created_at', since, until)
+        users_in_period = filter_in_window(users, user_date_field, since, until)
+        users_snapshot = (
+            filter_snapshot(users, user_date_field, until) if snapshot else users_in_period
+        )
 
         user_growth = list(
             users_in_period
-            .annotate(day=TruncDate('created_at'))
+            .annotate(day=TruncDate(user_date_field))
             .values('day')
             .annotate(count=Count('id'))
             .order_by('day')
         )
 
         users_by_role = list(
-            users_in_period.values('role').annotate(count=Count('id')).order_by('role')
+            users_snapshot.values('role').annotate(count=Count('id')).order_by('role')
         )
 
         users_by_status = list(
-            users_in_period.values('status').annotate(count=Count('id')).order_by('status')
+            users_snapshot.values('status').annotate(count=Count('id')).order_by('status')
         )
 
         by_department = list(
-            users_in_period.exclude(department='')
+            users_snapshot.exclude(department='')
             .values('department')
             .annotate(count=Count('id'))
             .order_by('-count')[:15]
@@ -432,19 +438,26 @@ class AdminChartMetricsView(APIView):
             .order_by('month')
         )
 
-        courses_in_period = filter_in_window(Course.objects.all(), 'created_at', since, until)
+        courses_all = Course.objects.all()
+        if snapshot:
+            courses_snapshot = filter_snapshot(courses_all, 'created_at', until)
+            courses_in_period = courses_snapshot
+        else:
+            courses_in_period = filter_in_window(courses_all, 'created_at', since, until)
+            courses_snapshot = courses_in_period
         courses_by_publish = list(
-            courses_in_period.values('is_published').annotate(count=Count('id'))
+            courses_snapshot.values('is_published').annotate(count=Count('id'))
         )
 
-        certs_in_period = filter_in_window(
-            CourseCertificate.objects.all(),
-            'issued_at',
-            since,
-            until,
-        )
+        cert_qs = CourseCertificate.objects.all()
+        if snapshot:
+            certs_snapshot = filter_snapshot(cert_qs, 'issued_at', until)
+            certs_in_period = filter_in_window(cert_qs, 'issued_at', since, until)
+        else:
+            certs_in_period = filter_in_window(cert_qs, 'issued_at', since, until)
+            certs_snapshot = certs_in_period
         certificates_by_level = list(
-            certs_in_period.values('enrollment__course__difficulty')
+            certs_snapshot.values('enrollment__course__difficulty')
             .annotate(count=Count('id'))
             .order_by('enrollment__course__difficulty')
         )
@@ -499,12 +512,12 @@ class AdminChartMetricsView(APIView):
             'generated_at': now.isoformat(),
             'period': period_payload(window),
             'summary': {
-                'total_users': users_in_period.count(),
+                'total_users': users_snapshot.count(),
                 'active_users': active_in_period,
-                'total_courses': courses_in_period.count(),
-                'published_courses': courses_in_period.filter(is_published=True).count(),
+                'total_courses': courses_snapshot.count(),
+                'published_courses': courses_snapshot.filter(is_published=True).count(),
                 'total_sessions': sessions_in_period.count(),
-                'certificates_issued': certs_in_period.count(),
+                'certificates_issued': certs_snapshot.count(),
             },
             'charts': {
                 'user_growth': [

@@ -55,6 +55,49 @@ class AdminChartMetricsTests(TestCase):
         self.assertEqual(response.data['period']['start_date'], '2026-08-01')
         self.assertEqual(response.data['period']['end_date'], '2026-08-27')
         self.assertEqual(response.data['period']['days'], 27)
+        self.assertTrue(response.data['period']['snapshot'])
+
+    def test_custom_range_uses_snapshot_for_user_summary(self):
+        before = User.objects.create_user(
+            email='snap-before@example.com',
+            username='snapbefore',
+            password='testpass123',
+            role='trainee',
+        )
+        inside = User.objects.create_user(
+            email='snap-inside@example.com',
+            username='snapinside',
+            password='testpass123',
+            role='trainee',
+        )
+        after = User.objects.create_user(
+            email='snap-after@example.com',
+            username='snapafter',
+            password='testpass123',
+            role='trainee',
+        )
+        User.objects.filter(pk=before.pk).update(
+            created_at=_aware(2026, 8, 10),
+            date_joined=_aware(2026, 8, 10),
+        )
+        User.objects.filter(pk=inside.pk).update(
+            created_at=_aware(2026, 8, 20),
+            date_joined=_aware(2026, 8, 20),
+        )
+        User.objects.filter(pk=after.pk).update(
+            created_at=_aware(2026, 8, 25),
+            date_joined=_aware(2026, 8, 25),
+        )
+
+        response = self.client.get(
+            METRICS_URL,
+            {'start_date': '2026-08-20', 'end_date': '2026-08-22'},
+        )
+        self.assertEqual(response.status_code, 200)
+        # Cumulative through end date: admin + before + inside (not after)
+        self.assertEqual(response.data['summary']['total_users'], 3)
+        total_new_in_period = sum(row['count'] for row in response.data['charts']['user_growth'])
+        self.assertEqual(total_new_in_period, 1)
 
     def test_custom_range_includes_start_and_end_dates(self):
         inside_start = User.objects.create_user(

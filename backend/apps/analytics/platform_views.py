@@ -12,7 +12,12 @@ from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.analytics.metrics_window import filter_in_window, parse_metrics_window, period_payload
+from apps.analytics.metrics_window import (
+    filter_in_window,
+    filter_snapshot,
+    parse_metrics_window,
+    period_payload,
+)
 from apps.simulations.models import CourseCertificate, SimulationSession
 from apps.simulations.permissions import IsPlatformAnalyticsStaff
 
@@ -90,9 +95,18 @@ class PlatformOverviewView(APIView):
                 'in_period': month_ago_cert,
             }
         else:
-            users_in_period = filter_in_window(users_qs, 'created_at', since, until)
+            snapshot = window.get('custom', False)
+            user_date_field = 'date_joined' if snapshot else 'created_at'
+
+            if snapshot:
+                users_base = filter_snapshot(users_qs, user_date_field, until)
+                users_new = filter_in_window(users_qs, user_date_field, since, until)
+            else:
+                users_base = filter_in_window(users_qs, user_date_field, since, until)
+                users_new = users_base
+
             by_role = dict(
-                users_in_period.values('role').annotate(c=Count('id')).values_list('role', 'c')
+                users_base.values('role').annotate(c=Count('id')).values_list('role', 'c')
             )
             active_in_period = 0
             try:
@@ -109,28 +123,30 @@ class PlatformOverviewView(APIView):
                     .count()
                 )
             except Exception:
-                active_in_period = users_in_period.filter(is_active=True, status='active').count()
+                active_in_period = users_base.filter(is_active=True, status='active').count()
 
             sessions_in_period = filter_in_window(
                 SimulationSession.objects.all(), 'started_at', since, until,
             )
-            certs_in_period = filter_in_window(
-                CourseCertificate.objects.select_related('enrollment__course'),
-                'issued_at',
-                since,
-                until,
-            )
+            cert_qs = CourseCertificate.objects.select_related('enrollment__course')
+            if snapshot:
+                certs_base = filter_snapshot(cert_qs, 'issued_at', until)
+                certs_in_period = filter_in_window(cert_qs, 'issued_at', since, until)
+            else:
+                certs_base = filter_in_window(cert_qs, 'issued_at', since, until)
+                certs_in_period = certs_base
+
             users_payload = {
-                'total': users_in_period.count(),
+                'total': users_base.count(),
                 'active': active_in_period,
-                'inactive': users_in_period.filter(is_active=False).count(),
+                'inactive': users_base.filter(is_active=False).count(),
                 'by_role': {
                     'trainee': by_role.get('trainee', 0),
                     'supervisor': by_role.get('supervisor', 0),
                     'instructor': by_role.get('instructor', 0),
                     'admin': by_role.get('admin', 0),
                 },
-                'new_in_period': users_in_period.count(),
+                'new_in_period': users_new.count(),
             }
             sims_payload = {
                 'total_sessions': sessions_in_period.count(),
@@ -144,7 +160,7 @@ class PlatformOverviewView(APIView):
                 'active_learners': sessions_in_period.values('user').distinct().count(),
             }
             certs_payload = {
-                'total_issued': certs_in_period.count(),
+                'total_issued': certs_base.count(),
                 'in_period': certs_in_period.count(),
             }
 
@@ -272,39 +288,41 @@ class PlatformCertificationAnalyticsView(APIView):
 
         since = window['since']
         until = window['until']
+        snapshot = window.get('custom', False)
 
-        certs = filter_in_window(
-            CourseCertificate.objects.select_related(
-                'enrollment__course',
-                'enrollment__trainee',
-            ),
-            'issued_at',
-            since,
-            until,
+        cert_qs = CourseCertificate.objects.select_related(
+            'enrollment__course',
+            'enrollment__trainee',
         )
+        if snapshot:
+            certs_snapshot = filter_snapshot(cert_qs, 'issued_at', until)
+            certs_trend = filter_in_window(cert_qs, 'issued_at', since, until)
+        else:
+            certs_snapshot = filter_in_window(cert_qs, 'issued_at', since, until)
+            certs_trend = certs_snapshot
 
         by_difficulty = list(
-            certs.values('enrollment__course__difficulty')
+            certs_snapshot.values('enrollment__course__difficulty')
             .annotate(count=Count('id'))
             .order_by('enrollment__course__difficulty')
         )
 
         trend = list(
-            certs.annotate(month=TruncMonth('issued_at'))
+            certs_trend.annotate(month=TruncMonth('issued_at'))
             .values('month')
             .annotate(count=Count('id'))
             .order_by('month')
         )
 
         leaderboard = list(
-            certs.values('enrollment__trainee__email')
+            certs_snapshot.values('enrollment__trainee__email')
             .annotate(certificates=Count('id'))
             .order_by('-certificates')[:15]
         )
 
         return Response({
             'period': period_payload(window),
-            'total_issued': certs.count(),
+            'total_issued': certs_snapshot.count(),
             'by_course_difficulty': [
                 {
                     'difficulty': r['enrollment__course__difficulty'],

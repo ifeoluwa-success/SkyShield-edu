@@ -22,6 +22,13 @@ def filter_in_window(qs, field, start_dt, end_dt=None):
     return qs
 
 
+def filter_snapshot(qs, field, until):
+    """Cumulative records strictly before until (through end of inclusive date range)."""
+    if until is None:
+        return qs
+    return qs.filter(**{f'{field}__lt': until})
+
+
 def period_payload(window):
     payload = {'all_time': window.get('all_time', False)}
     if window.get('days') is not None:
@@ -30,8 +37,10 @@ def period_payload(window):
         payload['start_date'] = window['start_date'].isoformat()
         payload['end_date'] = window['end_date'].isoformat()
         payload['custom'] = True
+        payload['snapshot'] = True
     else:
         payload['custom'] = False
+        payload['snapshot'] = False
     return payload
 
 

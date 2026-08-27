@@ -194,6 +194,8 @@ const AdminDashboardPage: React.FC = () => {
 
   const users = platform.users;
   const sims = platform.simulations;
+  const isSnapshot = platform.period?.snapshot === true;
+  const snapshotEndLabel = platform.period?.end_date ?? appliedCustomRange?.end_date;
   const activeRate = users.total ? Math.round((users.active / users.total) * 100) : 0;
   const completionRate = sims.total_sessions
     ? Math.round((sims.completed / sims.total_sessions) * 100)
@@ -298,8 +300,8 @@ const AdminDashboardPage: React.FC = () => {
         </h2>
         <div className="analytics-section-grid">
           <AnalyticsStatCard
-            label="New users"
-            value={users.new_in_period ?? users.total}
+            label={isSnapshot ? 'Total users' : 'New users'}
+            value={isSnapshot ? users.total : (users.new_in_period ?? users.total)}
             icon={<Users size={18} />}
           />
           <AnalyticsStatCard
@@ -307,14 +309,25 @@ const AdminDashboardPage: React.FC = () => {
             value={users.active}
             variant="success"
             barPercent={activeRate}
+            hint={isSnapshot ? 'Logged in during selected range' : undefined}
           />
+          {isSnapshot && users.new_in_period != null && (
+            <AnalyticsStatCard
+              label="New registrations"
+              value={users.new_in_period}
+              hint={`During ${periodLabel}`}
+            />
+          )}
           <AnalyticsStatCard label="Trainees" value={users.by_role.trainee} />
           <AnalyticsStatCard label="Supervisors" value={users.by_role.supervisor} />
           <AnalyticsStatCard label="Instructors" value={users.by_role.instructor} />
           <AnalyticsStatCard label="Admins" value={users.by_role.admin} />
         </div>
         <div className="admin-charts-grid">
-          <AdminPieChart title="New users by role" data={rolePieData} />
+          <AdminPieChart
+            title={isSnapshot ? 'User base by role' : 'New users by role'}
+            data={rolePieData}
+          />
           {userAnalytics && userAnalytics.registration_trend.length > 0 && (
             <AdminAreaChart
               title={`Registrations (${periodLabel})`}
@@ -372,7 +385,11 @@ const AdminDashboardPage: React.FC = () => {
           </h2>
           <div className="analytics-section-grid">
             <AnalyticsStatCard
-              label="Issued in period"
+              label={
+                isSnapshot && snapshotEndLabel
+                  ? `Issued through ${snapshotEndLabel}`
+                  : 'Issued in period'
+              }
               value={certs.total_issued}
               icon={<Award size={18} />}
             />
@@ -446,14 +463,21 @@ const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="analytics-section-grid">
-            <AnalyticsStatCard label="Courses" value={chartMetrics.summary.total_courses} />
             <AnalyticsStatCard
-              label="Published courses"
+              label={isSnapshot ? 'Courses (through end date)' : 'Courses'}
+              value={chartMetrics.summary.total_courses}
+            />
+            <AnalyticsStatCard
+              label={isSnapshot ? 'Published courses (through end date)' : 'Published courses'}
               value={chartMetrics.summary.published_courses}
               variant="success"
             />
             <AnalyticsStatCard
-              label="Certificates"
+              label={
+                isSnapshot && snapshotEndLabel
+                  ? `Certificates through ${snapshotEndLabel}`
+                  : 'Certificates'
+              }
               value={chartMetrics.summary.certificates_issued}
             />
           </div>
@@ -480,7 +504,7 @@ const AdminDashboardPage: React.FC = () => {
               }))}
             />
             <AdminPieChart
-              title="Users by account status"
+              title={isSnapshot ? 'User base by account status' : 'Users by account status'}
               data={chartMetrics.charts.users_by_status.map(r => ({
                 name: r.status,
                 value: r.count,
@@ -494,7 +518,9 @@ const AdminDashboardPage: React.FC = () => {
               }))}
             />
             <AdminPieChart
-              title="Certificates by level"
+              title={
+                isSnapshot ? 'Certificates by level (cumulative)' : 'Certificates by level'
+              }
               data={chartMetrics.charts.certificates_by_level.map(r => ({
                 name: r.level,
                 value: r.count,
