@@ -17,6 +17,7 @@ from .orchestrator import (
 )
 from .models import IncidentEvent
 from .pagination import IncidentEventPagination
+from .permissions import CanAccessIncidentRun, incident_runs_queryset_for_user
 from .serializers import (
     IncidentRunListSerializer,
     IncidentRunSerializer,
@@ -34,14 +35,6 @@ class StartMissionSerializer(serializers.Serializer):
 
 
 logger = logging.getLogger(__name__)
-
-LOBBY_ACTIONS = frozenset(
-    {
-        'join',
-        'state',
-        'participants',
-    }
-)
 
 
 class JoinMissionSerializer(serializers.Serializer):
@@ -82,7 +75,7 @@ class IsSupervisorOrAdmin:
 
 
 class IncidentRunViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, CanAccessIncidentRun]
     pagination_class = IncidentEventPagination
 
     def get_queryset(self):
@@ -104,11 +97,7 @@ class IncidentRunViewSet(viewsets.ModelViewSet):
                     to_attr='_recent_events',
                 )
             )
-        if getattr(user, 'role', None) in ['supervisor', 'admin']:
-            return base.all()
-        if action in LOBBY_ACTIONS:
-            return base.exclude(status__in=['completed', 'failed', 'abandoned'])
-        return base.filter(mission_participants__user=user)
+        return incident_runs_queryset_for_user(user, base)
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -143,6 +132,7 @@ class IncidentRunViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def actions(self, request, pk=None):
         """POST /incidents/{id}/actions/ — submit a decision"""
+        self.get_object()
         serializer = MissionActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         orchestrator = ScenarioOrchestrator()
@@ -165,6 +155,7 @@ class IncidentRunViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def state(self, request, pk=None):
         """GET /incidents/{id}/state/"""
+        self.get_object()
         orchestrator = ScenarioOrchestrator()
         return Response(orchestrator.get_current_state(pk))
 
@@ -219,8 +210,14 @@ class IncidentRunViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def acknowledge(self, request, pk=None):
         """POST /incidents/{id}/acknowledge/"""
+        self.get_object()
         orchestrator = ScenarioOrchestrator()
-        result = orchestrator.acknowledge_briefing(pk, request.user)
+        try:
+            result = orchestrator.acknowledge_briefing(pk, request.user)
+        except MissionNotFound:
+            return Response({'error': 'Mission not found'}, status=404)
+        except UnauthorizedAction:
+            return Response({'error': 'Not a participant'}, status=403)
         return Response(result)
 
     @extend_schema(
@@ -230,8 +227,14 @@ class IncidentRunViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def abandon(self, request, pk=None):
         """POST /incidents/{id}/abandon/"""
+        self.get_object()
         orchestrator = ScenarioOrchestrator()
-        result = orchestrator.abandon_mission(pk, request.user)
+        try:
+            result = orchestrator.abandon_mission(pk, request.user)
+        except MissionNotFound:
+            return Response({'error': 'Mission not found'}, status=404)
+        except UnauthorizedAction:
+            return Response({'error': 'Not a participant'}, status=403)
         return Response(result)
 
     @extend_schema(
@@ -284,6 +287,8 @@ class IncidentRunViewSet(viewsets.ModelViewSet):
             participant, created = orchestrator.join_mission(pk, request.user, role)
         except MissionNotFound:
             return Response({'error': 'Mission not found'}, status=404)
+        except UnauthorizedAction:
+            return Response({'error': 'Not authorized for this mission'}, status=403)
         except MissionAlreadyComplete:
             return Response(
                 {'error': 'Mission has ended; new participants are not accepted'},

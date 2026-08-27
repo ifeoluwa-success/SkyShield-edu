@@ -17,6 +17,7 @@ from .orchestrator import (
     PhaseTimedOut,
 )
 from .models import IncidentRun, MissionParticipant
+from .permissions import user_can_access_mission
 from .state_machine import MissionStateMachine
 from .ws_support import channel_safe, is_client_disconnect, log_client_disconnect, peer_from_scope
 from .ws_channel import ensure_channel_layer, redis_ping
@@ -58,6 +59,15 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=4004)
             return
 
+        if not await self.user_authorized_for_run(self.user, self.run):
+            logger.info(
+                'mission.ws_connect_denied_unauthorized run_id=%s user_id=%s',
+                run_id,
+                self.user.pk,
+            )
+            await self.close(code=4003)
+            return
+
         self.run_id = str(run_id)
         self.group_name = f'mission_{self.run_id}'
         self._peer = peer_from_scope(self.scope)
@@ -77,6 +87,14 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
                 self.user.pk,
             )
             await self.close(code=4005)
+            return
+        except UnauthorizedAction:
+            logger.info(
+                'mission.ws_connect_denied_unauthorized run_id=%s user_id=%s',
+                run_id,
+                self.user.pk,
+            )
+            await self.close(code=4003)
             return
         except MissionNotFound:
             await self.close(code=4004)
@@ -462,6 +480,10 @@ class MissionConsumer(AsyncJsonWebsocketConsumer):
                 'phase': event['phase'],
             }
         )
+
+    @database_sync_to_async
+    def user_authorized_for_run(self, user, run):
+        return user_can_access_mission(user, run)
 
     @database_sync_to_async
     def get_user_from_token(self):
