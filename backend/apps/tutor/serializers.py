@@ -97,6 +97,8 @@ class TeachingSessionSerializer(serializers.ModelSerializer):
     internal_meeting_details = serializers.SerializerMethodField()
     materials = serializers.ListField(child=serializers.UUIDField(), default=list)
     materials_count = serializers.SerializerMethodField()
+    meeting_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    has_meeting_password = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ", read_only=True)
     updated_at = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ", read_only=True)
     start_time = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ")
@@ -108,13 +110,16 @@ class TeachingSessionSerializer(serializers.ModelSerializer):
             'id', 'tutor', 'tutor_name', 'title', 'description',
             'session_type', 'platform', 'start_time', 'end_time',
             'timezone', 'meeting_link', 'meeting_id', 'meeting_password',
+            'has_meeting_password',
             'internal_meeting', 'internal_meeting_details',
             'max_attendees', 'current_attendees', 'is_cancelled',
             'cancellation_reason', 'recording_url', 'recording_available',
             'materials', 'materials_count', 'status', 'is_full',
             'meeting_details', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'current_attendees']
+        read_only_fields = [
+            'id', 'created_at', 'updated_at', 'current_attendees', 'has_meeting_password',
+        ]
     
     @extend_schema_field(serializers.CharField())
     def get_tutor_name(self, obj):
@@ -123,6 +128,10 @@ class TeachingSessionSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.BooleanField())
     def get_is_full(self, obj):
         return obj.current_attendees >= obj.max_attendees
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_has_meeting_password(self, obj):
+        return bool(obj.meeting_password)
     
     @extend_schema_field(serializers.CharField())
     def get_status(self, obj):
@@ -144,7 +153,7 @@ class TeachingSessionSerializer(serializers.ModelSerializer):
             return {
                 'link': obj.meeting_link,
                 'id': obj.meeting_id,
-                'password': obj.meeting_password
+                'has_password': bool(obj.meeting_password),
             }
         return None
     

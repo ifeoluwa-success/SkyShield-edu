@@ -84,6 +84,7 @@ class MeetingListSerializer(serializers.ModelSerializer):
     meeting_type_display = serializers.CharField(source='get_meeting_type_display', read_only=True)
     is_host = serializers.SerializerMethodField()
     can_join = serializers.SerializerMethodField()
+    has_password = serializers.SerializerMethodField()
     scheduled_start = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ")
     scheduled_end = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ")
     actual_start = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ", allow_null=True)
@@ -98,7 +99,7 @@ class MeetingListSerializer(serializers.ModelSerializer):
             'host', 'host_name', 'tutor_profile', 'meeting_type', 'meeting_type_display',
             'status', 'status_display', 'scheduled_start', 'scheduled_end',
             'actual_start', 'actual_end', 'max_participants', 'participant_count',
-            'is_private', 'is_host', 'can_join', 'recording_available',
+            'is_private', 'has_password', 'is_host', 'can_join', 'recording_available',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'meeting_code', 'room_name', 'actual_start', 
@@ -115,6 +116,10 @@ class MeetingListSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.host == request.user
         return False
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_has_password(self, obj):
+        return bool(obj.password)
     
     @extend_schema_field(serializers.BooleanField())
     def get_can_join(self, obj):
@@ -149,6 +154,8 @@ class MeetingDetailSerializer(serializers.ModelSerializer):
     meeting_type_display = serializers.CharField(source='get_meeting_type_display', read_only=True)
     is_host = serializers.SerializerMethodField()
     join_url = serializers.SerializerMethodField()
+    has_password = serializers.SerializerMethodField()
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     settings = serializers.JSONField(default=dict)
     metadata = serializers.JSONField(default=dict)
     scheduled_start = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ")
@@ -167,7 +174,7 @@ class MeetingDetailSerializer(serializers.ModelSerializer):
             'actual_start', 'actual_end', 'max_participants', 'participant_count',
             'peak_participants', 'duration_seconds', 'is_private',
             'require_host_to_start', 'allow_recording', 'allow_chat',
-            'allow_screen_share', 'password', 'waiting_room_enabled',
+            'allow_screen_share', 'password', 'has_password', 'waiting_room_enabled',
             'lock_on_start', 'recording_url', 'recording_available',
             'settings', 'metadata', 'participants', 'is_host', 'join_url',
             'created_at', 'updated_at'
@@ -175,7 +182,8 @@ class MeetingDetailSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'meeting_code', 'room_name', 'actual_start', 'actual_end',
             'peak_participants', 'duration_seconds', 'participant_count',
-            'recording_url', 'recording_available', 'created_at', 'updated_at'
+            'recording_url', 'recording_available', 'created_at', 'updated_at',
+            'has_password',
         ]
     
     @extend_schema_field(serializers.DictField())
@@ -196,6 +204,10 @@ class MeetingDetailSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.host == request.user
         return False
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_has_password(self, obj):
+        return bool(obj.password)
     
     @extend_schema_field(serializers.URLField(allow_null=True))
     def get_join_url(self, obj):
@@ -210,6 +222,7 @@ class MeetingCreateSerializer(serializers.ModelSerializer):
     scheduled_end = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ")
     settings = serializers.JSONField(required=False, default=dict)
     metadata = serializers.JSONField(required=False, default=dict)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     
     class Meta:
         model = Meeting

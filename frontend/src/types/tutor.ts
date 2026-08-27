@@ -96,7 +96,9 @@ export interface TeachingSession {
   timezone?: string;
   meeting_link?: string;
   meeting_id?: string;
+  /** Write-only when creating/updating; never returned on reads. */
   meeting_password?: string;
+  has_meeting_password?: boolean;
   internal_meeting?: string | null;
   internal_meeting_details?: Record<string, unknown>;
   max_attendees: number;
@@ -115,7 +117,7 @@ export interface TeachingSession {
   meeting_details?: {
     link: string;
     id: string;
-    password: string;
+    has_password: boolean;
   } | null;
 }
 

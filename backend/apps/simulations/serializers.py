@@ -85,7 +85,7 @@ class ScenarioDetailSerializer(serializers.ModelSerializer):
     threat_type_display = serializers.SerializerMethodField()
     difficulty_display = serializers.SerializerMethodField()
     tags = serializers.ListField(child=serializers.CharField(), default=list)
-    steps = serializers.ListField(child=serializers.DictField(), default=list)
+    steps = serializers.SerializerMethodField()
     hints = serializers.ListField(child=serializers.CharField(), default=list)
     learning_objectives = serializers.ListField(child=serializers.CharField(), default=list)
     supporting_docs = serializers.ListField(child=serializers.DictField(), default=list)
@@ -121,6 +121,11 @@ class ScenarioDetailSerializer(serializers.ModelSerializer):
     def get_difficulty_display(self, obj):
         return obj.get_difficulty_display()
     
+    @extend_schema_field(serializers.ListField(child=serializers.DictField()))
+    def get_steps(self, obj):
+        from .answer_keys import sanitize_steps
+        return sanitize_steps(obj.steps or [])
+    
     @extend_schema_field(serializers.IntegerField())
     def get_steps_count(self, obj):
         return len(obj.steps) if obj.steps else 0
@@ -137,8 +142,8 @@ class SimulationSessionSerializer(serializers.ModelSerializer):
         queryset=Scenario.objects.all(), source='scenario', write_only=True
     )
     status_display = serializers.SerializerMethodField()
-    session_state = serializers.DictField(default=dict)
-    decisions = serializers.ListField(child=serializers.DictField(), default=list)
+    session_state = serializers.SerializerMethodField()
+    decisions = serializers.SerializerMethodField()
     mistakes = serializers.ListField(child=serializers.DictField(), default=list)
     time_remaining = serializers.SerializerMethodField()
     progress_percentage = serializers.SerializerMethodField()
@@ -161,6 +166,19 @@ class SimulationSessionSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.CharField())
     def get_status_display(self, obj):
         return obj.get_status_display()
+    
+    @extend_schema_field(serializers.DictField())
+    def get_session_state(self, obj):
+        from .answer_keys import sanitize_session_state_for_trainee
+        return sanitize_session_state_for_trainee(obj.session_state)
+
+    @extend_schema_field(serializers.ListField(child=serializers.DictField()))
+    def get_decisions(self, obj):
+        from .answer_keys import sanitize_decision_record
+        decisions = obj.decisions or []
+        if not isinstance(decisions, list):
+            return []
+        return [sanitize_decision_record(d) for d in decisions]
     
     @extend_schema_field(serializers.IntegerField())
     def get_time_remaining(self, obj):
@@ -185,9 +203,10 @@ class UserDecisionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserDecision
+        # `is_correct` is kept server-side for scoring; not exposed to trainees.
         fields = [
             'id', 'session', 'step_number', 'decision_type', 'decision_type_display',
-            'decision_data', 'is_correct', 'time_taken', 'feedback', 'created_at'
+            'decision_data', 'time_taken', 'feedback', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
     

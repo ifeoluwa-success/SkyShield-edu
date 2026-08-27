@@ -147,7 +147,8 @@ class ScenarioOrchestrator:
             briefing = scenario.description
 
         steps = scenario.steps or []
-        first_step = steps[0] if steps else None
+        from .answer_keys import sanitize_step
+        first_step = sanitize_step(steps[0]) if steps else None
 
         return {
             'run_id': str(run.id),
