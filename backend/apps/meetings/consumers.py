@@ -35,6 +35,13 @@ class MeetingConsumer(AsyncWebsocketConsumer):
             await self.close(code=4004)
             return
 
+        # ── Authorization (same rules as HTTP join) ───────────────────────────
+        password = self._password_from_query()
+        allowed = await self.authorize_connection(password)
+        if not allowed:
+            await self.close(code=4003)
+            return
+
         # ── Waiting-room logic ────────────────────────────────────────────────
         # Host OR non-trainee roles bypass the waiting room entirely.
         is_host = await self.is_host()
@@ -507,6 +514,29 @@ class MeetingConsumer(AsyncWebsocketConsumer):
     # =========================================================================
     # DATABASE HELPERS
     # =========================================================================
+
+    def _password_from_query(self):
+        try:
+            qs = self.scope['query_string'].decode()
+            params = parse_qs(qs)
+            return (params.get('password') or [''])[0] or ''
+        except Exception:
+            return ''
+
+    @database_sync_to_async
+    def authorize_connection(self, password):
+        from .utils import authorize_meeting_websocket
+        allowed, reason = authorize_meeting_websocket(
+            self.meeting, self.user, password=password,
+        )
+        if not allowed:
+            logger.info(
+                'meeting.ws_auth_denied room=%s user_id=%s reason=%s',
+                self.room_name,
+                getattr(self.user, 'pk', '-'),
+                reason,
+            )
+        return allowed
 
     @database_sync_to_async
     def get_user_from_token(self):
