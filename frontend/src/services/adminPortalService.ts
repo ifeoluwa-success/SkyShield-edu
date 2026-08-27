@@ -79,7 +79,7 @@ export interface AdminLogsResponse {
 
 export interface ChartMetricsResponse {
   generated_at: string;
-  period: { days: number; months: number };
+  period: { days: number; months: number; start_date?: string; end_date?: string };
   summary: Record<string, number>;
   charts: {
     user_growth: { date: string; count: number }[];
@@ -248,6 +248,8 @@ export const patchAdminUserStatus = async (
 export const getAdminChartMetrics = async (params?: {
   days?: number;
   months?: number;
+  start_date?: string;
+  end_date?: string;
 }): Promise<ChartMetricsResponse> => {
   const res = await api.get<ChartMetricsResponse>('/core/admin/metrics/charts/', {
     params: listParams(params),

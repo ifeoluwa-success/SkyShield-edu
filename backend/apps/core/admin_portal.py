@@ -3,12 +3,13 @@ Admin portal REST APIs for the SkyShield frontend.
 All endpoints require role=admin (or Django staff/superuser).
 """
 
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 from django.contrib.auth import get_user_model
 from django.db.models import Avg, Count, Q
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, serializers
 from rest_framework.pagination import PageNumberPagination
@@ -331,32 +332,122 @@ class AdminApiLogsView(generics.ListAPIView):
     queryset = APILog.objects.select_related('user').order_by('-timestamp')
 
 
+MAX_METRICS_RANGE_DAYS = 365
+
+
+def _aware_day_start(d):
+    return timezone.make_aware(datetime.combine(d, time.min))
+
+
+def _filter_in_window(qs, field, start_dt, end_dt=None):
+    qs = qs.filter(**{f'{field}__gte': start_dt})
+    if end_dt is not None:
+        qs = qs.filter(**{f'{field}__lt': end_dt})
+    return qs
+
+
+def _parse_metrics_window(request):
+    """
+    Resolve the metrics time window from query params.
+
+    Preset: ?days=7|30|90 (default 30) — rolling window ending now.
+    Custom: ?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD — inclusive calendar
+    dates in the project timezone (UTC).
+    """
+    start_raw = request.query_params.get('start_date')
+    end_raw = request.query_params.get('end_date')
+    try:
+        months = max(3, min(24, int(request.query_params.get('months', 12))))
+    except (TypeError, ValueError):
+        months = 12
+
+    if start_raw is not None or end_raw is not None:
+        if not start_raw or not end_raw:
+            return None, Response(
+                {'error': 'start_date and end_date are required together'},
+                status=400,
+            )
+        try:
+            start = parse_date(str(start_raw).strip())
+            end = parse_date(str(end_raw).strip())
+        except (TypeError, ValueError):
+            start = None
+            end = None
+        if start is None or end is None:
+            return None, Response(
+                {'error': 'Invalid date format. Use YYYY-MM-DD.'},
+                status=400,
+            )
+        if start > end:
+            return None, Response(
+                {'error': 'start_date must be on or before end_date'},
+                status=400,
+            )
+        span_days = (end - start).days + 1
+        if span_days > MAX_METRICS_RANGE_DAYS:
+            return None, Response(
+                {'error': f'Date range cannot exceed {MAX_METRICS_RANGE_DAYS} days'},
+                status=400,
+            )
+        range_start = _aware_day_start(start)
+        range_end = _aware_day_start(end + timedelta(days=1))
+        return {
+            'days': span_days,
+            'months': months,
+            'since_days': range_start,
+            'until_days': range_end,
+            'since_months': range_start,
+            'until_months': range_end,
+            'start_date': start,
+            'end_date': end,
+            'custom': True,
+        }, None
+
+    try:
+        days = max(7, min(MAX_METRICS_RANGE_DAYS, int(request.query_params.get('days', 30))))
+    except (TypeError, ValueError):
+        days = 30
+    now = timezone.now()
+    return {
+        'days': days,
+        'months': months,
+        'since_days': now - timedelta(days=days),
+        'until_days': None,
+        'since_months': now - timedelta(days=months * 31),
+        'until_months': None,
+        'start_date': None,
+        'end_date': None,
+        'custom': False,
+    }, None
+
+
 class AdminChartMetricsView(APIView):
     """
     GET /api/core/admin/metrics/charts/
     Chart-ready datasets for the admin frontend dashboard.
-    Query: days (default 30), months (default 12)
+    Query: days (default 30), months (default 12),
+    or start_date & end_date (YYYY-MM-DD, inclusive).
     """
     permission_classes = [permissions.IsAuthenticated, IsAppAdmin]
 
     def get(self, request):
-        try:
-            days = max(7, min(365, int(request.query_params.get('days', 30))))
-        except ValueError:
-            days = 30
-        try:
-            months = max(3, min(24, int(request.query_params.get('months', 12))))
-        except ValueError:
-            months = 12
+        window, error = _parse_metrics_window(request)
+        if error is not None:
+            return error
+
+        days = window['days']
+        months = window['months']
+        since_days = window['since_days']
+        until_days = window['until_days']
+        since_months = window['since_months']
+        until_months = window['until_months']
 
         now = timezone.now()
-        since_days = now - timedelta(days=days)
-        since_months = now - timedelta(days=months * 31)
 
         users = User.objects.filter(deleted_at__isnull=True)
 
         user_growth = list(
-            users.filter(created_at__gte=since_days)
+            _filter_in_window(users, 'created_at', since_days, until_days)
             .annotate(day=TruncDate('created_at'))
             .values('day')
             .annotate(count=Count('id'))
@@ -382,9 +473,11 @@ class AdminChartMetricsView(APIView):
         try:
             from apps.users.models import UserActivity
             login_activity = list(
-                UserActivity.objects.filter(
-                    activity_type='login',
-                    timestamp__gte=since_days,
+                _filter_in_window(
+                    UserActivity.objects.filter(activity_type='login'),
+                    'timestamp',
+                    since_days,
+                    until_days,
                 )
                 .annotate(day=TruncDate('timestamp'))
                 .values('day')
@@ -400,7 +493,12 @@ class AdminChartMetricsView(APIView):
         )
 
         simulation_scores_trend = list(
-            sessions.filter(status='completed', completed_at__gte=since_months)
+            _filter_in_window(
+                sessions.filter(status='completed'),
+                'completed_at',
+                since_months,
+                until_months,
+            )
             .annotate(month=TruncMonth('completed_at'))
             .values('month')
             .annotate(
@@ -412,7 +510,12 @@ class AdminChartMetricsView(APIView):
         )
 
         enrollments_trend = list(
-            CourseEnrollment.objects.filter(enrolled_at__gte=since_months)
+            _filter_in_window(
+                CourseEnrollment.objects.all(),
+                'enrolled_at',
+                since_months,
+                until_months,
+            )
             .annotate(month=TruncMonth('enrolled_at'))
             .values('month')
             .annotate(count=Count('id'))
@@ -431,7 +534,7 @@ class AdminChartMetricsView(APIView):
         )
 
         certificate_trend = list(
-            certs.filter(issued_at__gte=since_months)
+            _filter_in_window(certs, 'issued_at', since_months, until_months)
             .annotate(month=TruncMonth('issued_at'))
             .values('month')
             .annotate(count=Count('id'))
@@ -439,7 +542,7 @@ class AdminChartMetricsView(APIView):
         )
 
         errors_by_day = list(
-            ErrorLog.objects.filter(created_at__gte=since_days)
+            _filter_in_window(ErrorLog.objects.all(), 'created_at', since_days, until_days)
             .annotate(day=TruncDate('created_at'))
             .values('day')
             .annotate(count=Count('id'))
@@ -460,9 +563,14 @@ class AdminChartMetricsView(APIView):
             d = row.get(key) or row.get('month')
             return d.isoformat() if d else None
 
+        period = {'days': days, 'months': months}
+        if window['custom']:
+            period['start_date'] = window['start_date'].isoformat()
+            period['end_date'] = window['end_date'].isoformat()
+
         return Response({
             'generated_at': now.isoformat(),
-            'period': {'days': days, 'months': months},
+            'period': period,
             'summary': {
                 'total_users': users.count(),
                 'active_users': users.filter(is_active=True, status='active').count(),
