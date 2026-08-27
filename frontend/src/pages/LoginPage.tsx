@@ -4,6 +4,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { canAccessPath, getHomePathForRole, normalizeRole } from '../lib/authRouting';
 import type { UserRole } from '../types/auth';
+import { isTwoFactorRequiredError } from '../services/authService';
 import {
   Lock, User, Shield, AlertCircle,
   CheckCircle, Info, Eye, EyeOff, ArrowLeft
@@ -37,7 +38,7 @@ function extractErrorMessage(err: unknown): string {
     if (typeof d.detail === 'string' && d.detail) return d.detail;
     if (Array.isArray(d.non_field_errors) && d.non_field_errors.length) return String(d.non_field_errors[0]);
     const fieldMessages: string[] = [];
-    for (const key of ['identifier', 'password', 'email', 'username']) {
+    for (const key of ['identifier', 'password', 'email', 'username', 'otp', 'temp_token']) {
       const val = d[key];
       if (Array.isArray(val) && val.length) fieldMessages.push(String(val[0]));
       else if (typeof val === 'string' && val) fieldMessages.push(val);
@@ -59,10 +60,12 @@ const LoginPage: React.FC = () => {
   const [infoMessage, setInfoMessage]     = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading]   = useState(false);
+  const [pendingToken, setPendingToken] = useState('');
+  const [otp, setOtp] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated, user } = useAuth();
+  const { login, completeTwoFactorLogin, isAuthenticated, user } = useAuth();
 
   const clearMessages = () => { setError(''); setInfoMessage(''); setSuccessMessage(''); };
 
@@ -79,6 +82,15 @@ const LoginPage: React.FC = () => {
     navigate(getHomePathForRole(role), { replace: true });
   }, [isAuthenticated, user, location.state, navigate]);
 
+  const redirectAfterLogin = (role: UserRole) => {
+    const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+    if (from && canAccessPath(role, from)) {
+      navigate(from, { replace: true });
+    } else {
+      navigate(getHomePathForRole(role), { replace: true });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
@@ -87,18 +99,39 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     try {
       const loggedIn = await login(identifier, password);
-      const role = normalizeRole(loggedIn.role) as UserRole;
-      const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
-      if (from && canAccessPath(role, from)) {
-        navigate(from, { replace: true });
-      } else {
-        navigate(getHomePathForRole(role), { replace: true });
+      redirectAfterLogin(normalizeRole(loggedIn.role) as UserRole);
+    } catch (err: unknown) {
+      if (isTwoFactorRequiredError(err)) {
+        setPendingToken(err.tempToken);
+        setOtp('');
+        setInfoMessage('Enter the code from your authenticator app to finish signing in.');
+        return;
       }
+      setError(extractErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTwoFactorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearMessages();
+    if (!otp.trim()) { setError('Verification code is required'); return; }
+    setIsLoading(true);
+    try {
+      const loggedIn = await completeTwoFactorLogin(pendingToken, otp.trim());
+      redirectAfterLogin(normalizeRole(loggedIn.role) as UserRole);
     } catch (err: unknown) {
       setError(extractErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const cancelTwoFactor = () => {
+    setPendingToken('');
+    setOtp('');
+    clearMessages();
   };
 
   useEffect(() => {
@@ -128,8 +161,8 @@ const LoginPage: React.FC = () => {
           </Link>
 
           <div className="login-header">
-            <h2>Welcome back</h2>
-            <p>Sign in to continue your training</p>
+            <h2>{pendingToken ? 'Two-factor verification' : 'Welcome back'}</h2>
+            <p>{pendingToken ? 'Confirm the code from your authenticator app' : 'Sign in to continue your training'}</p>
           </div>
 
           {/* Alert banners */}
@@ -155,7 +188,38 @@ const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* Form */}
+          {pendingToken ? (
+          <form className="login-form" onSubmit={handleTwoFactorSubmit} noValidate>
+            <div className="form-group">
+              <label htmlFor="otp">
+                <Shield size={15} />
+                <span>Authenticator code</span>
+              </label>
+              <input
+                type="text"
+                id="otp"
+                name="otp"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={otp}
+                onChange={e => { setOtp(e.target.value); clearMessages(); }}
+                placeholder="6-digit code or backup code"
+                className="form-input"
+                disabled={isLoading}
+              />
+            </div>
+
+            <button type="submit" className="login-button" disabled={isLoading}>
+              {isLoading
+                ? <><Spinner size="sm" className="text-[#020c1b]" /><span>Verifying…</span></>
+                : <><Shield size={18} /><span>Verify and Sign In</span></>}
+            </button>
+            <button type="button" className="auth-back-link" onClick={cancelTwoFactor} disabled={isLoading}>
+              <ArrowLeft size={16} />
+              <span>Back to sign in</span>
+            </button>
+          </form>
+          ) : (
           <form className="login-form" onSubmit={handleSubmit} noValidate>
             <div className="form-group">
               <label htmlFor="identifier">
@@ -218,6 +282,7 @@ const LoginPage: React.FC = () => {
                 : <><Shield size={18} /><span>Sign In</span></>}
             </button>
           </form>
+          )}
 
           <p className="auth-switch-link">
             Don't have an account?{' '}

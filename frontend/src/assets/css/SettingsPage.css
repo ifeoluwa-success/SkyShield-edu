@@ -156,3 +156,50 @@
 @media (max-width: 480px) {
   .settings-page { padding: 0.75rem; }
 }
+
+/* Two-factor authentication */
+.twofa-status { margin: 0.75rem 0 1rem; font-size: 0.875rem; color: var(--text-secondary); }
+.twofa-panel { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.75rem; }
+.twofa-qr {
+  width: 180px; height: 180px;
+  border-radius: var(--radius-md);
+  background: #fff; padding: 0.5rem;
+  align-self: flex-start;
+}
+.twofa-secret {
+  display: block;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+.twofa-label {
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.twofa-input {
+  width: 100%; max-width: 280px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 0.45rem 0.7rem; font-size: 0.875rem;
+}
+.twofa-actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.twofa-backup-codes {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem; margin: 0; padding: 0; list-style: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85rem;
+}
+.twofa-backup-codes li {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.55rem;
+  text-align: center;
+}

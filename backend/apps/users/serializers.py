@@ -163,9 +163,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'email_verified', 'email_notifications', 'two_factor_enabled',
             'created_at', 'last_active', 'can_create_meeting'
         ]
+        # Server-controlled identity, training, and security fields are
+        # readable on the profile but never writable via PATCH/PUT.
         read_only_fields = [
-            'id', 'email', 'created_at', 'total_score',
-            'simulations_completed', 'email_verified', 'last_active'
+            'id', 'email', 'role', 'status', 'created_at', 'last_active',
+            'training_level', 'total_score', 'simulations_completed',
+            'average_response_time', 'accuracy_rate', 'certifications',
+            'email_verified', 'two_factor_enabled',
         ]
 
     @extend_schema_field(serializers.CharField())
@@ -177,9 +181,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return obj.can_create_meeting()
 
     def update(self, instance, validated_data):
-        validated_data.pop('email', None)
-        validated_data.pop('role', None)
-        validated_data.pop('status', None)
+        # Defense in depth: never persist server-controlled fields even if a
+        # caller bypasses read_only_fields (e.g. extra kwargs / extra fields).
+        for field in (
+            'email', 'role', 'status', 'is_staff', 'is_superuser', 'is_active',
+            'training_level', 'total_score', 'simulations_completed',
+            'average_response_time', 'accuracy_rate', 'certifications',
+            'weak_areas', 'strong_areas', 'email_verified',
+            'two_factor_enabled', 'two_factor_secret',
+            'login_attempts', 'account_locked_until', 'password_changed_at',
+            'email_verification_token', 'last_login_ip',
+        ):
+            validated_data.pop(field, None)
         return super().update(instance, validated_data)
 
 
@@ -312,3 +325,25 @@ class TokenResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
     refresh = serializers.CharField()
     user = UserProfileSerializer()
+
+
+class TwoFactorConfirmSerializer(serializers.Serializer):
+    otp = serializers.CharField(required=True, max_length=16)
+
+
+class TwoFactorVerifyLoginSerializer(serializers.Serializer):
+    temp_token = serializers.CharField(required=True)
+    otp = serializers.CharField(required=True, max_length=16)
+
+
+class TwoFactorDisableSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        required=True, write_only=True, style={'input_type': 'password'}
+    )
+    otp = serializers.CharField(required=True, max_length=16)
+
+    def validate_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError('Password is incorrect.')
+        return value

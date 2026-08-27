@@ -53,7 +53,8 @@ api.interceptors.response.use(
     const isAuthEndpoint =
       url.includes('/users/login/') ||
       url.includes('/users/token/refresh/') ||
-      url.includes('/users/register/');
+      url.includes('/users/register/') ||
+      url.includes('/users/2fa/verify-login/');
 
     if (isAuthEndpoint) {
       return Promise.reject(error);

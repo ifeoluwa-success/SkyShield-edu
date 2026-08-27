@@ -7,10 +7,11 @@ import {
   getActiveSessions, terminateSession, terminateOtherSessions,
   type UserDevice, type UserSession,
 } from '../../services/authService';
-import { Bell, Shield, Smartphone, Monitor, LogOut, Trash2, CheckCircle } from 'lucide-react';
+import { Bell, Smartphone, Monitor, LogOut, Trash2, CheckCircle } from 'lucide-react';
 import { showToast } from '../../lib/toast';
 import { Spinner } from '../../components/ui/Loading';
 import SuccessModal from '../../components/SuccessModal';
+import TwoFactorSettings from '../../components/TwoFactorSettings';
 import '../../assets/css/SettingsPage.css';
 
 function toDisplayText(value: unknown): string | null {
@@ -135,15 +136,7 @@ const TutorSettingsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="settings-card">
-          <div className="card-header"><Shield size={20} /><h2>Two-Factor Authentication</h2></div>
-          <div className="card-content">
-            <p>Add an extra layer of security to your account.</p>
-            <button onClick={() => showToast({ type: 'info', message: 'Two-factor authentication setup is coming soon.' })} className="btn-secondary">
-              {user?.two_factor_enabled ? 'Manage 2FA' : 'Enable 2FA'}
-            </button>
-          </div>
-        </div>
+        <TwoFactorSettings />
 
         <div className="settings-card full-width">
           <div className="card-header"><Smartphone size={20} /><h2>Connected Devices</h2></div>

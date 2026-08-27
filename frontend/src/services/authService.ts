@@ -17,15 +17,71 @@ import type {
   ResendVerificationResponse,
   ProfileUpdateRequest,
   User,
+  LoginApiResponse,
+  TwoFactorChallenge,
+  TwoFactorSetupResponse,
+  TwoFactorConfirmResponse,
+  TwoFactorDisableRequest,
+  TwoFactorDisableResponse,
+  TwoFactorVerifyLoginRequest,
 } from '../types/auth';
 
+export class TwoFactorRequiredError extends Error {
+  readonly tempToken: string;
+  readonly requires2FA = true as const;
+
+  constructor(tempToken: string, message = 'Two-factor authentication required') {
+    super(message);
+    this.name = 'TwoFactorRequiredError';
+    this.tempToken = tempToken;
+  }
+}
+
+export function isTwoFactorRequiredError(err: unknown): err is TwoFactorRequiredError {
+  return err instanceof TwoFactorRequiredError;
+}
+
+function isTwoFactorChallenge(data: LoginApiResponse): data is TwoFactorChallenge {
+  return 'requires_2fa' in data && data.requires_2fa === true && typeof data.temp_token === 'string';
+}
+
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
-  const response = await api.post<LoginResponse>('/users/login/', credentials);
+  const response = await api.post<LoginApiResponse>('/users/login/', credentials);
   const data = response.data;
+  if (isTwoFactorChallenge(data)) {
+    throw new TwoFactorRequiredError(data.temp_token, data.message);
+  }
   if (!data.access || !data.refresh) {
     throw new Error('Login succeeded but the server did not return access tokens.');
   }
   return data;
+};
+
+export const verifyTwoFactorLogin = async (
+  data: TwoFactorVerifyLoginRequest,
+): Promise<LoginResponse> => {
+  const response = await api.post<LoginResponse>('/users/2fa/verify-login/', data);
+  if (!response.data.access || !response.data.refresh) {
+    throw new Error('Two-factor verification succeeded but the server did not return access tokens.');
+  }
+  return response.data;
+};
+
+export const setupTwoFactor = async (): Promise<TwoFactorSetupResponse> => {
+  const response = await api.post<TwoFactorSetupResponse>('/users/2fa/setup/');
+  return response.data;
+};
+
+export const confirmTwoFactor = async (otp: string): Promise<TwoFactorConfirmResponse> => {
+  const response = await api.post<TwoFactorConfirmResponse>('/users/2fa/confirm/', { otp });
+  return response.data;
+};
+
+export const disableTwoFactor = async (
+  data: TwoFactorDisableRequest,
+): Promise<TwoFactorDisableResponse> => {
+  const response = await api.post<TwoFactorDisableResponse>('/users/2fa/disable/', data);
+  return response.data;
 };
 
 export const register = async (userData: RegisterRequest): Promise<RegisterResponse> => {

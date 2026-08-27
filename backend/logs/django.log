@@ -660,3 +660,47 @@ INFO 2026-05-26 13:47:33,511 signals 11708 2736 Participant olaniyanp11@gmail.co
 INFO 2026-05-26 13:47:37,172 signals 11708 2736 Participant olaniyanp11@gmail.com joined meeting Navigation Security Office Hours
 INFO 2026-06-08 22:30:07,790 views 7472 23804 User logged in: olaniyanp11@gmail.com (role=trainee)
 INFO 2026-06-08 22:32:03,356 views 7472 19088 User logged out: olaniyanp11@gmail.com
+INFO 2026-08-27 14:11:28,458 views 11816 7488 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:11:28,550 views 11816 7488 User logged in with 2FA: trainee@example.com (role=trainee)
+INFO 2026-08-27 14:11:29,987 views 11816 7488 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:11:34,517 views 11816 7488 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:11:37,471 views 11816 7488 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:11:41,772 views 11816 7488 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:11:44,632 views 11816 7488 User logged in: trainee@example.com (role=trainee)
+INFO 2026-08-27 14:11:47,586 views 11816 7488 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:11:47,594 views 11816 7488 User logged in with 2FA: trainee@example.com (role=trainee)
+INFO 2026-08-27 14:11:57,669 views 11816 7488 2FA disabled for: trainee@example.com
+INFO 2026-08-27 14:11:59,104 views 11816 7488 User logged in: trainee@example.com (role=trainee)
+INFO 2026-08-27 14:12:11,120 views 11816 7488 2FA disabled for: trainee@example.com
+INFO 2026-08-27 14:12:15,646 views 11816 7488 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:12:18,650 views 11816 7488 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:12:20,115 views 11816 7488 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:12:20,133 views 11816 7488 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:12:20,159 views 11816 7488 2FA enabled for: trainee@example.com
+INFO 2026-08-27 14:12:21,615 views 11816 7488 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:12:21,639 views 11816 7488 2FA enabled for: trainee@example.com
+INFO 2026-08-27 14:12:23,301 views 11816 7488 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:12:26,187 views 11816 7488 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:12:26,210 views 11816 7488 2FA enabled for: trainee@example.com
+INFO 2026-08-27 14:17:26,567 views 25344 15220 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:17:26,648 views 25344 15220 User logged in with 2FA: trainee@example.com (role=trainee)
+INFO 2026-08-27 14:17:29,375 views 25344 15220 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:17:37,879 views 25344 15220 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:17:41,830 views 25344 15220 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:17:47,234 views 25344 15220 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:17:50,606 views 25344 15220 User logged in: trainee@example.com (role=trainee)
+INFO 2026-08-27 14:17:53,592 views 25344 15220 2FA challenge issued for: trainee@example.com
+INFO 2026-08-27 14:17:53,599 views 25344 15220 User logged in with 2FA: trainee@example.com (role=trainee)
+INFO 2026-08-27 14:18:05,012 views 25344 15220 2FA disabled for: trainee@example.com
+INFO 2026-08-27 14:18:07,454 views 25344 15220 User logged in: trainee@example.com (role=trainee)
+INFO 2026-08-27 14:18:45,596 views 25344 15220 2FA disabled for: trainee@example.com
+INFO 2026-08-27 14:19:00,066 views 25344 15220 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:19:10,652 views 25344 15220 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:19:16,494 views 25344 15220 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:19:16,559 views 25344 15220 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:19:16,603 views 25344 15220 2FA enabled for: trainee@example.com
+INFO 2026-08-27 14:19:21,470 views 25344 15220 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:19:21,533 views 25344 15220 2FA enabled for: trainee@example.com
+INFO 2026-08-27 14:19:28,337 views 25344 15220 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:19:39,401 views 25344 15220 2FA setup initiated for: trainee@example.com
+INFO 2026-08-27 14:19:39,451 views 25344 15220 2FA enabled for: trainee@example.com

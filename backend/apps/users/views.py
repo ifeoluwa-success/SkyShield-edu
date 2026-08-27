@@ -30,6 +30,9 @@ from .serializers import (
     UserNotificationSerializer,
     UserDeviceSerializer,
     UserSessionSerializer,
+    TwoFactorConfirmSerializer,
+    TwoFactorVerifyLoginSerializer,
+    TwoFactorDisableSerializer,
 )
 from .models import (
     UserSession,
@@ -39,6 +42,7 @@ from .models import (
     UserNotification,
     UserDevice
 )
+from . import two_factor
 
 import uuid
 from datetime import timedelta
@@ -57,9 +61,12 @@ class RegisterResponseSerializer(serializers.Serializer):
 
 
 class LoginResponseSerializer(serializers.Serializer):
-    access = serializers.CharField()
-    refresh = serializers.CharField()
-    user = UserProfileSerializer()
+    access = serializers.CharField(required=False)
+    refresh = serializers.CharField(required=False)
+    user = UserProfileSerializer(required=False)
+    requires_2fa = serializers.BooleanField(required=False)
+    temp_token = serializers.CharField(required=False)
+    message = serializers.CharField(required=False)
 
 
 class LogoutResponseSerializer(serializers.Serializer):
@@ -100,6 +107,65 @@ class TerminateSessionRequestSerializer(serializers.Serializer):
 
 class TerminateOtherSessionsResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
+
+
+class TwoFactorSetupResponseSerializer(serializers.Serializer):
+    secret = serializers.CharField()
+    otpauth_url = serializers.CharField()
+    qr_code = serializers.CharField()
+    two_factor_enabled = serializers.BooleanField()
+
+
+class TwoFactorConfirmResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+    two_factor_enabled = serializers.BooleanField()
+    backup_codes = serializers.ListField(child=serializers.CharField())
+
+
+class TwoFactorDisableResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+    two_factor_enabled = serializers.BooleanField()
+
+
+def _complete_authenticated_login(request, user):
+    """Issue JWTs and session records after password (and 2FA, if any) succeed."""
+    user.reset_login_attempts()
+    user.last_active = timezone.now()
+    user.last_login_ip = request.META.get('REMOTE_ADDR')
+    user.save(update_fields=['last_active', 'last_login_ip'])
+
+    session = UserSession.objects.create(
+        user=user,
+        session_id=str(uuid.uuid4()),
+        ip_address=request.META.get('REMOTE_ADDR') or '0.0.0.0',
+        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        device_info={
+            'browser': request.META.get('HTTP_USER_AGENT', ''),
+        }
+    )
+
+    UserActivity.objects.create(
+        user=user,
+        activity_type='login',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        metadata={'session_id': str(session.id)}
+    )
+
+    refresh = RefreshToken.for_user(user)
+    return {
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
+        'user': UserProfileSerializer(user).data,
+    }
+
+
+def _two_factor_challenge_response(user):
+    return Response({
+        'requires_2fa': True,
+        'temp_token': two_factor.issue_pending_token(user),
+        'message': 'Two-factor authentication required.',
+    }, status=status.HTTP_200_OK)
 
 
 # ==============================================================================
@@ -157,6 +223,8 @@ class GoogleLogin(SocialLoginView):
         response = super().get_response()
         if response.status_code == 200:
             _finalize_social_user(self.user)
+            if getattr(self.user, 'two_factor_enabled', False):
+                return _two_factor_challenge_response(self.user)
             data = dict(response.data)
             data['user'] = UserProfileSerializer(self.user).data
             return Response(data, status=status.HTTP_200_OK)
@@ -175,6 +243,8 @@ class GitHubLogin(SocialLoginView):
         response = super().get_response()
         if response.status_code == 200:
             _finalize_social_user(self.user)
+            if getattr(self.user, 'two_factor_enabled', False):
+                return _two_factor_challenge_response(self.user)
             data = dict(response.data)
             data['user'] = UserProfileSerializer(self.user).data
             return Response(data, status=status.HTTP_200_OK)
@@ -265,42 +335,14 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
 
-            # Reset failed-login counter
+            # Password is correct; reset lockout counter before the 2FA step.
             user.reset_login_attempts()
 
-            # Update last-seen metadata
-            user.last_active = timezone.now()
-            user.last_login_ip = request.META.get('REMOTE_ADDR')
-            user.save(update_fields=['last_active', 'last_login_ip'])
+            if user.two_factor_enabled:
+                logger.info(f"2FA challenge issued for: {user.email}")
+                return _two_factor_challenge_response(user)
 
-            # Create session record
-            session = UserSession.objects.create(
-                user=user,
-                session_id=str(uuid.uuid4()),
-                ip_address=request.META.get('REMOTE_ADDR') or '0.0.0.0',
-                user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                device_info={
-                    'browser': request.META.get('HTTP_USER_AGENT', ''),
-                }
-            )
-
-            # Audit log
-            UserActivity.objects.create(
-                user=user,
-                activity_type='login',
-                ip_address=request.META.get('REMOTE_ADDR'),
-                user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                metadata={'session_id': str(session.id)}
-            )
-
-            # Issue JWT tokens
-            refresh = RefreshToken.for_user(user)
-            response_data = {
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': UserProfileSerializer(user).data,
-            }
-
+            response_data = _complete_authenticated_login(request, user)
             logger.info(f"User logged in: {user.email} (role={user.role})")
             return Response(response_data, status=status.HTTP_200_OK)
 
@@ -799,3 +841,182 @@ class TerminateOtherSessionsView(APIView):
         ).update(is_active=False, logout_time=timezone.now())
         # ↑ Fixed: was `Respons>` (typo) — now `return Response(...)`
         return Response({"message": "All other sessions terminated"})
+
+
+class TwoFactorSetupView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @extend_schema(
+        request=None,
+        responses={
+            200: TwoFactorSetupResponseSerializer,
+            400: OpenApiResponse(description="2FA already enabled"),
+        },
+        description="Start TOTP enrollment. Returns a secret and QR code; 2FA is not enabled until confirm."
+    )
+    def post(self, request):
+        user = request.user
+        if user.two_factor_enabled:
+            return Response(
+                {"detail": "Two-factor authentication is already enabled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        secret = two_factor.generate_totp_secret()
+        user.two_factor_secret = secret
+        user.two_factor_enabled = False
+        user.save(update_fields=['two_factor_secret', 'two_factor_enabled'])
+
+        otpauth_url = two_factor.provisioning_uri(secret, user.email)
+        logger.info(f"2FA setup initiated for: {user.email}")
+        return Response({
+            "secret": secret,
+            "otpauth_url": otpauth_url,
+            "qr_code": two_factor.qr_data_uri(otpauth_url),
+            "two_factor_enabled": False,
+        })
+
+
+class TwoFactorConfirmView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @extend_schema(
+        request=TwoFactorConfirmSerializer,
+        responses={
+            200: TwoFactorConfirmResponseSerializer,
+            400: OpenApiResponse(description="Invalid OTP or setup not started"),
+        },
+        description="Confirm TOTP enrollment with a valid authenticator code."
+    )
+    def post(self, request):
+        serializer = TwoFactorConfirmSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if user.two_factor_enabled:
+            return Response(
+                {"detail": "Two-factor authentication is already enabled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not user.two_factor_secret:
+            return Response(
+                {"detail": "Two-factor setup has not been started."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        otp = serializer.validated_data['otp']
+        if not two_factor.verify_totp(user.two_factor_secret, otp):
+            return Response(
+                {"otp": ["Invalid verification code."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.two_factor_enabled = True
+        user.save(update_fields=['two_factor_enabled'])
+        backup_codes = two_factor.generate_backup_codes(user)
+
+        UserActivity.objects.create(
+            user=user,
+            activity_type='two_factor_enabled',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        )
+        logger.info(f"2FA enabled for: {user.email}")
+        return Response({
+            "message": "Two-factor authentication enabled.",
+            "two_factor_enabled": True,
+            "backup_codes": backup_codes,
+        })
+
+
+class TwoFactorVerifyLoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @extend_schema(
+        request=TwoFactorVerifyLoginSerializer,
+        responses={
+            200: LoginResponseSerializer,
+            400: OpenApiResponse(description="Invalid OTP"),
+            401: OpenApiResponse(description="Invalid or expired pending token"),
+        },
+        description="Complete login by verifying a TOTP or backup code after password authentication."
+    )
+    def post(self, request):
+        serializer = TwoFactorVerifyLoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = two_factor.user_from_pending_token(serializer.validated_data['temp_token'])
+        except ValueError:
+            return Response(
+                {"detail": "Invalid or expired two-factor token."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not user.two_factor_enabled:
+            return Response(
+                {"detail": "Two-factor authentication is not enabled for this account."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not two_factor.verify_second_factor(user, serializer.validated_data['otp']):
+            return Response(
+                {"otp": ["Invalid verification code."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        response_data = _complete_authenticated_login(request, user)
+        logger.info(f"User logged in with 2FA: {user.email} (role={user.role})")
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class TwoFactorDisableView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @extend_schema(
+        request=TwoFactorDisableSerializer,
+        responses={
+            200: TwoFactorDisableResponseSerializer,
+            400: OpenApiResponse(description="Invalid password or OTP"),
+        },
+        description="Disable 2FA after verifying the current password and a valid OTP or backup code."
+    )
+    def post(self, request):
+        serializer = TwoFactorDisableSerializer(
+            data=request.data,
+            context={'request': request},
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if not user.two_factor_enabled:
+            return Response(
+                {"detail": "Two-factor authentication is not enabled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not two_factor.verify_second_factor(user, serializer.validated_data['otp']):
+            return Response(
+                {"otp": ["Invalid verification code."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        two_factor.clear_two_factor(user)
+        UserActivity.objects.create(
+            user=user,
+            activity_type='two_factor_disabled',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        )
+        logger.info(f"2FA disabled for: {user.email}")
+        return Response({
+            "message": "Two-factor authentication disabled.",
+            "two_factor_enabled": False,
+        })
