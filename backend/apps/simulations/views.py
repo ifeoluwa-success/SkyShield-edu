@@ -260,15 +260,19 @@ class ScenarioViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
-class SimulationSessionViewSet(viewsets.ModelViewSet):
+class SimulationSessionViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for managing simulation sessions.
-    Handles starting sessions, submitting decisions, requesting hints, etc.
+    Read-only ViewSet for simulation sessions.
+
+    Sessions cannot be created/updated/deleted via the default CRUD routes.
+    Mutations go through controlled actions: start, submit_decision,
+    request_hint, and abandon.
     """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SimulationSessionSerializer
     queryset = SimulationSession.objects.all()
     parser_classes = [JSONParser, MultiPartParser, FormParser]
+    http_method_names = ['get', 'post', 'head', 'options']
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
