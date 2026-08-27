@@ -95,14 +95,13 @@ export interface ScenarioStep {
   points_value: number;
   time_limit_seconds: number;
   options: StepOption[];
-  correct_action: string;
+  /** Answer keys are server-side only; never returned to trainees. */
   hint: string;
 }
 
 export interface StepOption {
   id: string;
   text: string;
-  is_correct: boolean;
   consequence: string;
   escalation_trigger: boolean;
 }
