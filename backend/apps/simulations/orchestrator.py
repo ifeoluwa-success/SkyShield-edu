@@ -608,6 +608,11 @@ class ScenarioOrchestrator:
         if run.status in ('completed', 'failed', 'abandoned'):
             raise MissionAlreadyComplete("Mission is no longer accepting participants")
 
+        from .permissions import user_can_access_mission
+
+        if not user_can_access_mission(user, run):
+            raise UnauthorizedAction("User is not authorized for this mission")
+
         if role not in MISSION_PARTICIPANT_ROLES:
             role = 'support_operator'
 

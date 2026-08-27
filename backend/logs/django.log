@@ -660,3 +660,60 @@ INFO 2026-05-26 13:47:33,511 signals 11708 2736 Participant olaniyanp11@gmail.co
 INFO 2026-05-26 13:47:37,172 signals 11708 2736 Participant olaniyanp11@gmail.com joined meeting Navigation Security Office Hours
 INFO 2026-06-08 22:30:07,790 views 7472 23804 User logged in: olaniyanp11@gmail.com (role=trainee)
 INFO 2026-06-08 22:32:03,356 views 7472 19088 User logged out: olaniyanp11@gmail.com
+INFO 2026-08-27 13:41:16,523 orchestrator 31656 1196 mission.join_mission run_id=722a8c28-51a0-4511-b6cc-963896877202 user_id=ab95e0f7-3b72-4961-9b10-769237165016 username=assigned created=True role=support_operator
+INFO 2026-08-27 13:41:16,547 incident_views 31656 1196 mission.http_join run_id=722a8c28-51a0-4511-b6cc-963896877202 user_id=ab95e0f7-3b72-4961-9b10-769237165016 created=True
+INFO 2026-08-27 13:41:25,014 orchestrator 31656 1196 mission.join_mission run_id=87274bd9-380c-40d0-83ae-bc3f100b30bd user_id=85fd7c8f-1f57-48b2-ba3a-4c0d04ea74dc username=outsider created=False role=support_operator
+INFO 2026-08-27 13:41:25,022 incident_views 31656 1196 mission.http_join run_id=87274bd9-380c-40d0-83ae-bc3f100b30bd user_id=85fd7c8f-1f57-48b2-ba3a-4c0d04ea74dc created=False
+INFO 2026-08-27 13:41:34,637 orchestrator 31656 1196 mission.join_mission run_id=4e4f0a4e-99fc-4654-9d2c-51ce0422ee80 user_id=60edb3cc-0194-440a-bb1a-14c8f262fefc username=host created=False role=lead_operator
+INFO 2026-08-27 13:41:34,645 incident_views 31656 1196 mission.http_join run_id=4e4f0a4e-99fc-4654-9d2c-51ce0422ee80 user_id=60edb3cc-0194-440a-bb1a-14c8f262fefc created=False
+INFO 2026-08-27 13:41:55,095 orchestrator 31656 1196 mission.join_mission run_id=26975fb1-42bd-4800-b73f-0d8b21c7ceb2 user_id=52d59f9c-623f-4916-8215-dc9bd39b7499 username=supervisor created=True role=supervisor
+INFO 2026-08-27 13:41:55,110 incident_views 31656 1196 mission.http_join run_id=26975fb1-42bd-4800-b73f-0d8b21c7ceb2 user_id=52d59f9c-623f-4916-8215-dc9bd39b7499 created=True
+INFO 2026-08-27 13:41:55,144 orchestrator 31656 1196 mission.join_mission run_id=26975fb1-42bd-4800-b73f-0d8b21c7ceb2 user_id=794d281c-9535-41a2-9d9f-450c9f71ae73 username=admin created=True role=supervisor
+INFO 2026-08-27 13:41:55,160 incident_views 31656 1196 mission.http_join run_id=26975fb1-42bd-4800-b73f-0d8b21c7ceb2 user_id=794d281c-9535-41a2-9d9f-450c9f71ae73 created=True
+INFO 2026-08-27 13:42:28,555 orchestrator 31656 1196 mission.join_mission run_id=82a9df46-a8cc-4225-b13d-60b35a5d95b8 user_id=c0f4f5eb-6950-429d-8f8c-62e925451b79 username=wsassigned created=True role=support_operator
+INFO 2026-08-27 13:42:28,566 consumers 31656 12620 mission.ws_connected run_id=82a9df46-a8cc-4225-b13d-60b35a5d95b8 user_id=c0f4f5eb-6950-429d-8f8c-62e925451b79 participant_id=6e7cbb9b-53ba-4377-963a-a5371d01bc59 channel_ok=True
+INFO 2026-08-27 13:42:28,569 consumers 31656 12620 mission.ws_disconnected run_id=82a9df46-a8cc-4225-b13d-60b35a5d95b8 user_id=c0f4f5eb-6950-429d-8f8c-62e925451b79 participant_id=6e7cbb9b-53ba-4377-963a-a5371d01bc59 code=1000
+INFO 2026-08-27 13:42:33,224 orchestrator 31656 1196 mission.join_mission run_id=f19312c8-d63c-4655-9064-b2c27097b30d user_id=8d8b4c2b-9eb5-4f09-801e-ecbb5ec6133b username=wshost created=False role=lead_operator
+INFO 2026-08-27 13:42:33,239 consumers 31656 25032 mission.ws_connected run_id=f19312c8-d63c-4655-9064-b2c27097b30d user_id=8d8b4c2b-9eb5-4f09-801e-ecbb5ec6133b participant_id=44b63463-66ef-4789-a4ad-6ba15eae80ff channel_ok=True
+INFO 2026-08-27 13:42:33,242 consumers 31656 25032 mission.ws_disconnected run_id=f19312c8-d63c-4655-9064-b2c27097b30d user_id=8d8b4c2b-9eb5-4f09-801e-ecbb5ec6133b participant_id=44b63463-66ef-4789-a4ad-6ba15eae80ff code=1000
+INFO 2026-08-27 13:42:38,491 consumers 31656 13424 mission.ws_disconnected run_id=- user_id=None participant_id=- code=1000
+INFO 2026-08-27 13:42:44,103 consumers 31656 14180 mission.ws_connect_denied_unauthorized run_id=9d0716ff-c735-470f-a056-6f2b6688b78b user_id=fc74aead-308b-4aba-9c5e-ed6be9a42d6a
+INFO 2026-08-27 13:42:44,105 consumers 31656 14180 mission.ws_disconnected run_id=- user_id=fc74aead-308b-4aba-9c5e-ed6be9a42d6a participant_id=- code=1000
+INFO 2026-08-27 13:44:55,945 orchestrator 26052 28704 mission.join_mission run_id=a97d5bb2-0309-419b-a024-59d33033b28e user_id=0b467a1f-1926-4857-a2c7-419c5627b0e9 username=assigned created=True role=support_operator
+INFO 2026-08-27 13:44:55,957 incident_views 26052 28704 mission.http_join run_id=a97d5bb2-0309-419b-a024-59d33033b28e user_id=0b467a1f-1926-4857-a2c7-419c5627b0e9 created=True
+INFO 2026-08-27 13:45:04,508 orchestrator 26052 28704 mission.join_mission run_id=5876f347-a58c-4118-8151-6f09d5dbcdf2 user_id=a9c55eae-e0d7-46fd-a691-06380653953a username=outsider created=False role=support_operator
+INFO 2026-08-27 13:45:04,514 incident_views 26052 28704 mission.http_join run_id=5876f347-a58c-4118-8151-6f09d5dbcdf2 user_id=a9c55eae-e0d7-46fd-a691-06380653953a created=False
+INFO 2026-08-27 13:45:12,852 orchestrator 26052 28704 mission.join_mission run_id=6c34d48b-620f-4cfb-9820-7c4f7a657945 user_id=12fd8c69-a656-40cc-9cd2-fb825a4607ed username=host created=False role=lead_operator
+INFO 2026-08-27 13:45:12,859 incident_views 26052 28704 mission.http_join run_id=6c34d48b-620f-4cfb-9820-7c4f7a657945 user_id=12fd8c69-a656-40cc-9cd2-fb825a4607ed created=False
+INFO 2026-08-27 13:45:29,615 orchestrator 26052 28704 mission.join_mission run_id=6e8d9827-7fc0-4406-886e-51dfb43e0914 user_id=5f207eeb-790c-4650-9bf7-29b813d41621 username=supervisor created=True role=supervisor
+INFO 2026-08-27 13:45:29,626 incident_views 26052 28704 mission.http_join run_id=6e8d9827-7fc0-4406-886e-51dfb43e0914 user_id=5f207eeb-790c-4650-9bf7-29b813d41621 created=True
+INFO 2026-08-27 13:45:29,660 orchestrator 26052 28704 mission.join_mission run_id=6e8d9827-7fc0-4406-886e-51dfb43e0914 user_id=7150aa9f-64d0-4b79-bce3-160949831359 username=admin created=True role=supervisor
+INFO 2026-08-27 13:45:29,670 incident_views 26052 28704 mission.http_join run_id=6e8d9827-7fc0-4406-886e-51dfb43e0914 user_id=7150aa9f-64d0-4b79-bce3-160949831359 created=True
+INFO 2026-08-27 13:46:05,840 orchestrator 26052 28704 mission.join_mission run_id=f73540d5-fd23-415c-90d2-d1007d9afcb6 user_id=b919f170-b6c8-4ec5-ba01-bee22f848693 username=wsassigned created=True role=support_operator
+INFO 2026-08-27 13:46:05,850 consumers 26052 29508 mission.ws_connected run_id=f73540d5-fd23-415c-90d2-d1007d9afcb6 user_id=b919f170-b6c8-4ec5-ba01-bee22f848693 participant_id=4a173f4b-699c-4690-a336-ff6ddd29945d channel_ok=True
+INFO 2026-08-27 13:46:05,853 consumers 26052 29508 mission.ws_disconnected run_id=f73540d5-fd23-415c-90d2-d1007d9afcb6 user_id=b919f170-b6c8-4ec5-ba01-bee22f848693 participant_id=4a173f4b-699c-4690-a336-ff6ddd29945d code=1000
+INFO 2026-08-27 13:46:10,354 orchestrator 26052 28704 mission.join_mission run_id=21ac903e-c6b4-4ab6-8b7f-22c1c6b9b583 user_id=55537f71-e368-4f71-b6cd-47df330ea60c username=wshost created=False role=lead_operator
+INFO 2026-08-27 13:46:10,364 consumers 26052 19072 mission.ws_connected run_id=21ac903e-c6b4-4ab6-8b7f-22c1c6b9b583 user_id=55537f71-e368-4f71-b6cd-47df330ea60c participant_id=0ef22c24-3f34-4073-9b4f-1ccf7a04cf68 channel_ok=True
+INFO 2026-08-27 13:46:10,367 consumers 26052 19072 mission.ws_disconnected run_id=21ac903e-c6b4-4ab6-8b7f-22c1c6b9b583 user_id=55537f71-e368-4f71-b6cd-47df330ea60c participant_id=0ef22c24-3f34-4073-9b4f-1ccf7a04cf68 code=1000
+INFO 2026-08-27 13:46:15,188 consumers 26052 12344 mission.ws_disconnected run_id=- user_id=None participant_id=- code=1000
+INFO 2026-08-27 13:46:20,021 consumers 26052 32340 mission.ws_connect_denied_unauthorized run_id=71d21a30-3bb1-4acb-94ac-681affc779e7 user_id=a1b3c4e3-4933-4e25-b331-5453bcde24fc
+INFO 2026-08-27 13:46:20,022 consumers 26052 32340 mission.ws_disconnected run_id=- user_id=a1b3c4e3-4933-4e25-b331-5453bcde24fc participant_id=- code=1000
+INFO 2026-08-27 13:47:28,222 orchestrator 29200 10092 mission.join_mission run_id=9600edfa-2fc3-4612-9118-42d46378bd7c user_id=f6aa6bc4-0da0-40cc-836c-d51ccbc4f370 username=assigned created=True role=support_operator
+INFO 2026-08-27 13:47:28,234 incident_views 29200 10092 mission.http_join run_id=9600edfa-2fc3-4612-9118-42d46378bd7c user_id=f6aa6bc4-0da0-40cc-836c-d51ccbc4f370 created=True
+INFO 2026-08-27 13:47:36,609 orchestrator 29200 10092 mission.join_mission run_id=1cae2c41-a151-4210-a510-f0afdc0e42c2 user_id=9e5eecae-bf09-42b0-a762-78771437264d username=outsider created=False role=support_operator
+INFO 2026-08-27 13:47:36,616 incident_views 29200 10092 mission.http_join run_id=1cae2c41-a151-4210-a510-f0afdc0e42c2 user_id=9e5eecae-bf09-42b0-a762-78771437264d created=False
+INFO 2026-08-27 13:47:44,883 orchestrator 29200 10092 mission.join_mission run_id=72f140e4-b4ff-477b-8f9c-5ffb70dd46e8 user_id=1af3833c-ac7d-4065-85cd-8c4851adaee7 username=host created=False role=lead_operator
+INFO 2026-08-27 13:47:44,889 incident_views 29200 10092 mission.http_join run_id=72f140e4-b4ff-477b-8f9c-5ffb70dd46e8 user_id=1af3833c-ac7d-4065-85cd-8c4851adaee7 created=False
+INFO 2026-08-27 13:48:01,805 orchestrator 29200 10092 mission.join_mission run_id=b4384ccd-97b5-4e68-8a44-e3bdd213ea8b user_id=4027a19c-efa3-4af5-996b-0e8fd5223a64 username=supervisor created=True role=supervisor
+INFO 2026-08-27 13:48:01,812 incident_views 29200 10092 mission.http_join run_id=b4384ccd-97b5-4e68-8a44-e3bdd213ea8b user_id=4027a19c-efa3-4af5-996b-0e8fd5223a64 created=True
+INFO 2026-08-27 13:48:01,839 orchestrator 29200 10092 mission.join_mission run_id=b4384ccd-97b5-4e68-8a44-e3bdd213ea8b user_id=9471bcbd-a68d-4473-993d-a7b42f669c77 username=admin created=True role=supervisor
+INFO 2026-08-27 13:48:01,846 incident_views 29200 10092 mission.http_join run_id=b4384ccd-97b5-4e68-8a44-e3bdd213ea8b user_id=9471bcbd-a68d-4473-993d-a7b42f669c77 created=True
+INFO 2026-08-27 13:48:31,575 orchestrator 29200 10092 mission.join_mission run_id=0ebdea5a-c214-4b87-833f-8c6e7c2eb264 user_id=403f65e6-d033-44b1-b6c1-95867c58c3d8 username=wsassigned created=True role=support_operator
+INFO 2026-08-27 13:48:31,585 consumers 29200 16536 mission.ws_connected run_id=0ebdea5a-c214-4b87-833f-8c6e7c2eb264 user_id=403f65e6-d033-44b1-b6c1-95867c58c3d8 participant_id=5bf11aaf-f250-483c-88f3-8ad9b165116b channel_ok=True
+INFO 2026-08-27 13:48:31,588 consumers 29200 16536 mission.ws_disconnected run_id=0ebdea5a-c214-4b87-833f-8c6e7c2eb264 user_id=403f65e6-d033-44b1-b6c1-95867c58c3d8 participant_id=5bf11aaf-f250-483c-88f3-8ad9b165116b code=1000
+INFO 2026-08-27 13:48:35,831 orchestrator 29200 10092 mission.join_mission run_id=9927e654-a539-4099-943e-48adee7ad5a0 user_id=fc1cc432-f40e-4bc1-9e16-fd3298326820 username=wshost created=False role=lead_operator
+INFO 2026-08-27 13:48:35,839 consumers 29200 3572 mission.ws_connected run_id=9927e654-a539-4099-943e-48adee7ad5a0 user_id=fc1cc432-f40e-4bc1-9e16-fd3298326820 participant_id=d40143c9-2733-4e7e-918e-a44562b46a50 channel_ok=True
+INFO 2026-08-27 13:48:35,841 consumers 29200 3572 mission.ws_disconnected run_id=9927e654-a539-4099-943e-48adee7ad5a0 user_id=fc1cc432-f40e-4bc1-9e16-fd3298326820 participant_id=d40143c9-2733-4e7e-918e-a44562b46a50 code=1000
+INFO 2026-08-27 13:48:40,286 consumers 29200 26304 mission.ws_disconnected run_id=- user_id=None participant_id=- code=1000
+INFO 2026-08-27 13:48:45,035 consumers 29200 14040 mission.ws_connect_denied_unauthorized run_id=6fb9b232-0df9-4189-9533-236f34dab73b user_id=a7aa4677-05f9-437a-91fd-df665d313e65
+INFO 2026-08-27 13:48:45,036 consumers 29200 14040 mission.ws_disconnected run_id=- user_id=a7aa4677-05f9-437a-91fd-df665d313e65 participant_id=- code=1000
