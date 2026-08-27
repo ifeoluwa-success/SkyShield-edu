@@ -99,7 +99,6 @@ function materializeScenarioStep(raw: unknown, fallbackPhase: MissionPhase): Sce
     points_value: Number(r.points_value ?? r.points ?? 10),
     time_limit_seconds: Number(r.time_limit_seconds ?? 60),
     options,
-    correct_action: String(r.correct_action ?? ''),
     hint: String(r.hint ?? ''),
   };
 }

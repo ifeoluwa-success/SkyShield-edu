@@ -476,8 +476,9 @@ class SimulationSessionViewSet(viewsets.ModelViewSet):
                 session.current_step += 1
                 session.save()
 
-                # Get next step info
-                next_step = session.scenario.steps[session.current_step]
+                # Get next step info (no answer keys)
+                from .answer_keys import sanitize_step
+                next_step = sanitize_step(session.scenario.steps[session.current_step])
                 return Response({
                     'correct': is_correct,
                     'feedback': step_data.get('feedback', {}),

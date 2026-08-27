@@ -8,12 +8,17 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
+from .answer_keys import (
+    sanitize_session_state_for_trainee,
+    sanitize_step,
+    sanitize_steps,
+)
 from .state_machine import MissionStateMachine, PHASE_TIME_LIMITS, indices_for_scenario_phase
 
 
 def trim_session_state(session_state: Optional[dict], *, max_decisions: int = 20) -> dict:
     """Drop or cap heavy keys before sending over WebSocket."""
-    st = dict(session_state or {})
+    st = sanitize_session_state_for_trainee(session_state)
     decisions = st.get('decisions')
     if isinstance(decisions, list) and len(decisions) > max_decisions:
         st['decisions'] = decisions[-max_decisions:]
@@ -37,7 +42,7 @@ def build_scenario_mission_payload(scenario) -> dict[str, Any]:
         'description': scenario.description,
         'threat_type': scenario.threat_type,
         'difficulty': scenario.difficulty,
-        'steps': scenario.steps or [],
+        'steps': sanitize_steps(scenario.steps or []),
         'hints': hints_payload,
         'passing_score': scenario.passing_score,
         'points_possible': scenario.points_possible,
@@ -49,7 +54,7 @@ def build_scenario_mission_payload(scenario) -> dict[str, Any]:
 
 def build_run_mission_payload(run, *, trim_session: bool = False) -> dict[str, Any]:
     """Lightweight run dict (replaces IncidentRunSerializer on hot paths)."""
-    st = run.session_state or {}
+    st = sanitize_session_state_for_trainee(run.session_state)
     if trim_session:
         st = trim_session_state(st)
 
@@ -79,17 +84,21 @@ def materialize_active_step(steps: list, index: int) -> Optional[dict]:
     raw = steps[index]
     if not isinstance(raw, dict):
         return None
-    options = raw.get('options') or []
+    cleaned = sanitize_step(raw)
+    options = cleaned.get('options') or []
     return {
-        'step_id': raw.get('step_id') or raw.get('id'),
-        'phase': raw.get('phase') or raw.get('mission_phase'),
-        'title': raw.get('title'),
-        'description': raw.get('description') or raw.get('narrative') or raw.get('question'),
-        'points_value': raw.get('points_value', raw.get('points', 10)),
-        'time_limit_seconds': raw.get('time_limit_seconds'),
+        'step_id': cleaned.get('step_id') or cleaned.get('id'),
+        'phase': cleaned.get('phase') or cleaned.get('mission_phase'),
+        'title': cleaned.get('title'),
+        'description': (
+            cleaned.get('description')
+            or cleaned.get('narrative')
+            or cleaned.get('question')
+        ),
+        'points_value': cleaned.get('points_value', cleaned.get('points', 10)),
+        'time_limit_seconds': cleaned.get('time_limit_seconds'),
         'options': options,
-        'correct_action': raw.get('correct_action'),
-        'hint': raw.get('hint'),
+        'hint': cleaned.get('hint'),
     }
 
 
@@ -108,7 +117,7 @@ def compose_mission_state(
     sm = MissionStateMachine(run.phase)
     steps = run.scenario.steps or []
     n = len(steps)
-    st = dict(run.session_state or {})
+    st = sanitize_session_state_for_trainee(run.session_state)
     csr = int(st.get('current_step', 0) or 0)
     if n == 0:
         active_step_index = 0
