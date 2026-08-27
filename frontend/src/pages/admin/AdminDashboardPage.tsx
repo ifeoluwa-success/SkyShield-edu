@@ -366,8 +366,34 @@ const AdminDashboardPage: React.FC = () => {
       {certs && (
         <section className="dashboard-section">
           <h2 className="dashboard-section-title">
-            <Award size={18} /> Certifications ({certs.total_issued.toLocaleString()} issued)
+            <Award size={18} /> Certifications
           </h2>
+          <div className="analytics-section-grid">
+            <AnalyticsStatCard
+              label="Total issued"
+              value={certs.total_issued}
+              icon={<Award size={18} />}
+            />
+            <AnalyticsStatCard
+              label="Last 30 days"
+              value={platform.certificates.last_30_days}
+              variant="success"
+            />
+            {certs.by_course_difficulty.map(row => (
+              <AnalyticsStatCard
+                key={row.level}
+                label={`${row.level} level`}
+                value={row.count}
+              />
+            ))}
+            {certs.issuance_trend.length > 0 && (
+              <AnalyticsStatCard
+                label="Latest month"
+                value={certs.issuance_trend[certs.issuance_trend.length - 1].count}
+                hint={certs.issuance_trend[certs.issuance_trend.length - 1].period ?? undefined}
+              />
+            )}
+          </div>
           <div className="admin-charts-grid">
             <AdminPieChart
               title="Certificates by level"
