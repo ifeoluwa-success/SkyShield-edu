@@ -3,18 +3,21 @@ Admin portal REST APIs for the SkyShield frontend.
 All endpoints require role=admin (or Django staff/superuser).
 """
 
-from datetime import datetime, time, timedelta
-
 from django.contrib.auth import get_user_model
 from django.db.models import Avg, Count, Q
 from django.db.models.functions import TruncDate, TruncMonth
-from django.utils import timezone
-from django.utils.dateparse import parse_date
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import generics, permissions, serializers
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps.analytics.metrics_window import (
+    filter_in_window,
+    parse_metrics_window,
+    period_payload,
+)
 
 from apps.core.models import APILog, AuditLog, ErrorLog
 from apps.core.serializers import APILogSerializer, AuditLogSerializer, ErrorLogSerializer
@@ -332,122 +335,28 @@ class AdminApiLogsView(generics.ListAPIView):
     queryset = APILog.objects.select_related('user').order_by('-timestamp')
 
 
-MAX_METRICS_RANGE_DAYS = 365
-
-
-def _aware_day_start(d):
-    return timezone.make_aware(datetime.combine(d, time.min))
-
-
-def _filter_in_window(qs, field, start_dt, end_dt=None):
-    qs = qs.filter(**{f'{field}__gte': start_dt})
-    if end_dt is not None:
-        qs = qs.filter(**{f'{field}__lt': end_dt})
-    return qs
-
-
-def _parse_metrics_window(request):
-    """
-    Resolve the metrics time window from query params.
-
-    Preset: ?days=7|30|90 (default 30) — rolling window ending now.
-    Custom: ?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD — inclusive calendar
-    dates in the project timezone (UTC).
-    """
-    start_raw = request.query_params.get('start_date')
-    end_raw = request.query_params.get('end_date')
-    try:
-        months = max(3, min(24, int(request.query_params.get('months', 12))))
-    except (TypeError, ValueError):
-        months = 12
-
-    if start_raw is not None or end_raw is not None:
-        if not start_raw or not end_raw:
-            return None, Response(
-                {'error': 'start_date and end_date are required together'},
-                status=400,
-            )
-        try:
-            start = parse_date(str(start_raw).strip())
-            end = parse_date(str(end_raw).strip())
-        except (TypeError, ValueError):
-            start = None
-            end = None
-        if start is None or end is None:
-            return None, Response(
-                {'error': 'Invalid date format. Use YYYY-MM-DD.'},
-                status=400,
-            )
-        if start > end:
-            return None, Response(
-                {'error': 'start_date must be on or before end_date'},
-                status=400,
-            )
-        span_days = (end - start).days + 1
-        if span_days > MAX_METRICS_RANGE_DAYS:
-            return None, Response(
-                {'error': f'Date range cannot exceed {MAX_METRICS_RANGE_DAYS} days'},
-                status=400,
-            )
-        range_start = _aware_day_start(start)
-        range_end = _aware_day_start(end + timedelta(days=1))
-        return {
-            'days': span_days,
-            'months': months,
-            'since_days': range_start,
-            'until_days': range_end,
-            'since_months': range_start,
-            'until_months': range_end,
-            'start_date': start,
-            'end_date': end,
-            'custom': True,
-        }, None
-
-    try:
-        days = max(7, min(MAX_METRICS_RANGE_DAYS, int(request.query_params.get('days', 30))))
-    except (TypeError, ValueError):
-        days = 30
-    now = timezone.now()
-    return {
-        'days': days,
-        'months': months,
-        'since_days': now - timedelta(days=days),
-        'until_days': None,
-        'since_months': now - timedelta(days=months * 31),
-        'until_months': None,
-        'start_date': None,
-        'end_date': None,
-        'custom': False,
-    }, None
-
-
 class AdminChartMetricsView(APIView):
     """
     GET /api/core/admin/metrics/charts/
     Chart-ready datasets for the admin frontend dashboard.
-    Query: days (default 30), months (default 12),
-    or start_date & end_date (YYYY-MM-DD, inclusive).
+    Query: days (default 30), or start_date & end_date (YYYY-MM-DD, inclusive).
     """
     permission_classes = [permissions.IsAuthenticated, IsAppAdmin]
 
     def get(self, request):
-        window, error = _parse_metrics_window(request)
+        window, error = parse_metrics_window(request, default_days=30)
         if error is not None:
             return error
 
-        days = window['days']
-        months = window['months']
-        since_days = window['since_days']
-        until_days = window['until_days']
-        since_months = window['since_months']
-        until_months = window['until_months']
-
+        since = window['since']
+        until = window['until']
         now = timezone.now()
 
         users = User.objects.filter(deleted_at__isnull=True)
+        users_in_period = filter_in_window(users, 'created_at', since, until)
 
         user_growth = list(
-            _filter_in_window(users, 'created_at', since_days, until_days)
+            users_in_period
             .annotate(day=TruncDate('created_at'))
             .values('day')
             .annotate(count=Count('id'))
@@ -455,15 +364,15 @@ class AdminChartMetricsView(APIView):
         )
 
         users_by_role = list(
-            users.values('role').annotate(count=Count('id')).order_by('role')
+            users_in_period.values('role').annotate(count=Count('id')).order_by('role')
         )
 
         users_by_status = list(
-            users.values('status').annotate(count=Count('id')).order_by('status')
+            users_in_period.values('status').annotate(count=Count('id')).order_by('status')
         )
 
         by_department = list(
-            users.exclude(department='')
+            users_in_period.exclude(department='')
             .values('department')
             .annotate(count=Count('id'))
             .order_by('-count')[:15]
@@ -473,11 +382,11 @@ class AdminChartMetricsView(APIView):
         try:
             from apps.users.models import UserActivity
             login_activity = list(
-                _filter_in_window(
+                filter_in_window(
                     UserActivity.objects.filter(activity_type='login'),
                     'timestamp',
-                    since_days,
-                    until_days,
+                    since,
+                    until,
                 )
                 .annotate(day=TruncDate('timestamp'))
                 .values('day')
@@ -488,16 +397,17 @@ class AdminChartMetricsView(APIView):
             pass
 
         sessions = SimulationSession.objects.all()
+        sessions_in_period = filter_in_window(sessions, 'started_at', since, until)
         simulations_by_status = list(
-            sessions.values('status').annotate(count=Count('id')).order_by('status')
+            sessions_in_period.values('status').annotate(count=Count('id')).order_by('status')
         )
 
         simulation_scores_trend = list(
-            _filter_in_window(
-                sessions.filter(status='completed'),
+            filter_in_window(
+                sessions_in_period.filter(status='completed'),
                 'completed_at',
-                since_months,
-                until_months,
+                since,
+                until,
             )
             .annotate(month=TruncMonth('completed_at'))
             .values('month')
@@ -510,11 +420,11 @@ class AdminChartMetricsView(APIView):
         )
 
         enrollments_trend = list(
-            _filter_in_window(
+            filter_in_window(
                 CourseEnrollment.objects.all(),
                 'enrolled_at',
-                since_months,
-                until_months,
+                since,
+                until,
             )
             .annotate(month=TruncMonth('enrolled_at'))
             .values('month')
@@ -522,32 +432,54 @@ class AdminChartMetricsView(APIView):
             .order_by('month')
         )
 
+        courses_in_period = filter_in_window(Course.objects.all(), 'created_at', since, until)
         courses_by_publish = list(
-            Course.objects.values('is_published').annotate(count=Count('id'))
+            courses_in_period.values('is_published').annotate(count=Count('id'))
         )
 
-        certs = CourseCertificate.objects.all()
+        certs_in_period = filter_in_window(
+            CourseCertificate.objects.all(),
+            'issued_at',
+            since,
+            until,
+        )
         certificates_by_level = list(
-            certs.values('enrollment__course__difficulty')
+            certs_in_period.values('enrollment__course__difficulty')
             .annotate(count=Count('id'))
             .order_by('enrollment__course__difficulty')
         )
 
         certificate_trend = list(
-            _filter_in_window(certs, 'issued_at', since_months, until_months)
-            .annotate(month=TruncMonth('issued_at'))
+            certs_in_period.annotate(month=TruncMonth('issued_at'))
             .values('month')
             .annotate(count=Count('id'))
             .order_by('month')
         )
 
         errors_by_day = list(
-            _filter_in_window(ErrorLog.objects.all(), 'created_at', since_days, until_days)
+            filter_in_window(ErrorLog.objects.all(), 'created_at', since, until)
             .annotate(day=TruncDate('created_at'))
             .values('day')
             .annotate(count=Count('id'))
             .order_by('day')
         )
+
+        active_in_period = 0
+        try:
+            from apps.users.models import UserActivity
+            active_in_period = (
+                filter_in_window(
+                    UserActivity.objects.filter(activity_type='login'),
+                    'timestamp',
+                    since,
+                    until,
+                )
+                .values('user')
+                .distinct()
+                .count()
+            )
+        except Exception:
+            active_in_period = users_in_period.filter(is_active=True, status='active').count()
 
         schedule_upcoming = {
             'teaching_sessions': TeachingSession.objects.filter(
@@ -563,21 +495,16 @@ class AdminChartMetricsView(APIView):
             d = row.get(key) or row.get('month')
             return d.isoformat() if d else None
 
-        period = {'days': days, 'months': months}
-        if window['custom']:
-            period['start_date'] = window['start_date'].isoformat()
-            period['end_date'] = window['end_date'].isoformat()
-
         return Response({
             'generated_at': now.isoformat(),
-            'period': period,
+            'period': period_payload(window),
             'summary': {
-                'total_users': users.count(),
-                'active_users': users.filter(is_active=True, status='active').count(),
-                'total_courses': Course.objects.count(),
-                'published_courses': Course.objects.filter(is_published=True).count(),
-                'total_sessions': sessions.count(),
-                'certificates_issued': certs.count(),
+                'total_users': users_in_period.count(),
+                'active_users': active_in_period,
+                'total_courses': courses_in_period.count(),
+                'published_courses': courses_in_period.filter(is_published=True).count(),
+                'total_sessions': sessions_in_period.count(),
+                'certificates_issued': certs_in_period.count(),
             },
             'charts': {
                 'user_growth': [

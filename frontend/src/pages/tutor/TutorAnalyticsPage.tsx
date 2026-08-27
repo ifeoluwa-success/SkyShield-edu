@@ -38,7 +38,7 @@ useEffect(() => {
     const platformCalls = showPlatform
       ? Promise.all([
           getPlatformOverview(),
-          getPlatformPerformanceTrends(6),
+          getPlatformPerformanceTrends({ days: 186 }),
           getPlatformCertificationAnalytics(),
           getPlatformRetryAnalytics(),
         ])

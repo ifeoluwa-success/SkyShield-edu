@@ -79,7 +79,13 @@ export interface AdminLogsResponse {
 
 export interface ChartMetricsResponse {
   generated_at: string;
-  period: { days: number; months: number; start_date?: string; end_date?: string };
+  period: {
+    all_time?: boolean;
+    days?: number;
+    custom?: boolean;
+    start_date?: string;
+    end_date?: string;
+  };
   summary: Record<string, number>;
   charts: {
     user_growth: { date: string; count: number }[];

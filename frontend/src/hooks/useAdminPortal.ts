@@ -139,18 +139,17 @@ export function useAdminLogsQuery(
 
 export function useAdminChartMetricsQuery(
   days: number,
-  months: number,
   range?: { start_date: string; end_date: string } | null,
 ) {
   const startDate = range?.start_date ?? '';
   const endDate = range?.end_date ?? '';
   return useQuery({
-    queryKey: adminKeys.chartMetrics(days, months, startDate, endDate),
+    queryKey: adminKeys.chartMetrics(days, 0, startDate, endDate),
     queryFn: () =>
       getAdminChartMetrics(
         startDate && endDate
-          ? { start_date: startDate, end_date: endDate, months }
-          : { days, months },
+          ? { start_date: startDate, end_date: endDate }
+          : { days },
       ),
     staleTime: ADMIN_STALE_MS,
   });

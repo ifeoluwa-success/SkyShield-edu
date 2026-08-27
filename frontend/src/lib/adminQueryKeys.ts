@@ -5,8 +5,12 @@ export const adminKeys = {
   all: ['admin'] as const,
   chartMetrics: (days: number, months: number, startDate = '', endDate = '') =>
     [...adminKeys.all, 'chartMetrics', days, months, startDate, endDate] as const,
-  dashboardBundle: (periodDays: number, trendMonths: number, chartDays: number) =>
-    [...adminKeys.all, 'dashboardBundle', periodDays, trendMonths, chartDays] as const,
+  dashboardBundle: (
+    periodDays: number,
+    startDate = '',
+    endDate = '',
+    custom = false,
+  ) => [...adminKeys.all, 'dashboardBundle', periodDays, startDate, endDate, custom] as const,
   users: (role: string, params: Record<string, string | number>) =>
     [...adminKeys.all, 'users', role, params] as const,
   tutors: (params: Record<string, string | number>) =>

@@ -24,6 +24,7 @@ import {
   getPlatformPerformanceTrends,
   getPlatformRetryAnalytics,
   getPlatformUserAnalytics,
+  type PlatformMetricsRange,
 } from '../../services/analyticsService';
 import AnalyticsStatCard from '../../components/analytics/AnalyticsStatCard';
 import TrendsTable from '../../components/analytics/TrendsTable';
@@ -48,9 +49,7 @@ interface LegacyAdminStats {
 const AdminDashboardPage: React.FC = () => {
   const qc = useQueryClient();
   const [periodDays, setPeriodDays] = useState(30);
-  const [trendMonths, setTrendMonths] = useState(8);
-  const [chartDays, setChartDays] = useState(30);
-  const [chartPeriodMode, setChartPeriodMode] = useState<'preset' | 'custom'>('preset');
+  const [periodMode, setPeriodMode] = useState<'preset' | 'custom'>('preset');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [appliedCustomRange, setAppliedCustomRange] = useState<{
@@ -58,16 +57,34 @@ const AdminDashboardPage: React.FC = () => {
     end_date: string;
   } | null>(null);
 
+  const metricsRange: PlatformMetricsRange = useMemo(
+    () =>
+      periodMode === 'custom' && appliedCustomRange
+        ? appliedCustomRange
+        : { days: periodDays },
+    [periodMode, appliedCustomRange, periodDays],
+  );
+
+  const periodLabel =
+    periodMode === 'custom' && appliedCustomRange
+      ? `${appliedCustomRange.start_date} – ${appliedCustomRange.end_date}`
+      : `Last ${periodDays} days`;
+
   const bundleQuery = useQuery({
-    queryKey: adminKeys.dashboardBundle(periodDays, trendMonths, chartDays),
+    queryKey: adminKeys.dashboardBundle(
+      periodDays,
+      appliedCustomRange?.start_date ?? '',
+      appliedCustomRange?.end_date ?? '',
+      Boolean(appliedCustomRange),
+    ),
     queryFn: async () => {
       const [legacyRes, overview, users, certData, trendData, retryData] = await Promise.all([
         api.get<LegacyAdminStats>('/core/admin/stats/').catch(() => ({ data: null })),
-        getPlatformOverview(),
-        getPlatformUserAnalytics(periodDays),
-        getPlatformCertificationAnalytics(),
-        getPlatformPerformanceTrends(trendMonths),
-        getPlatformRetryAnalytics(),
+        getPlatformOverview(metricsRange),
+        getPlatformUserAnalytics(metricsRange),
+        getPlatformCertificationAnalytics(metricsRange),
+        getPlatformPerformanceTrends(metricsRange),
+        getPlatformRetryAnalytics(metricsRange),
       ]);
       return {
         legacy: legacyRes.data,
@@ -81,11 +98,7 @@ const AdminDashboardPage: React.FC = () => {
     staleTime: ADMIN_STALE_MS,
   });
 
-  const chartQuery = useAdminChartMetricsQuery(
-    chartDays,
-    trendMonths,
-    chartPeriodMode === 'custom' ? appliedCustomRange : null,
-  );
+  const chartQuery = useAdminChartMetricsQuery(periodDays, appliedCustomRange);
 
   const legacy = bundleQuery.data?.legacy ?? null;
   const platform = bundleQuery.data?.platform ?? null;
@@ -129,17 +142,17 @@ const AdminDashboardPage: React.FC = () => {
     showToast({ type: 'success', message: 'Trends exported' });
   };
 
-  const onChartPeriodChange = (value: string) => {
+  const onPeriodPresetChange = (value: string) => {
     if (value === 'custom') {
-      setChartPeriodMode('custom');
+      setPeriodMode('custom');
       return;
     }
-    setChartPeriodMode('preset');
+    setPeriodMode('preset');
     setAppliedCustomRange(null);
-    setChartDays(Number(value));
+    setPeriodDays(Number(value));
   };
 
-  const applyCustomChartRange = () => {
+  const applyCustomRange = () => {
     if (!customStart || !customEnd) {
       showToast({ type: 'error', message: 'Select both a start date and an end date' });
       return;
@@ -155,14 +168,9 @@ const AdminDashboardPage: React.FC = () => {
       showToast({ type: 'error', message: 'Date range cannot exceed 365 days' });
       return;
     }
-    setChartPeriodMode('custom');
+    setPeriodMode('custom');
     setAppliedCustomRange({ start_date: customStart, end_date: customEnd });
   };
-
-  const chartPeriodLabel =
-    chartPeriodMode === 'custom' && appliedCustomRange
-      ? `${appliedCustomRange.start_date} – ${appliedCustomRange.end_date}`
-      : `Last ${chartDays} days`;
 
   if (loading) {
     return (
@@ -190,6 +198,7 @@ const AdminDashboardPage: React.FC = () => {
   const completionRate = sims.total_sessions
     ? Math.round((sims.completed / sims.total_sessions) * 100)
     : 0;
+  const activeLearners = sims.active_learners ?? sims.active_learners_30d ?? 0;
 
   return (
     <div className="role-dashboard admin-dashboard-page">
@@ -225,24 +234,15 @@ const AdminDashboardPage: React.FC = () => {
           <div>
             <h1 className="page-title">Metrics & Charts</h1>
             <p className="page-subtitle">
-              Organization-wide metrics · {users.total.toLocaleString()} users · updated{' '}
+              Organization-wide metrics · {periodLabel} · updated{' '}
               {new Date(platform.generated_at).toLocaleString()}
             </p>
           </div>
           <div className="header-actions">
             <select
               className="admin-filter-select"
-              value={chartPeriodMode === 'custom' ? 'custom' : String(periodDays)}
-              onChange={e => {
-                const value = e.target.value;
-                if (value === 'custom') {
-                  setChartPeriodMode('custom');
-                  return;
-                }
-                setPeriodDays(Number(value));
-                setChartPeriodMode('preset');
-                setAppliedCustomRange(null);
-              }}
+              value={periodMode === 'custom' ? 'custom' : String(periodDays)}
+              onChange={e => onPeriodPresetChange(e.target.value)}
               aria-label="Metrics period"
             >
               <option value={7}>Last 7 days</option>
@@ -250,7 +250,7 @@ const AdminDashboardPage: React.FC = () => {
               <option value={90}>Last 90 days</option>
               <option value="custom">Custom</option>
             </select>
-            {chartPeriodMode === 'custom' && (
+            {periodMode === 'custom' && (
               <div className="admin-custom-range">
                 <label>
                   Start date
@@ -275,7 +275,7 @@ const AdminDashboardPage: React.FC = () => {
                 <button
                   type="button"
                   className="btn-secondary"
-                  onClick={applyCustomChartRange}
+                  onClick={applyCustomRange}
                   disabled={!customStart || !customEnd}
                 >
                   Apply
@@ -297,26 +297,28 @@ const AdminDashboardPage: React.FC = () => {
           <Users size={18} /> User base
         </h2>
         <div className="analytics-section-grid">
-          <AnalyticsStatCard label="Total users" value={users.total} icon={<Users size={18} />} />
+          <AnalyticsStatCard
+            label="New users"
+            value={users.new_in_period ?? users.total}
+            icon={<Users size={18} />}
+          />
           <AnalyticsStatCard
             label="Active users"
             value={users.active}
             variant="success"
             barPercent={activeRate}
           />
-          <AnalyticsStatCard label="New (7d)" value={users.new_last_7_days} />
-          <AnalyticsStatCard label="New (30d)" value={users.new_last_30_days} />
           <AnalyticsStatCard label="Trainees" value={users.by_role.trainee} />
           <AnalyticsStatCard label="Supervisors" value={users.by_role.supervisor} />
           <AnalyticsStatCard label="Instructors" value={users.by_role.instructor} />
           <AnalyticsStatCard label="Admins" value={users.by_role.admin} />
         </div>
         <div className="admin-charts-grid">
-          <AdminPieChart title="Users by role" data={rolePieData} />
+          <AdminPieChart title="New users by role" data={rolePieData} />
           {userAnalytics && userAnalytics.registration_trend.length > 0 && (
             <AdminAreaChart
-              title={`New registrations (${userAnalytics.period_days}d)`}
-              data={userAnalytics.registration_trend.slice(-30).map(r => ({
+              title={`Registrations (${periodLabel})`}
+              data={userAnalytics.registration_trend.map(r => ({
                 name: r.date.slice(5),
                 value: r.count,
               }))}
@@ -344,7 +346,7 @@ const AdminDashboardPage: React.FC = () => {
             value={`${completionRate}%`}
             barPercent={completionRate}
           />
-          <AnalyticsStatCard label="Active learners (30d)" value={sims.active_learners_30d} />
+          <AnalyticsStatCard label="Active learners" value={activeLearners} />
           <AnalyticsStatCard label="Scenarios (catalog)" value={legacy?.scenarios ?? '—'} />
         </div>
       </section>
@@ -370,14 +372,9 @@ const AdminDashboardPage: React.FC = () => {
           </h2>
           <div className="analytics-section-grid">
             <AnalyticsStatCard
-              label="Total issued"
+              label="Issued in period"
               value={certs.total_issued}
               icon={<Award size={18} />}
-            />
-            <AnalyticsStatCard
-              label="Last 30 days"
-              value={platform.certificates.last_30_days}
-              variant="success"
             />
             {certs.by_course_difficulty.map(row => (
               <AnalyticsStatCard
@@ -432,22 +429,9 @@ const AdminDashboardPage: React.FC = () => {
       )}
 
       <section className="dashboard-section">
-        <div className="section-header-row">
-          <h2 className="dashboard-section-title">
-            <BarChart2 size={18} /> Performance trends
-          </h2>
-          <select
-            className="admin-filter-select"
-            value={trendMonths}
-            onChange={e => setTrendMonths(Number(e.target.value))}
-            aria-label="Trend months"
-          >
-            <option value={4}>4 months</option>
-            <option value={6}>6 months</option>
-            <option value={8}>8 months</option>
-            <option value={12}>12 months</option>
-          </select>
-        </div>
+        <h2 className="dashboard-section-title">
+          <BarChart2 size={18} /> Performance trends ({periodLabel})
+        </h2>
         <TrendsTable rows={trends} showCompletions />
       </section>
 
@@ -458,52 +442,7 @@ const AdminDashboardPage: React.FC = () => {
               <h2 className="dashboard-section-title">
                 <BarChart2 size={18} /> Analytics charts
               </h2>
-              <p className="admin-chart-range-label">Showing {chartPeriodLabel}</p>
-            </div>
-            <div className="admin-chart-period-controls">
-              <select
-                className="admin-filter-select"
-                value={chartPeriodMode === 'custom' ? 'custom' : String(chartDays)}
-                onChange={e => onChartPeriodChange(e.target.value)}
-                aria-label="Chart period days"
-              >
-                <option value={7}>Last 7 days</option>
-                <option value={30}>Last 30 days</option>
-                <option value={90}>Last 90 days</option>
-                <option value="custom">Custom</option>
-              </select>
-              {chartPeriodMode === 'custom' && (
-                <div className="admin-custom-range">
-                  <label>
-                    Start date
-                    <input
-                      type="date"
-                      className="admin-filter-select"
-                      value={customStart}
-                      onChange={e => setCustomStart(e.target.value)}
-                      aria-label="Chart custom start date"
-                    />
-                  </label>
-                  <label>
-                    End date
-                    <input
-                      type="date"
-                      className="admin-filter-select"
-                      value={customEnd}
-                      onChange={e => setCustomEnd(e.target.value)}
-                      aria-label="Chart custom end date"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={applyCustomChartRange}
-                    disabled={!customStart || !customEnd}
-                  >
-                    Apply
-                  </button>
-                </div>
-              )}
+              <p className="admin-chart-range-label">Showing {periodLabel}</p>
             </div>
           </div>
           <div className="analytics-section-grid">

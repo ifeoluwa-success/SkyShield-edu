@@ -147,15 +147,37 @@ export const getComparisonStats = async (): Promise<ComparisonStats> => {
 
 // ─── Platform analytics (admin / supervisor / instructor) ───────────────────
 
+export interface PlatformMetricsPeriod {
+  all_time?: boolean;
+  days?: number;
+  custom?: boolean;
+  start_date?: string;
+  end_date?: string;
+}
+
+export type PlatformMetricsRange =
+  | { days: number }
+  | { start_date: string; end_date: string };
+
+const platformRangeParams = (range?: PlatformMetricsRange) => {
+  if (!range) return undefined;
+  if ('start_date' in range) {
+    return { start_date: range.start_date, end_date: range.end_date };
+  }
+  return { days: range.days };
+};
+
 export interface PlatformOverview {
   generated_at: string;
+  period?: PlatformMetricsPeriod;
   users: {
     total: number;
     active: number;
     inactive: number;
     by_role: { trainee: number; supervisor: number; instructor: number; admin: number };
-    new_last_7_days: number;
-    new_last_30_days: number;
+    new_last_7_days?: number;
+    new_last_30_days?: number;
+    new_in_period?: number;
   };
   simulations: {
     total_sessions: number;
@@ -163,12 +185,14 @@ export interface PlatformOverview {
     failed: number;
     abandoned: number;
     avg_score: number;
-    active_learners_30d: number;
+    active_learners_30d?: number;
+    active_learners?: number;
   };
-  certificates: { total_issued: number; last_30_days: number };
+  certificates: { total_issued: number; last_30_days?: number; in_period?: number };
 }
 
 export interface PlatformUserAnalytics {
+  period?: PlatformMetricsPeriod;
   period_days: number;
   registration_trend: { date: string; count: number }[];
   login_trend: { date: string; count: number }[];
@@ -184,6 +208,7 @@ export interface PlatformPerformanceTrendRow {
 }
 
 export interface PlatformCertificationAnalytics {
+  period?: PlatformMetricsPeriod;
   total_issued: number;
   by_course_difficulty: { difficulty: number; level: string; count: number }[];
   issuance_trend: { period: string | null; count: number }[];
@@ -191,42 +216,56 @@ export interface PlatformCertificationAnalytics {
 }
 
 export interface PlatformRetryAnalytics {
+  period?: PlatformMetricsPeriod;
   total_sessions: number;
   scenarios_with_retries: number;
   failed_sessions: number;
   avg_attempt_number: number;
 }
 
-export const getPlatformOverview = async (): Promise<PlatformOverview> => {
-  const response = await api.get<PlatformOverview>('/analytics/platform/overview/');
+export const getPlatformOverview = async (
+  range?: PlatformMetricsRange,
+): Promise<PlatformOverview> => {
+  const response = await api.get<PlatformOverview>('/analytics/platform/overview/', {
+    params: platformRangeParams(range),
+  });
   return response.data;
 };
 
-export const getPlatformUserAnalytics = async (period?: number): Promise<PlatformUserAnalytics> => {
+export const getPlatformUserAnalytics = async (
+  range: PlatformMetricsRange,
+): Promise<PlatformUserAnalytics> => {
   const response = await api.get<PlatformUserAnalytics>('/analytics/platform/users/', {
-    params: period ? { period } : undefined,
+    params: platformRangeParams(range),
   });
   return response.data;
 };
 
 export const getPlatformPerformanceTrends = async (
-  months?: number,
-): Promise<{ trends: PlatformPerformanceTrendRow[] }> => {
-  const response = await api.get<{ trends: PlatformPerformanceTrendRow[] }>(
+  range: PlatformMetricsRange = { days: 180 },
+): Promise<{ trends: PlatformPerformanceTrendRow[]; period?: PlatformMetricsPeriod }> => {
+  const response = await api.get<{ trends: PlatformPerformanceTrendRow[]; period?: PlatformMetricsPeriod }>(
     '/analytics/platform/performance-trends/',
-    { params: months ? { months } : undefined },
+    { params: platformRangeParams(range) },
   );
   return response.data;
 };
 
-export const getPlatformCertificationAnalytics = async (): Promise<PlatformCertificationAnalytics> => {
+export const getPlatformCertificationAnalytics = async (
+  range?: PlatformMetricsRange,
+): Promise<PlatformCertificationAnalytics> => {
   const response = await api.get<PlatformCertificationAnalytics>(
     '/analytics/platform/certifications/',
+    { params: platformRangeParams(range) },
   );
   return response.data;
 };
 
-export const getPlatformRetryAnalytics = async (): Promise<PlatformRetryAnalytics> => {
-  const response = await api.get<PlatformRetryAnalytics>('/analytics/platform/retries/');
+export const getPlatformRetryAnalytics = async (
+  range?: PlatformMetricsRange,
+): Promise<PlatformRetryAnalytics> => {
+  const response = await api.get<PlatformRetryAnalytics>('/analytics/platform/retries/', {
+    params: platformRangeParams(range),
+  });
   return response.data;
 };
