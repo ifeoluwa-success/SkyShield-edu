@@ -50,6 +50,41 @@
   margin-bottom: 0;
 }
 
+.admin-dashboard-page .header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-dashboard-page .admin-custom-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.admin-dashboard-page .admin-custom-range label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #64748b);
+}
+
+.admin-dashboard-page .admin-chart-period-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.admin-dashboard-page .admin-chart-range-label {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #64748b);
+}
+
 .admin-dashboard-page .admin-charts-row {
   margin-top: 1rem;
 }

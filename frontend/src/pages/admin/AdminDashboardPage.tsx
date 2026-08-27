@@ -50,7 +50,15 @@ const AdminDashboardPage: React.FC = () => {
   const [periodDays, setPeriodDays] = useState(30);
   const [trendMonths, setTrendMonths] = useState(8);
   const [chartDays, setChartDays] = useState(30);
-const bundleQuery = useQuery({
+  const [chartPeriodMode, setChartPeriodMode] = useState<'preset' | 'custom'>('preset');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const [appliedCustomRange, setAppliedCustomRange] = useState<{
+    start_date: string;
+    end_date: string;
+  } | null>(null);
+
+  const bundleQuery = useQuery({
     queryKey: adminKeys.dashboardBundle(periodDays, trendMonths, chartDays),
     queryFn: async () => {
       const [legacyRes, overview, users, certData, trendData, retryData] = await Promise.all([
@@ -73,7 +81,11 @@ const bundleQuery = useQuery({
     staleTime: ADMIN_STALE_MS,
   });
 
-  const chartQuery = useAdminChartMetricsQuery(chartDays, trendMonths);
+  const chartQuery = useAdminChartMetricsQuery(
+    chartDays,
+    trendMonths,
+    chartPeriodMode === 'custom' ? appliedCustomRange : null,
+  );
 
   const legacy = bundleQuery.data?.legacy ?? null;
   const platform = bundleQuery.data?.platform ?? null;
@@ -117,6 +129,41 @@ const bundleQuery = useQuery({
     showToast({ type: 'success', message: 'Trends exported' });
   };
 
+  const onChartPeriodChange = (value: string) => {
+    if (value === 'custom') {
+      setChartPeriodMode('custom');
+      return;
+    }
+    setChartPeriodMode('preset');
+    setAppliedCustomRange(null);
+    setChartDays(Number(value));
+  };
+
+  const applyCustomChartRange = () => {
+    if (!customStart || !customEnd) {
+      showToast({ type: 'error', message: 'Select both a start date and an end date' });
+      return;
+    }
+    if (customStart > customEnd) {
+      showToast({ type: 'error', message: 'Start date must be on or before end date' });
+      return;
+    }
+    const start = new Date(`${customStart}T00:00:00Z`);
+    const end = new Date(`${customEnd}T00:00:00Z`);
+    const spanDays = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+    if (spanDays > 365) {
+      showToast({ type: 'error', message: 'Date range cannot exceed 365 days' });
+      return;
+    }
+    setChartPeriodMode('custom');
+    setAppliedCustomRange({ start_date: customStart, end_date: customEnd });
+  };
+
+  const chartPeriodLabel =
+    chartPeriodMode === 'custom' && appliedCustomRange
+      ? `${appliedCustomRange.start_date} – ${appliedCustomRange.end_date}`
+      : `Last ${chartDays} days`;
+
   if (loading) {
     return (
       <div className="role-dashboard loading">
@@ -128,7 +175,7 @@ const bundleQuery = useQuery({
   if (!platform) {
     return (
       <div className="role-dashboard error-state">
-<AlertTriangle size={40} />
+        <AlertTriangle size={40} />
         <p>Could not load admin dashboard.</p>
         <button type="button" className="btn-secondary" onClick={refresh}>
           Retry
@@ -185,14 +232,56 @@ const bundleQuery = useQuery({
           <div className="header-actions">
             <select
               className="admin-filter-select"
-              value={periodDays}
-              onChange={e => setPeriodDays(Number(e.target.value))}
-              aria-label="User analytics period"
+              value={chartPeriodMode === 'custom' ? 'custom' : String(periodDays)}
+              onChange={e => {
+                const value = e.target.value;
+                if (value === 'custom') {
+                  setChartPeriodMode('custom');
+                  return;
+                }
+                setPeriodDays(Number(value));
+                setChartPeriodMode('preset');
+                setAppliedCustomRange(null);
+              }}
+              aria-label="Metrics period"
             >
               <option value={7}>Last 7 days</option>
               <option value={30}>Last 30 days</option>
               <option value={90}>Last 90 days</option>
+              <option value="custom">Custom</option>
             </select>
+            {chartPeriodMode === 'custom' && (
+              <div className="admin-custom-range">
+                <label>
+                  Start date
+                  <input
+                    type="date"
+                    className="admin-filter-select"
+                    value={customStart}
+                    onChange={e => setCustomStart(e.target.value)}
+                    aria-label="Custom start date"
+                  />
+                </label>
+                <label>
+                  End date
+                  <input
+                    type="date"
+                    className="admin-filter-select"
+                    value={customEnd}
+                    onChange={e => setCustomEnd(e.target.value)}
+                    aria-label="Custom end date"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={applyCustomChartRange}
+                  disabled={!customStart || !customEnd}
+                >
+                  Apply
+                </button>
+              </div>
+            )}
             <button type="button" className="btn-secondary" onClick={exportTrendsCsv}>
               <Download size={16} /> Export
             </button>
@@ -339,19 +428,57 @@ const bundleQuery = useQuery({
       {chartMetrics && (
         <section className="dashboard-section">
           <div className="section-header-row">
-            <h2 className="dashboard-section-title">
-              <BarChart2 size={18} /> Analytics charts
-            </h2>
-            <select
-              className="admin-filter-select"
-              value={chartDays}
-              onChange={e => setChartDays(Number(e.target.value))}
-              aria-label="Chart period days"
-            >
-              <option value={7}>7 days</option>
-              <option value={30}>30 days</option>
-              <option value={90}>90 days</option>
-            </select>
+            <div>
+              <h2 className="dashboard-section-title">
+                <BarChart2 size={18} /> Analytics charts
+              </h2>
+              <p className="admin-chart-range-label">Showing {chartPeriodLabel}</p>
+            </div>
+            <div className="admin-chart-period-controls">
+              <select
+                className="admin-filter-select"
+                value={chartPeriodMode === 'custom' ? 'custom' : String(chartDays)}
+                onChange={e => onChartPeriodChange(e.target.value)}
+                aria-label="Chart period days"
+              >
+                <option value={7}>Last 7 days</option>
+                <option value={30}>Last 30 days</option>
+                <option value={90}>Last 90 days</option>
+                <option value="custom">Custom</option>
+              </select>
+              {chartPeriodMode === 'custom' && (
+                <div className="admin-custom-range">
+                  <label>
+                    Start date
+                    <input
+                      type="date"
+                      className="admin-filter-select"
+                      value={customStart}
+                      onChange={e => setCustomStart(e.target.value)}
+                      aria-label="Chart custom start date"
+                    />
+                  </label>
+                  <label>
+                    End date
+                    <input
+                      type="date"
+                      className="admin-filter-select"
+                      value={customEnd}
+                      onChange={e => setCustomEnd(e.target.value)}
+                      aria-label="Chart custom end date"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={applyCustomChartRange}
+                    disabled={!customStart || !customEnd}
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="analytics-section-grid">
             <AnalyticsStatCard label="Courses" value={chartMetrics.summary.total_courses} />

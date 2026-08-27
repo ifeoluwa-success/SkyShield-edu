@@ -3,8 +3,8 @@ export const ADMIN_LIST_STALE_MS = 2 * 60_000;
 
 export const adminKeys = {
   all: ['admin'] as const,
-  chartMetrics: (days: number, months: number) =>
-    [...adminKeys.all, 'chartMetrics', days, months] as const,
+  chartMetrics: (days: number, months: number, startDate = '', endDate = '') =>
+    [...adminKeys.all, 'chartMetrics', days, months, startDate, endDate] as const,
   dashboardBundle: (periodDays: number, trendMonths: number, chartDays: number) =>
     [...adminKeys.all, 'dashboardBundle', periodDays, trendMonths, chartDays] as const,
   users: (role: string, params: Record<string, string | number>) =>

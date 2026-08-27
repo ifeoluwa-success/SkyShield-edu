@@ -137,10 +137,21 @@ export function useAdminLogsQuery(
   });
 }
 
-export function useAdminChartMetricsQuery(days: number, months: number) {
+export function useAdminChartMetricsQuery(
+  days: number,
+  months: number,
+  range?: { start_date: string; end_date: string } | null,
+) {
+  const startDate = range?.start_date ?? '';
+  const endDate = range?.end_date ?? '';
   return useQuery({
-    queryKey: adminKeys.chartMetrics(days, months),
-    queryFn: () => getAdminChartMetrics({ days, months }),
+    queryKey: adminKeys.chartMetrics(days, months, startDate, endDate),
+    queryFn: () =>
+      getAdminChartMetrics(
+        startDate && endDate
+          ? { start_date: startDate, end_date: endDate, months }
+          : { days, months },
+      ),
     staleTime: ADMIN_STALE_MS,
   });
 }
