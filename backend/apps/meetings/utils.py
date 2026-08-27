@@ -63,6 +63,54 @@ def can_join_meeting(meeting, user):
     return True, "OK"
 
 
+def authorize_meeting_websocket(meeting, user, password=''):
+    """
+    Enforce the same password / invite / membership rules as HTTP meeting joins.
+
+    Returns (allowed: bool, reason: str).
+    """
+    from .models import MeetingInvitation, MeetingParticipant
+
+    role = getattr(user, 'role', None)
+    if role in ('admin', 'supervisor'):
+        return True, 'OK'
+
+    if meeting.host_id == user.id:
+        return True, 'OK'
+
+    if meeting.status not in ('scheduled', 'live'):
+        return False, f'Meeting is {meeting.get_status_display()}'
+
+    # Prefer membership established by HTTP join or invitation accept.
+    existing = MeetingParticipant.objects.filter(
+        meeting=meeting,
+        user=user,
+    ).exclude(status='rejected').exists()
+    if existing:
+        return True, 'OK'
+
+    invited = MeetingInvitation.objects.filter(
+        meeting=meeting,
+        invited_user=user,
+        status='accepted',
+    ).exists()
+    if invited:
+        return True, 'OK'
+
+    if meeting.is_private:
+        if meeting.password:
+            if password and meeting.password == password:
+                return True, 'OK'
+            return False, 'Invalid meeting password'
+        return False, 'This is a private meeting'
+
+    # Public meetings: allow when under capacity (mirrors HTTP join gates).
+    if meeting.participant_count >= meeting.max_participants:
+        return False, 'Meeting has reached maximum capacity'
+
+    return True, 'OK'
+
+
 def create_meeting_invitation(meeting, invited_user, invited_by):
     """Create meeting invitation with token"""
     from .models import MeetingInvitation
